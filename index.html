@@ -12,34 +12,28 @@
        TOKENS
        ============================================ */
     :root {
-      /* Cores primárias — extraídas do logo real */
       --brand-blue: #3CAAF0;
       --brand-blue-light: #5EBBF5;
       --brand-blue-dark: #2B8FD4;
       --brand-blue-bg: rgba(60, 170, 240, 0.1);
 
-      /* Cinza da marca — extraído do logo */
       --brand-gray: #969696;
       --brand-gray-light: #b0b0b0;
       --brand-gray-dark: #6b6b6b;
 
-      /* Cores escuras */
       --brand-dark: #0f0f1a;
       --brand-dark-soft: #1a1a2e;
 
-      /* Textos */
       --text-primary: #111111;
       --text-secondary: #444444;
       --text-muted: #888888;
       --text-on-dark: #ffffff;
       --text-on-dark-muted: #a0a0b0;
 
-      /* CTA WhatsApp */
       --cta-green: #25D366;
       --cta-green-hover: #1EBF5A;
       --cta-green-active: #178A42;
 
-      /* Feedback */
       --color-error: #EF4444;
       --color-error-bg: rgba(239, 68, 68, 0.08);
       --color-error-border: #FCA5A5;
@@ -47,17 +41,14 @@
       --color-success-bg: rgba(34, 197, 94, 0.08);
       --color-success-border: #86EFAC;
 
-      /* Fundos */
       --bg-white: #ffffff;
       --bg-light: #f5f7fa;
       --bg-dark: #0f0f1a;
 
-      /* Bordas */
       --border-light: #e2e8f0;
       --border-input: #cbd5e1;
       --border-focus: #3CAAF0;
 
-      /* Sombras */
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
       --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
       --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -65,14 +56,12 @@
       --shadow-cta: 0 4px 14px rgba(37, 211, 102, 0.35);
       --shadow-cta-hover: 0 6px 20px rgba(37, 211, 102, 0.45);
 
-      /* Raios */
       --radius-sm: 6px;
       --radius-md: 8px;
       --radius-lg: 12px;
       --radius-xl: 16px;
       --radius-full: 9999px;
 
-      /* Espaçamento — base 4px */
       --space-1: 4px;
       --space-2: 8px;
       --space-3: 12px;
@@ -86,7 +75,6 @@
       --space-20: 80px;
       --space-24: 96px;
 
-      /* Tipografia */
       --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
       --font-heading: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
@@ -100,20 +88,15 @@
       --text-4xl: 2.25rem;
       --text-5xl: 3rem;
 
-      /* Transições */
       --transition-fast: 120ms ease;
       --transition: 200ms ease;
       --transition-slow: 350ms ease;
     }
 
     /* ============================================
-       RESET & BASE
+       RESET
        ============================================ */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: var(--font-body);
@@ -188,7 +171,7 @@
     }
 
     /* ============================================
-       CORES
+       COLOR
        ============================================ */
     .color-grid {
       display: grid;
@@ -203,20 +186,11 @@
       border: 1px solid var(--border-light);
     }
 
-    .color-swatch {
-      height: 90px;
-      width: 100%;
-    }
+    .color-swatch { height: 90px; width: 100%; }
 
-    .color-info {
-      padding: var(--space-3) var(--space-4);
-    }
+    .color-info { padding: var(--space-3) var(--space-4); }
 
-    .color-name {
-      font-weight: 600;
-      font-size: var(--text-sm);
-      display: block;
-    }
+    .color-name { font-weight: 600; font-size: var(--text-sm); display: block; }
 
     .color-hex {
       font-size: var(--text-xs);
@@ -224,10 +198,12 @@
       font-family: monospace;
     }
 
-    .color-usage {
-      font-size: var(--text-xs);
-      color: var(--text-secondary);
-      margin-top: var(--space-1);
+    .color-var {
+      font-size: 10px;
+      color: var(--brand-blue-dark);
+      font-family: monospace;
+      display: block;
+      margin-top: 2px;
     }
 
     .color-wcag {
@@ -252,7 +228,7 @@
     }
 
     /* ============================================
-       TIPOGRAFIA
+       TYPOGRAPHY
        ============================================ */
     .type-sample {
       margin-bottom: var(--space-6);
@@ -272,240 +248,142 @@
       font-family: monospace;
     }
 
-    .type-heading-hero {
-      font-family: var(--font-heading);
-      font-size: var(--text-5xl);
-      font-weight: 800;
-      line-height: 1.1;
-    }
-
-    .type-heading-section {
-      font-family: var(--font-heading);
-      font-size: var(--text-3xl);
-      font-weight: 700;
-      line-height: 1.2;
-    }
-
-    .type-heading-card {
-      font-family: var(--font-heading);
-      font-size: var(--text-xl);
-      font-weight: 600;
-      line-height: 1.3;
-    }
-
-    .type-body {
-      font-family: var(--font-body);
-      font-size: var(--text-base);
-      line-height: 1.6;
-      color: var(--text-secondary);
-    }
-
-    .type-body-sm {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      line-height: 1.5;
+    .type-meta {
+      font-size: 10px;
       color: var(--text-muted);
-    }
-
-    .type-fallback-demo {
-      padding: var(--space-4);
-      background: var(--bg-light);
-      border-radius: var(--radius-md);
-      border: 1px dashed var(--border-light);
-    }
-
-    .type-fallback-demo .with-font {
-      font-family: var(--font-heading);
-      font-size: var(--text-2xl);
-      font-weight: 700;
-      margin-bottom: var(--space-2);
-    }
-
-    .type-fallback-demo .without-font {
-      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-      font-size: var(--text-2xl);
-      font-weight: 700;
-      color: var(--text-muted);
+      font-family: monospace;
+      margin-top: var(--space-2);
     }
 
     /* ============================================
-       LOGO
+       SPACING
        ============================================ */
-    .logo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    .spacing-demo {
+      display: flex;
+      flex-wrap: wrap;
       gap: var(--space-6);
+      align-items: flex-end;
     }
 
-    .logo-demo {
-      padding: var(--space-8) var(--space-6);
+    .spacing-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .spacing-visual {
+      background: var(--brand-blue);
+      opacity: 0.6;
+      border-radius: var(--radius-sm);
+      width: 48px;
+    }
+
+    .spacing-label {
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .spacing-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+      margin-top: var(--space-6);
+    }
+
+    .spacing-table th {
+      text-align: left;
+      font-weight: 600;
+      padding: var(--space-2) var(--space-4);
+      border-bottom: 2px solid var(--border-light);
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .spacing-table td {
+      padding: var(--space-2) var(--space-4);
+      border-bottom: 1px solid var(--border-light);
+      font-family: monospace;
+      font-size: var(--text-xs);
+    }
+
+    .spacing-table td:last-child {
+      font-family: var(--font-body);
+      color: var(--text-secondary);
+    }
+
+    .spacing-bar {
+      height: 12px;
+      background: var(--brand-blue);
+      opacity: 0.5;
+      border-radius: 2px;
+    }
+
+    /* ============================================
+       RADIUS & ELEVATION
+       ============================================ */
+    .radius-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-6);
+      align-items: flex-end;
+    }
+
+    .radius-demo { text-align: center; }
+
+    .radius-box {
+      width: 72px;
+      height: 72px;
+      background: var(--brand-blue-bg);
+      border: 2px solid var(--brand-blue);
+      margin: 0 auto var(--space-2);
+    }
+
+    .radius-label {
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+
+    .shadow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: var(--space-6);
+      margin-top: var(--space-8);
+    }
+
+    .shadow-demo {
+      height: 80px;
+      background: var(--bg-white);
       border-radius: var(--radius-lg);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      gap: var(--space-3);
-      border: 1px solid var(--border-light);
+      gap: 4px;
     }
 
-    .logo-demo img {
-      height: 60px;
-      width: auto;
-      border-radius: var(--radius-sm);
-    }
-
-    .logo-demo.on-dark {
-      background: var(--bg-dark);
-      border-color: transparent;
-    }
-
-    .logo-demo.on-white { background: var(--bg-white); }
-    .logo-demo.on-light { background: var(--bg-light); }
-
-    .logo-demo-label {
+    .shadow-name {
       font-size: var(--text-xs);
+      font-family: monospace;
       color: var(--text-muted);
+    }
+
+    .shadow-value {
+      font-size: 9px;
+      font-family: monospace;
+      color: var(--brand-gray-light);
+      max-width: 140px;
       text-align: center;
-    }
-
-    .logo-demo.on-dark .logo-demo-label {
-      color: var(--text-on-dark-muted);
+      word-break: break-all;
     }
 
     /* ============================================
-       BOTÕES
-       ============================================ */
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-4);
-      align-items: center;
-      margin-bottom: var(--space-6);
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-2);
-      padding: var(--space-3) var(--space-6);
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 600;
-      border: none;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      transition: all var(--transition);
-      text-decoration: none;
-      line-height: 1;
-      position: relative;
-    }
-
-    .btn:active { transform: scale(0.97); }
-
-    .btn-cta {
-      background: var(--cta-green);
-      color: white;
-      padding: var(--space-4) var(--space-8);
-      font-size: var(--text-base);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-cta);
-    }
-
-    .btn-cta:hover {
-      background: var(--cta-green-hover);
-      box-shadow: var(--shadow-cta-hover);
-      transform: translateY(-1px);
-    }
-
-    .btn-cta:active {
-      background: var(--cta-green-active);
-      transform: translateY(0) scale(0.98);
-    }
-
-    .btn-cta.disabled {
-      background: #94d3a2;
-      color: rgba(255,255,255,0.7);
-      cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
-    }
-
-    .btn-cta.loading {
-      background: var(--cta-green);
-      color: transparent;
-      pointer-events: none;
-    }
-
-    .btn-cta.loading::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .btn-primary {
-      background: var(--brand-blue);
-      color: white;
-    }
-
-    .btn-primary:hover { background: var(--brand-blue-dark); }
-
-    .btn-primary.disabled {
-      background: #a3d4f5;
-      color: rgba(255,255,255,0.7);
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--brand-blue);
-      border: 2px solid var(--brand-blue);
-    }
-
-    .btn-secondary:hover {
-      background: var(--brand-blue);
-      color: white;
-    }
-
-    .btn-ghost {
-      background: rgba(255, 255, 255, 0.08);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .btn-ghost:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.35);
-    }
-
-    .btn-dark-demo {
-      background: var(--bg-dark);
-      padding: var(--space-4) var(--space-6);
-      border-radius: var(--radius-md);
-      display: inline-flex;
-      gap: var(--space-4);
-    }
-
-    .btn-lg {
-      padding: var(--space-4) var(--space-10);
-      font-size: var(--text-lg);
-      border-radius: var(--radius-lg);
-    }
-
-    .btn-sm {
-      padding: var(--space-2) var(--space-4);
-      font-size: var(--text-xs);
-    }
-
-    /* ============================================
-       INPUTS
+       CORE COMPONENTS — INPUT
        ============================================ */
     .input-grid {
       display: grid;
@@ -517,6 +395,16 @@
       padding: var(--space-4);
       background: var(--bg-light);
       border-radius: var(--radius-md);
+    }
+
+    .input-demo-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--brand-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-3);
+      font-family: monospace;
     }
 
     .form-label {
@@ -560,6 +448,13 @@
       box-shadow: 0 0 0 3px var(--color-success-bg);
     }
 
+    .form-input:disabled {
+      background: var(--bg-light);
+      color: var(--brand-gray);
+      cursor: not-allowed;
+      border-color: var(--border-light);
+    }
+
     .form-feedback {
       font-size: var(--text-xs);
       margin-top: var(--space-1);
@@ -579,216 +474,123 @@
     }
 
     /* ============================================
-       TOASTS
+       CORE COMPONENTS — CHECKBOX
        ============================================ */
-    .toast-demo {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-      max-width: 420px;
-    }
-
-    .toast {
-      padding: var(--space-3) var(--space-4);
-      border-radius: var(--radius-md);
-      font-size: var(--text-sm);
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      animation: slideIn 0.3s ease;
-      box-shadow: var(--shadow-md);
-    }
-
-    .toast-error {
-      background: var(--color-error-bg);
-      color: var(--color-error);
-      border: 1px solid var(--color-error-border);
-    }
-
-    .toast-success {
-      background: var(--color-success-bg);
-      color: var(--color-success);
-      border: 1px solid var(--color-success-border);
-    }
-
-    .toast-info {
-      background: rgba(60, 170, 240, 0.08);
-      color: var(--brand-blue-dark);
-      border: 1px solid rgba(60, 170, 240, 0.3);
-    }
-
-    .toast svg {
-      flex-shrink: 0;
-      width: 18px;
-      height: 18px;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ============================================
-       SEÇÕES ALTERNADAS
-       ============================================ */
-    .section-alt-demo {
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-      border: 1px solid var(--border-light);
-    }
-
-    .section-alt {
-      padding: var(--space-6) var(--space-8);
-      text-align: center;
-    }
-
-    .section-alt h3 {
-      font-family: var(--font-heading);
-      font-size: var(--text-sm);
-      font-weight: 600;
-      margin-bottom: var(--space-1);
-    }
-
-    .section-alt p {
-      font-size: var(--text-xs);
-      color: var(--text-muted);
-      font-family: monospace;
-    }
-
-    .section-alt.white { background: var(--bg-white); }
-    .section-alt.light { background: var(--bg-light); }
-    .section-alt.dark { background: var(--bg-dark); color: var(--text-on-dark); }
-    .section-alt.dark p { color: var(--text-on-dark-muted); }
-
-    /* ============================================
-       SOMBRAS
-       ============================================ */
-    .shadow-grid {
+    .checkbox-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: var(--space-6);
     }
 
-    .shadow-demo {
-      height: 80px;
-      background: var(--bg-white);
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: var(--text-xs);
-      font-family: monospace;
-      color: var(--text-muted);
-    }
-
-    /* ============================================
-       RAIOS
-       ============================================ */
-    .radius-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-6);
-      align-items: flex-end;
-    }
-
-    .radius-demo {
-      text-align: center;
-    }
-
-    .radius-box {
-      width: 64px;
-      height: 64px;
-      background: var(--brand-blue-bg);
-      border: 2px solid var(--brand-blue);
-      margin: 0 auto var(--space-2);
-    }
-
-    .radius-label {
-      font-size: 10px;
-      font-family: monospace;
-      color: var(--text-muted);
-    }
-
-    /* ============================================
-       ANIMAÇÕES
-       ============================================ */
-    .anim-demo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: var(--space-6);
-    }
-
-    .anim-demo-card {
-      text-align: center;
-      padding: var(--space-6);
+    .checkbox-demo {
+      padding: var(--space-4);
       background: var(--bg-light);
-      border-radius: var(--radius-lg);
+      border-radius: var(--radius-md);
     }
 
-    .anim-demo-card p {
+    .checkbox-demo-label {
       font-size: var(--text-xs);
-      color: var(--text-muted);
-      margin-top: var(--space-3);
+      font-weight: 600;
+      color: var(--brand-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-3);
       font-family: monospace;
     }
 
-    .anim-box {
-      width: 60px;
-      height: 60px;
-      background: var(--brand-blue);
-      border-radius: var(--radius-md);
-      margin: 0 auto;
+    .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      cursor: pointer;
+      padding: var(--space-2) 0;
+    }
+
+    .checkbox-wrapper + .checkbox-wrapper {
+      margin-top: var(--space-2);
+    }
+
+    .checkbox {
+      position: relative;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .checkbox input {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .checkbox-visual {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-input);
+      border-radius: var(--radius-sm);
+      background: var(--bg-white);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-weight: 600;
-      font-size: var(--text-sm);
+      transition: all var(--transition-fast);
     }
 
-    .anim-fade-up { animation: fadeUp 1.5s ease infinite; }
-
-    .anim-scale { transition: transform var(--transition); cursor: pointer; }
-    .anim-scale:hover { transform: scale(1.1); }
-
-    .anim-lift { transition: all var(--transition); cursor: pointer; }
-    .anim-lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-
-    @keyframes fadeUp {
-      0%, 100% { opacity: 0.3; transform: translateY(8px); }
-      50% { opacity: 1; transform: translateY(0); }
+    .checkbox-visual svg {
+      width: 14px;
+      height: 14px;
+      stroke: white;
+      stroke-width: 2.5;
+      fill: none;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all var(--transition-fast);
     }
 
-    /* ============================================
-       ESPAÇAMENTO
-       ============================================ */
-    .spacing-demo {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-4);
-      align-items: flex-end;
-    }
-
-    .spacing-block {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-2);
-    }
-
-    .spacing-visual {
+    .checkbox input:checked + .checkbox-visual {
       background: var(--brand-blue);
-      opacity: 0.6;
-      border-radius: var(--radius-sm);
-      width: 48px;
+      border-color: var(--brand-blue);
     }
 
-    .spacing-label {
-      font-size: 10px;
-      font-family: monospace;
-      color: var(--text-muted);
-      text-align: center;
+    .checkbox input:checked + .checkbox-visual svg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .checkbox input:focus-visible + .checkbox-visual {
+      box-shadow: 0 0 0 3px rgba(60, 170, 240, 0.15);
+      border-color: var(--border-focus);
+    }
+
+    .checkbox.error .checkbox-visual {
+      border-color: var(--color-error);
+    }
+
+    .checkbox.error input:focus-visible + .checkbox-visual {
+      box-shadow: 0 0 0 3px var(--color-error-bg);
+    }
+
+    .checkbox input:disabled + .checkbox-visual {
+      background: var(--bg-light);
+      border-color: var(--border-light);
+      cursor: not-allowed;
+    }
+
+    .checkbox input:disabled:checked + .checkbox-visual {
+      background: var(--brand-gray-light);
+      border-color: var(--brand-gray-light);
+    }
+
+    .checkbox-text {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .checkbox-text.disabled {
+      color: var(--brand-gray);
     }
 
     /* ============================================
@@ -797,7 +599,7 @@
     @media (max-width: 768px) {
       .ds-header h1 { font-size: var(--text-2xl); }
       .color-grid { grid-template-columns: repeat(2, 1fr); }
-      .type-heading-hero { font-size: var(--text-3xl); }
+      .spacing-table { font-size: var(--text-xs); }
     }
   </style>
 </head>
@@ -810,21 +612,29 @@
 
   <div class="ds-container">
 
-    <!-- ===================== 1. CORES ===================== -->
+    <!-- ===================== 1. COLOR ===================== -->
     <section class="ds-section">
-      <h2 class="ds-section-title">1. Cores</h2>
-      <p class="ds-section-desc">Extraídas do logo. Azul <code>#3CAAF0</code> + cinza <code>#969696</code>. Verde CTA WhatsApp. Badges WCAG indicam contraste sobre branco.</p>
+      <h2 class="ds-section-title">Color</h2>
+      <p class="ds-section-desc">Extraídas do logo via análise de pixels. Badges WCAG indicam contraste sobre fundo branco.</p>
 
       <div class="ds-subsection">
-        <h3 class="ds-subsection-title">Marca</h3>
+        <h3 class="ds-subsection-title">Brand</h3>
         <div class="color-grid">
           <div class="color-card">
             <div class="color-swatch" style="background: #3CAAF0;"></div>
             <div class="color-info">
-              <span class="color-name">Brand Blue</span>
+              <span class="color-name">Blue</span>
               <span class="color-hex">#3CAAF0</span>
-              <p class="color-usage">Headers, links, ícones</p>
+              <span class="color-var">--brand-blue</span>
               <span class="color-wcag pass">AA Large</span>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #5EBBF5;"></div>
+            <div class="color-info">
+              <span class="color-name">Blue Light</span>
+              <span class="color-hex">#5EBBF5</span>
+              <span class="color-var">--brand-blue-light</span>
             </div>
           </div>
           <div class="color-card">
@@ -832,26 +642,26 @@
             <div class="color-info">
               <span class="color-name">Blue Dark</span>
               <span class="color-hex">#2B8FD4</span>
-              <p class="color-usage">Hover</p>
+              <span class="color-var">--brand-blue-dark</span>
               <span class="color-wcag pass">AA</span>
             </div>
           </div>
           <div class="color-card">
             <div class="color-swatch" style="background: #0f0f1a;"></div>
             <div class="color-info">
-              <span class="color-name">Brand Dark</span>
+              <span class="color-name">Dark</span>
               <span class="color-hex">#0F0F1A</span>
-              <p class="color-usage">Fundos escuros</p>
+              <span class="color-var">--brand-dark</span>
               <span class="color-wcag pass">AAA</span>
             </div>
           </div>
           <div class="color-card">
             <div class="color-swatch" style="background: #969696;"></div>
             <div class="color-info">
-              <span class="color-name">Brand Gray</span>
+              <span class="color-name">Gray</span>
               <span class="color-hex">#969696</span>
-              <p class="color-usage">Texto sobre escuro</p>
-              <span class="color-wcag fail">Falha AA s/ branco</span>
+              <span class="color-var">--brand-gray</span>
+              <span class="color-wcag fail">Falha AA</span>
             </div>
           </div>
         </div>
@@ -865,7 +675,7 @@
             <div class="color-info">
               <span class="color-name">CTA Green</span>
               <span class="color-hex">#25D366</span>
-              <p class="color-usage">Botão WhatsApp</p>
+              <span class="color-var">--cta-green</span>
               <span class="color-wcag pass">AA Large</span>
             </div>
           </div>
@@ -874,37 +684,38 @@
             <div class="color-info">
               <span class="color-name">CTA Hover</span>
               <span class="color-hex">#1EBF5A</span>
-              <p class="color-usage">Hover CTA</p>
+              <span class="color-var">--cta-green-hover</span>
             </div>
           </div>
           <div class="color-card">
             <div class="color-swatch" style="background: #EF4444;"></div>
             <div class="color-info">
-              <span class="color-name">Erro</span>
+              <span class="color-name">Error</span>
               <span class="color-hex">#EF4444</span>
-              <p class="color-usage">Validação</p>
+              <span class="color-var">--color-error</span>
               <span class="color-wcag pass">AA Large</span>
             </div>
           </div>
           <div class="color-card">
             <div class="color-swatch" style="background: #22C55E;"></div>
             <div class="color-info">
-              <span class="color-name">Sucesso</span>
+              <span class="color-name">Success</span>
               <span class="color-hex">#22C55E</span>
-              <p class="color-usage">Validação positiva</p>
+              <span class="color-var">--color-success</span>
             </div>
           </div>
         </div>
       </div>
 
       <div class="ds-subsection">
-        <h3 class="ds-subsection-title">Neutros</h3>
+        <h3 class="ds-subsection-title">Text &amp; Background</h3>
         <div class="color-grid">
           <div class="color-card">
             <div class="color-swatch" style="background: #111111;"></div>
             <div class="color-info">
               <span class="color-name">Text Primary</span>
               <span class="color-hex">#111111</span>
+              <span class="color-var">--text-primary</span>
               <span class="color-wcag pass">AAA</span>
             </div>
           </div>
@@ -913,6 +724,7 @@
             <div class="color-info">
               <span class="color-name">Text Secondary</span>
               <span class="color-hex">#444444</span>
+              <span class="color-var">--text-secondary</span>
               <span class="color-wcag pass">AA</span>
             </div>
           </div>
@@ -921,6 +733,7 @@
             <div class="color-info">
               <span class="color-name">Text Muted</span>
               <span class="color-hex">#888888</span>
+              <span class="color-var">--text-muted</span>
               <span class="color-wcag fail">Falha AA</span>
             </div>
           </div>
@@ -929,268 +742,75 @@
             <div class="color-info">
               <span class="color-name">BG Light</span>
               <span class="color-hex">#F5F7FA</span>
+              <span class="color-var">--bg-light</span>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #e2e8f0;"></div>
+            <div class="color-info">
+              <span class="color-name">Border</span>
+              <span class="color-hex">#E2E8F0</span>
+              <span class="color-var">--border-light</span>
+            </div>
+          </div>
+          <div class="color-card">
+            <div class="color-swatch" style="background: #cbd5e1;"></div>
+            <div class="color-info">
+              <span class="color-name">Border Input</span>
+              <span class="color-hex">#CBD5E1</span>
+              <span class="color-var">--border-input</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===================== 2. TIPOGRAFIA ===================== -->
+    <!-- ===================== 2. TYPOGRAPHY ===================== -->
     <section class="ds-section">
-      <h2 class="ds-section-title">2. Tipografia</h2>
-      <p class="ds-section-desc">Montserrat (títulos) + Inter (corpo). Fallback: system-ui.</p>
+      <h2 class="ds-section-title">Typography</h2>
+      <p class="ds-section-desc">Montserrat (headings) + Inter (body). Fallback: system-ui, -apple-system, Segoe UI, sans-serif.</p>
 
       <div class="type-sample">
-        <div class="type-label">Hero — Montserrat 800 / 3rem / lh 1.1</div>
-        <div class="type-heading-hero">Texto Heading Hero</div>
-      </div>
-
-      <div class="type-sample">
-        <div class="type-label">Section — Montserrat 700 / 1.875rem / lh 1.2</div>
-        <div class="type-heading-section">Texto Heading Seção</div>
+        <div class="type-label">Heading Hero</div>
+        <div style="font-family:var(--font-heading);font-size:var(--text-5xl);font-weight:800;line-height:1.1;">Texto Heading Hero</div>
+        <div class="type-meta">Montserrat 800 &middot; 3rem (48px) &middot; line-height 1.1 &middot; --text-5xl</div>
       </div>
 
       <div class="type-sample">
-        <div class="type-label">Card — Montserrat 600 / 1.25rem / lh 1.3</div>
-        <div class="type-heading-card">Texto Heading Card</div>
+        <div class="type-label">Heading Section</div>
+        <div style="font-family:var(--font-heading);font-size:var(--text-3xl);font-weight:700;line-height:1.2;">Texto Heading Seção</div>
+        <div class="type-meta">Montserrat 700 &middot; 1.875rem (30px) &middot; line-height 1.2 &middot; --text-3xl</div>
       </div>
 
       <div class="type-sample">
-        <div class="type-label">Body — Inter 400 / 1rem / lh 1.6</div>
-        <div class="type-body">Texto corpo padrão usado em descrições e parágrafos. Otimizado para leitura em telas mobile e desktop.</div>
+        <div class="type-label">Heading Card</div>
+        <div style="font-family:var(--font-heading);font-size:var(--text-xl);font-weight:600;line-height:1.3;">Texto Heading Card</div>
+        <div class="type-meta">Montserrat 600 &middot; 1.25rem (20px) &middot; line-height 1.3 &middot; --text-xl</div>
       </div>
 
       <div class="type-sample">
-        <div class="type-label">Caption — Inter 400 / 0.875rem / lh 1.5</div>
-        <div class="type-body-sm">Texto menor para legendas, labels e informações secundárias.</div>
+        <div class="type-label">Body</div>
+        <div style="font-family:var(--font-body);font-size:var(--text-base);line-height:1.6;color:var(--text-secondary);">Texto corpo padrão para descrições e parágrafos. Otimizado para legibilidade em mobile e desktop com espaçamento confortável entre linhas.</div>
+        <div class="type-meta">Inter 400 &middot; 1rem (16px) &middot; line-height 1.6 &middot; --text-base &middot; color: --text-secondary</div>
       </div>
 
-      <div class="ds-subsection">
-        <h3 class="ds-subsection-title">Fallback (sem Google Fonts)</h3>
-        <div class="type-fallback-demo">
-          <div class="with-font">Montserrat carregada</div>
-          <div class="without-font">system-ui fallback</div>
-        </div>
+      <div class="type-sample">
+        <div class="type-label">Body Small</div>
+        <div style="font-family:var(--font-body);font-size:var(--text-sm);line-height:1.5;color:var(--text-muted);">Texto menor para legendas, labels e informações secundárias.</div>
+        <div class="type-meta">Inter 400 &middot; 0.875rem (14px) &middot; line-height 1.5 &middot; --text-sm &middot; color: --text-muted</div>
       </div>
-    </section>
 
-    <!-- ===================== 3. LOGO ===================== -->
-    <section class="ds-section">
-      <h2 class="ds-section-title">3. Logo</h2>
-      <p class="ds-section-desc">Altura mínima: 60px. Espaçamento mínimo ao redor: 16px.</p>
-
-      <div class="logo-grid">
-        <div class="logo-demo on-dark">
-          <img src="01-logo-dbg.jpeg" alt="Logo DBG sobre fundo escuro">
-          <span class="logo-demo-label">Fundo escuro</span>
-        </div>
-        <div class="logo-demo on-white">
-          <img src="01-logo-dbg.jpeg" alt="Logo DBG sobre branco" style="filter: brightness(0.9);">
-          <span class="logo-demo-label">Fundo branco</span>
-        </div>
-        <div class="logo-demo on-light">
-          <img src="01-logo-dbg.jpeg" alt="Logo DBG sobre light">
-          <span class="logo-demo-label">Fundo light</span>
-        </div>
+      <div class="type-sample">
+        <div class="type-label">Caption</div>
+        <div style="font-family:var(--font-body);font-size:var(--text-xs);line-height:1.4;color:var(--text-muted);">Texto caption para metadata, timestamps, notas de rodapé.</div>
+        <div class="type-meta">Inter 400 &middot; 0.75rem (12px) &middot; line-height 1.4 &middot; --text-xs</div>
       </div>
     </section>
 
-    <!-- ===================== 4. BOTÕES ===================== -->
+    <!-- ===================== 3. SPACING ===================== -->
     <section class="ds-section">
-      <h2 class="ds-section-title">4. Botões</h2>
-      <p class="ds-section-desc">CTA verde WhatsApp. Primário azul. Secundário outline. Ghost sobre escuro. 3 tamanhos. Estados: normal, hover, disabled, loading.</p>
-
-      <div class="ds-subsection">
-        <h3 class="ds-subsection-title">CTA (WhatsApp)</h3>
-        <div class="button-row">
-          <button class="btn btn-cta btn-lg">CTA Grande</button>
-          <button class="btn btn-cta">Normal</button>
-          <button class="btn btn-cta disabled">Disabled</button>
-          <button class="btn btn-cta loading">Loading</button>
-        </div>
-      </div>
-
-      <div class="ds-subsection">
-        <h3 class="ds-subsection-title">Primário</h3>
-        <div class="button-row">
-          <button class="btn btn-primary btn-lg">Grande</button>
-          <button class="btn btn-primary">Normal</button>
-          <button class="btn btn-primary btn-sm">Pequeno</button>
-          <button class="btn btn-primary disabled">Disabled</button>
-        </div>
-      </div>
-
-      <div class="ds-subsection">
-        <h3 class="ds-subsection-title">Secundário</h3>
-        <div class="button-row">
-          <button class="btn btn-secondary btn-lg">Grande</button>
-          <button class="btn btn-secondary">Normal</button>
-          <button class="btn btn-secondary btn-sm">Pequeno</button>
-        </div>
-      </div>
-
-      <div class="ds-subsection">
-        <h3 class="ds-subsection-title">Ghost (sobre fundo escuro)</h3>
-        <div class="button-row">
-          <div class="btn-dark-demo">
-            <button class="btn btn-ghost">Ghost</button>
-            <button class="btn btn-cta">CTA</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== 5. INPUTS ===================== -->
-    <section class="ds-section">
-      <h2 class="ds-section-title">5. Inputs</h2>
-      <p class="ds-section-desc">Estados: default, focus (clique), erro, sucesso. Select com seta customizada.</p>
-
-      <div class="input-grid">
-        <div class="input-demo">
-          <label class="form-label">Default</label>
-          <input class="form-input" type="text" placeholder="Placeholder text">
-        </div>
-
-        <div class="input-demo">
-          <label class="form-label">Erro</label>
-          <input class="form-input error" type="tel" value="1199">
-          <p class="form-feedback error">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-            Informe um telefone válido com DDD
-          </p>
-        </div>
-
-        <div class="input-demo">
-          <label class="form-label">Sucesso</label>
-          <input class="form-input success" type="tel" value="(11) 95236-0688">
-          <p class="form-feedback success">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            Telefone válido
-          </p>
-        </div>
-
-        <div class="input-demo">
-          <label class="form-label">Select</label>
-          <select class="form-select">
-            <option disabled selected>Selecione uma opção</option>
-            <option>Opção A</option>
-            <option>Opção B</option>
-          </select>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== 6. TOASTS ===================== -->
-    <section class="ds-section">
-      <h2 class="ds-section-title">6. Toasts</h2>
-      <p class="ds-section-desc">Feedback após ações. 3 variantes: sucesso, erro, info.</p>
-
-      <div class="toast-demo">
-        <div class="toast toast-success">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          Mensagem de sucesso
-        </div>
-        <div class="toast toast-error">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          Mensagem de erro
-        </div>
-        <div class="toast toast-info">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          Mensagem informativa
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== 7. SOMBRAS ===================== -->
-    <section class="ds-section">
-      <h2 class="ds-section-title">7. Sombras</h2>
-      <p class="ds-section-desc">4 níveis de elevação + 2 sombras específicas para CTA.</p>
-
-      <div class="shadow-grid">
-        <div class="shadow-demo" style="box-shadow: var(--shadow-sm);">shadow-sm</div>
-        <div class="shadow-demo" style="box-shadow: var(--shadow-md);">shadow-md</div>
-        <div class="shadow-demo" style="box-shadow: var(--shadow-lg);">shadow-lg</div>
-        <div class="shadow-demo" style="box-shadow: var(--shadow-card);">shadow-card</div>
-        <div class="shadow-demo" style="box-shadow: var(--shadow-cta);">shadow-cta</div>
-        <div class="shadow-demo" style="box-shadow: var(--shadow-cta-hover);">shadow-cta-hover</div>
-      </div>
-    </section>
-
-    <!-- ===================== 8. RAIOS ===================== -->
-    <section class="ds-section">
-      <h2 class="ds-section-title">8. Border Radius</h2>
-      <p class="ds-section-desc">5 níveis de arredondamento.</p>
-
-      <div class="radius-grid">
-        <div class="radius-demo">
-          <div class="radius-box" style="border-radius: var(--radius-sm);"></div>
-          <span class="radius-label">sm — 6px</span>
-        </div>
-        <div class="radius-demo">
-          <div class="radius-box" style="border-radius: var(--radius-md);"></div>
-          <span class="radius-label">md — 8px</span>
-        </div>
-        <div class="radius-demo">
-          <div class="radius-box" style="border-radius: var(--radius-lg);"></div>
-          <span class="radius-label">lg — 12px</span>
-        </div>
-        <div class="radius-demo">
-          <div class="radius-box" style="border-radius: var(--radius-xl);"></div>
-          <span class="radius-label">xl — 16px</span>
-        </div>
-        <div class="radius-demo">
-          <div class="radius-box" style="border-radius: var(--radius-full);"></div>
-          <span class="radius-label">full — pill</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== 9. FUNDOS ===================== -->
-    <section class="ds-section">
-      <h2 class="ds-section-title">9. Fundos Alternados</h2>
-      <p class="ds-section-desc">Padrão de alternância entre seções.</p>
-
-      <div class="section-alt-demo">
-        <div class="section-alt dark"><h3>Dark</h3><p>#0F0F1A</p></div>
-        <div class="section-alt white"><h3>White</h3><p>#FFFFFF</p></div>
-        <div class="section-alt light"><h3>Light</h3><p>#F5F7FA</p></div>
-        <div class="section-alt white"><h3>White</h3><p>#FFFFFF</p></div>
-        <div class="section-alt light"><h3>Light</h3><p>#F5F7FA</p></div>
-        <div class="section-alt dark"><h3>Dark</h3><p>#0F0F1A</p></div>
-      </div>
-    </section>
-
-    <!-- ===================== 10. ANIMAÇÕES ===================== -->
-    <section class="ds-section">
-      <h2 class="ds-section-title">10. Animações</h2>
-      <p class="ds-section-desc">Transições sutis. 3 velocidades: fast (120ms), default (200ms), slow (350ms).</p>
-
-      <div class="anim-demo-grid">
-        <div class="anim-demo-card">
-          <div class="anim-box anim-fade-up">Fade</div>
-          <p>fadeUp<br>scroll reveal</p>
-        </div>
-        <div class="anim-demo-card">
-          <div class="anim-box anim-scale">Scale</div>
-          <p>hover: scale(1.1)<br>200ms</p>
-        </div>
-        <div class="anim-demo-card">
-          <div class="anim-box anim-lift">Lift</div>
-          <p>hover: -4px<br>200ms + shadow</p>
-        </div>
-        <div class="anim-demo-card">
-          <div class="anim-box" style="position:relative;">
-            <div style="width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.6s linear infinite;"></div>
-          </div>
-          <p>Spinner<br>0.6s linear</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== 11. ESPAÇAMENTO ===================== -->
-    <section class="ds-section">
-      <h2 class="ds-section-title">11. Espaçamento</h2>
-      <p class="ds-section-desc">Base 4px. Seções: 64px–96px. Container: max-w 1100px + px 16px.</p>
+      <h2 class="ds-section-title">Spacing</h2>
+      <p class="ds-section-desc">Escala base 4px. Seções usam space-16 (64px) a space-24 (96px). Container: max-width 1100px + padding space-4 (16px).</p>
 
       <div class="spacing-demo">
         <div class="spacing-block">
@@ -1228,6 +848,233 @@
         <div class="spacing-block">
           <div class="spacing-visual" style="height: 96px;"></div>
           <span class="spacing-label">96px<br>space-24</span>
+        </div>
+      </div>
+
+      <table class="spacing-table">
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Valor</th>
+            <th style="width:30%;">Visual</th>
+            <th>Uso típico</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>--space-1</td><td>4px</td><td><div class="spacing-bar" style="width:4px;"></div></td><td>Gap mínimo entre ícone e texto</td></tr>
+          <tr><td>--space-2</td><td>8px</td><td><div class="spacing-bar" style="width:8px;"></div></td><td>Padding interno de badges, chips</td></tr>
+          <tr><td>--space-3</td><td>12px</td><td><div class="spacing-bar" style="width:12px;"></div></td><td>Padding de inputs, gap entre label e campo</td></tr>
+          <tr><td>--space-4</td><td>16px</td><td><div class="spacing-bar" style="width:16px;"></div></td><td>Padding de cards, gap entre campos de form</td></tr>
+          <tr><td>--space-6</td><td>24px</td><td><div class="spacing-bar" style="width:24px;"></div></td><td>Gap entre cards em grid</td></tr>
+          <tr><td>--space-8</td><td>32px</td><td><div class="spacing-bar" style="width:32px;"></div></td><td>Padding de seções internas, container lateral</td></tr>
+          <tr><td>--space-12</td><td>48px</td><td><div class="spacing-bar" style="width:48px;"></div></td><td>Separação entre blocos dentro de seção</td></tr>
+          <tr><td>--space-16</td><td>64px</td><td><div class="spacing-bar" style="width:64px;"></div></td><td>Padding vertical de seções (mobile)</td></tr>
+          <tr><td>--space-24</td><td>96px</td><td><div class="spacing-bar" style="width:96px;"></div></td><td>Padding vertical de seções (desktop)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===================== 4. RADIUS & ELEVATION ===================== -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">Radius &amp; Elevation</h2>
+      <p class="ds-section-desc">5 níveis de arredondamento. 6 níveis de sombra.</p>
+
+      <div class="ds-subsection">
+        <h3 class="ds-subsection-title">Border Radius</h3>
+        <div class="radius-grid">
+          <div class="radius-demo">
+            <div class="radius-box" style="border-radius: var(--radius-sm);"></div>
+            <span class="radius-label">sm — 6px<br>inputs, badges</span>
+          </div>
+          <div class="radius-demo">
+            <div class="radius-box" style="border-radius: var(--radius-md);"></div>
+            <span class="radius-label">md — 8px<br>botões, cards</span>
+          </div>
+          <div class="radius-demo">
+            <div class="radius-box" style="border-radius: var(--radius-lg);"></div>
+            <span class="radius-label">lg — 12px<br>cards grandes, CTA</span>
+          </div>
+          <div class="radius-demo">
+            <div class="radius-box" style="border-radius: var(--radius-xl);"></div>
+            <span class="radius-label">xl — 16px<br>modais, seções</span>
+          </div>
+          <div class="radius-demo">
+            <div class="radius-box" style="border-radius: var(--radius-full);"></div>
+            <span class="radius-label">full — pill<br>badges, avatares</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ds-subsection">
+        <h3 class="ds-subsection-title">Elevation (Sombras)</h3>
+        <div class="shadow-grid">
+          <div class="shadow-demo" style="box-shadow: var(--shadow-sm);">
+            <span class="shadow-name">shadow-sm</span>
+            <span class="shadow-value">0 1px 2px</span>
+          </div>
+          <div class="shadow-demo" style="box-shadow: var(--shadow-md);">
+            <span class="shadow-name">shadow-md</span>
+            <span class="shadow-value">0 4px 6px</span>
+          </div>
+          <div class="shadow-demo" style="box-shadow: var(--shadow-lg);">
+            <span class="shadow-name">shadow-lg</span>
+            <span class="shadow-value">0 10px 25px</span>
+          </div>
+          <div class="shadow-demo" style="box-shadow: var(--shadow-card);">
+            <span class="shadow-name">shadow-card</span>
+            <span class="shadow-value">0 2px 8px</span>
+          </div>
+          <div class="shadow-demo" style="box-shadow: var(--shadow-cta);">
+            <span class="shadow-name">shadow-cta</span>
+            <span class="shadow-value">green glow</span>
+          </div>
+          <div class="shadow-demo" style="box-shadow: var(--shadow-cta-hover);">
+            <span class="shadow-name">shadow-cta-hover</span>
+            <span class="shadow-value">green glow strong</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 5. CORE COMPONENTS — INPUT ===================== -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">Core Components — Input</h2>
+      <p class="ds-section-desc">6 estados: default, focus (clique no campo), erro, sucesso, disabled, select. Padding: space-3 vertical, space-4 horizontal. Border-radius: radius-md.</p>
+
+      <div class="input-grid">
+        <div class="input-demo">
+          <div class="input-demo-label">Default</div>
+          <label class="form-label">Label</label>
+          <input class="form-input" type="text" placeholder="Placeholder">
+        </div>
+
+        <div class="input-demo">
+          <div class="input-demo-label">Focus</div>
+          <label class="form-label">Label</label>
+          <input class="form-input" type="text" value="Texto digitado" style="border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(60,170,240,0.15);">
+        </div>
+
+        <div class="input-demo">
+          <div class="input-demo-label">Error</div>
+          <label class="form-label">Telefone</label>
+          <input class="form-input error" type="tel" value="1199">
+          <p class="form-feedback error">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Informe um telefone válido com DDD
+          </p>
+        </div>
+
+        <div class="input-demo">
+          <div class="input-demo-label">Success</div>
+          <label class="form-label">Telefone</label>
+          <input class="form-input success" type="tel" value="(11) 95236-0688">
+          <p class="form-feedback success">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Telefone válido
+          </p>
+        </div>
+
+        <div class="input-demo">
+          <div class="input-demo-label">Disabled</div>
+          <label class="form-label">Nome</label>
+          <input class="form-input" type="text" value="Campo desabilitado" disabled>
+        </div>
+
+        <div class="input-demo">
+          <div class="input-demo-label">Select</div>
+          <label class="form-label">Tipo de Serviço</label>
+          <select class="form-select">
+            <option disabled selected>Selecione</option>
+            <option>Elétrica</option>
+            <option>Pintura</option>
+            <option>Hidráulica</option>
+            <option>Drywall</option>
+            <option>Outros</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 6. CORE COMPONENTS — CHECKBOX ===================== -->
+    <section class="ds-section">
+      <h2 class="ds-section-title">Core Components — Checkbox</h2>
+      <p class="ds-section-desc">5 estados: default, checked, focus, error, disabled. Tamanho: 20x20px. Border-radius: radius-sm. Checked usa brand-blue.</p>
+
+      <div class="checkbox-grid">
+        <div class="checkbox-demo">
+          <div class="checkbox-demo-label">Default</div>
+          <label class="checkbox-wrapper">
+            <div class="checkbox">
+              <input type="checkbox">
+              <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="checkbox-text">Checkbox desmarcado</span>
+          </label>
+          <label class="checkbox-wrapper">
+            <div class="checkbox">
+              <input type="checkbox" checked>
+              <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="checkbox-text">Checkbox marcado</span>
+          </label>
+        </div>
+
+        <div class="checkbox-demo">
+          <div class="checkbox-demo-label">Error</div>
+          <label class="checkbox-wrapper">
+            <div class="checkbox error">
+              <input type="checkbox">
+              <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="checkbox-text">Aceito os termos de serviço</span>
+          </label>
+          <p class="form-feedback error" style="margin-left:32px;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Campo obrigatório
+          </p>
+        </div>
+
+        <div class="checkbox-demo">
+          <div class="checkbox-demo-label">Disabled</div>
+          <label class="checkbox-wrapper">
+            <div class="checkbox">
+              <input type="checkbox" disabled>
+              <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="checkbox-text disabled">Disabled desmarcado</span>
+          </label>
+          <label class="checkbox-wrapper">
+            <div class="checkbox">
+              <input type="checkbox" checked disabled>
+              <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="checkbox-text disabled">Disabled marcado</span>
+          </label>
+        </div>
+
+        <div class="checkbox-demo">
+          <div class="checkbox-demo-label">Grupo</div>
+          <label class="checkbox-wrapper">
+            <div class="checkbox">
+              <input type="checkbox" checked>
+              <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="checkbox-text">Elétrica</span>
+          </label>
+          <label class="checkbox-wrapper">
+            <div class="checkbox">
+              <input type="checkbox" checked>
+              <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="checkbox-text">Pintura</span>
+          </label>
+          <label class="checkbox-wrapper">
+            <div class="checkbox">
+              <input type="checkbox">
+              <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <span class="checkbox-text">Hidráulica</span>
+          </label>
         </div>
       </div>
     </section>
