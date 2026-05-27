@@ -30,15 +30,7 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           DIFF=$(cat "$RUNNER_TEMP/pr_diff.txt")
-
-          PROMPT="Você é um revisor de código sênior. Analise o diff desta PR e forneça:
-
-          1. **Resumo**: O que esta PR faz (2-3 frases)
-          2. **Problemas críticos**: Bugs, vulnerabilidades de segurança, problemas de performance
-          3. **Sugestões**: Melhorias de código, boas práticas
-          4. **Veredicto**: APROVADO ✅ ou MUDANÇAS NECESSÁRIAS ❌
-
-          Seja direto e objetivo. Foque em problemas reais, não estilo."
+          PROMPT=$(cat .github/prompts/pr-review.md)
 
           PAYLOAD=$(jq -n \
             --arg prompt "$PROMPT" \
@@ -48,12 +40,12 @@ jobs:
             '{
               contents: [{
                 parts: [{
-                  text: ($prompt + "\n\n## PR: " + $title + "\n\n" + $body + "\n\n## Diff:\n```\n" + $diff + "\n```")
+                  text: ($prompt + "\n\n---\n\n## PR: " + $title + "\n\n" + $body + "\n\n## Diff:\n```\n" + $diff + "\n```")
                 }]
               }],
               generationConfig: {
                 temperature: 0.3,
-                maxOutputTokens: 4096
+                maxOutputTokens: 8192
               }
             }')
 
@@ -64,9 +56,15 @@ jobs:
 
           REVIEW=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // "Erro ao gerar review"')
 
+          if [ "$REVIEW" = "Erro ao gerar review" ]; then
+            echo "::error::Gemini API retornou erro"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+
           echo "$REVIEW" > "$RUNNER_TEMP/review.txt"
 
-          if echo "$REVIEW" | grep -qi "MUDANÇAS NECESSÁRIAS"; then
+          if echo "$REVIEW" | grep -q "MUDANÇAS NECESSÁRIAS"; then
             echo "approved=false" >> "$GITHUB_OUTPUT"
           else
             echo "approved=true" >> "$GITHUB_OUTPUT"
