@@ -1,0 +1,97 @@
+name: Gemini PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    name: gemini-review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        run: |
+          git diff origin/${{ github.event.pull_request.base.ref }}...HEAD > "$RUNNER_TEMP/pr_diff.txt"
+
+      - name: Gemini Review
+        id: review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          DIFF=$(cat "$RUNNER_TEMP/pr_diff.txt")
+
+          PROMPT="Você é um revisor de código sênior. Analise o diff desta PR e forneça:
+
+          1. **Resumo**: O que esta PR faz (2-3 frases)
+          2. **Problemas críticos**: Bugs, vulnerabilidades de segurança, problemas de performance
+          3. **Sugestões**: Melhorias de código, boas práticas
+          4. **Veredicto**: APROVADO ✅ ou MUDANÇAS NECESSÁRIAS ❌
+
+          Seja direto e objetivo. Foque em problemas reais, não estilo."
+
+          PAYLOAD=$(jq -n \
+            --arg prompt "$PROMPT" \
+            --arg title "$PR_TITLE" \
+            --arg body "$PR_BODY" \
+            --arg diff "$DIFF" \
+            '{
+              contents: [{
+                parts: [{
+                  text: ($prompt + "\n\n## PR: " + $title + "\n\n" + $body + "\n\n## Diff:\n```\n" + $diff + "\n```")
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 4096
+              }
+            }')
+
+          RESPONSE=$(curl -s -X POST \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          REVIEW=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // "Erro ao gerar review"')
+
+          echo "$REVIEW" > "$RUNNER_TEMP/review.txt"
+
+          if echo "$REVIEW" | grep -qi "MUDANÇAS NECESSÁRIAS"; then
+            echo "approved=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "approved=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post review comment
+        uses: actions/github-script@v7
+        env:
+          REVIEW_APPROVED: ${{ steps.review.outputs.approved }}
+        with:
+          script: |
+            const fs = require('fs');
+            const review = fs.readFileSync(process.env.RUNNER_TEMP + '/review.txt', 'utf8');
+            const approved = process.env.REVIEW_APPROVED === 'true';
+
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              body: `## 🤖 Gemini Code Review\n\n${review}`,
+              event: approved ? 'APPROVE' : 'REQUEST_CHANGES'
+            });
+
+      - name: Gate check
+        if: steps.review.outputs.approved == 'false'
+        run: |
+          echo "❌ Gemini solicitou mudanças. PR não aprovada."
+          exit 1
