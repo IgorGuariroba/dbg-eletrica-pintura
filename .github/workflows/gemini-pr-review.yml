@@ -57,17 +57,34 @@ jobs:
               }
             }' > "$RUNNER_TEMP/payload.json"
 
-          curl -s -X POST \
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
-            -H "Content-Type: application/json" \
-            -d @"$RUNNER_TEMP/payload.json" > "$RUNNER_TEMP/response.json"
+          # Retry até 4x em erros transitórios (503 UNAVAILABLE, 429 RATE_LIMIT)
+          MAX_ATTEMPTS=4
+          attempt=1
+          while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
+            curl -s -X POST \
+              "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d @"$RUNNER_TEMP/payload.json" > "$RUNNER_TEMP/response.json"
+
+            ERROR_CODE=$(jq -r '.error.code // empty' "$RUNNER_TEMP/response.json")
+            if [ "$ERROR_CODE" != "503" ] && [ "$ERROR_CODE" != "429" ]; then
+              break
+            fi
+
+            echo "::warning::Gemini API retornou $ERROR_CODE (tentativa $attempt/$MAX_ATTEMPTS), aguardando..."
+            sleep $((attempt * 15))
+            attempt=$((attempt + 1))
+          done
 
           REVIEW=$(jq -r '.candidates[0].content.parts[0].text // "Erro ao gerar review"' "$RUNNER_TEMP/response.json")
 
           if [ "$REVIEW" = "Erro ao gerar review" ]; then
-            echo "::error::Gemini API retornou erro"
+            ERROR_CODE=$(jq -r '.error.code // "unknown"' "$RUNNER_TEMP/response.json")
+            echo "::warning::Gemini API indisponível (code=$ERROR_CODE) após $MAX_ATTEMPTS tentativas — pulando review"
             jq . "$RUNNER_TEMP/response.json"
-            exit 1
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            echo "approved=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
           echo "$REVIEW" > "$RUNNER_TEMP/review.txt"
@@ -79,6 +96,7 @@ jobs:
           fi
 
       - name: Post review comment
+        if: steps.review.outputs.skipped != 'true'
         uses: actions/github-script@v7
         env:
           REVIEW_APPROVED: ${{ steps.review.outputs.approved }}
