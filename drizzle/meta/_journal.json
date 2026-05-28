@@ -8,6 +8,13 @@
       "when": 1779999001189,
       "tag": "0000_wild_dust",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780004224208,
+      "tag": "0001_mighty_the_hunter",
+      "breakpoints": true
     }
   ]
 }

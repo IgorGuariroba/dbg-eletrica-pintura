@@ -180,7 +180,7 @@ export const ordemServico = pgTable("ordem_servico", {
   id: uuid("id").defaultRandom().primaryKey(),
   solicitacaoId: uuid("solicitacao_id")
     .notNull()
-    .references(() => solicitacao.id, { onDelete: "cascade" }),
+    .references(() => solicitacao.id, { onDelete: "restrict" }),
   osPaiId: uuid("os_pai_id").references((): AnyPgColumn => ordemServico.id, {
     onDelete: "set null",
   }),
@@ -197,7 +197,8 @@ export const ordemServico = pgTable("ordem_servico", {
     .notNull(),
   atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
     .defaultNow()
-    .notNull(),
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
 // ============================================================
@@ -208,7 +209,7 @@ export const orcamento = pgTable("orcamento", {
   id: uuid("id").defaultRandom().primaryKey(),
   osId: uuid("os_id")
     .notNull()
-    .references(() => ordemServico.id, { onDelete: "cascade" }),
+    .references(() => ordemServico.id, { onDelete: "restrict" }),
   tokenAprovacao: varchar("token_aprovacao", { length: 64 }).notNull().unique(),
   totalMaterial: decimal("total_material", { precision: 10, scale: 2 })
     .notNull()
