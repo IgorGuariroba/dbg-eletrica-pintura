@@ -7,8 +7,9 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 2 : undefined,
+  timeout: 30_000,
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: BASE_URL,
@@ -21,10 +22,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `next dev --webpack --port ${PORT}`,
+    command: process.env.CI
+      ? `next build --webpack && next start --port ${PORT}`
+      : `next dev --webpack --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
     env: {
       AUTH_TRUST_HOST: "true",
       AUTH_SECRET: process.env.AUTH_SECRET ?? "ci-secret-ci-secret-ci-secret-ci-secret",

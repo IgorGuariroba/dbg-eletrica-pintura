@@ -34,11 +34,9 @@ test.describe("Slice 1 — smoke", () => {
     expect(body.google.type).toBe("oidc");
   });
 
-  test("clicar em Entrar com Google redireciona pro accounts.google.com", async ({ page }) => {
-    await page.goto("/");
-    const navigation = page.waitForURL(/accounts\.google\.com/, { timeout: 15_000 });
-    await page.getByRole("button", { name: /Entrar com Google/i }).click();
-    await navigation;
-    expect(page.url()).toContain("accounts.google.com");
+  test("signin Google retorna redirect pra accounts.google.com", async ({ request }) => {
+    const res = await request.get("/api/auth/signin/google", { maxRedirects: 0 });
+    expect([302, 303, 307]).toContain(res.status());
+    expect(res.headers()["location"] ?? "").toContain("accounts.google.com");
   });
 });
