@@ -15,6 +15,13 @@
       "when": 1780004224208,
       "tag": "0001_mighty_the_hunter",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780009032440,
+      "tag": "0002_slimy_photon",
+      "breakpoints": true
     }
   ]
 }

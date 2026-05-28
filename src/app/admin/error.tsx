@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { FORBIDDEN_DIGEST_PREFIX } from "@/auth/require-modulo";
 
-export default function CatalogoError({
+export default function AdminError({
   error,
 }: {
   error: Error & { digest?: string };
 }) {
-  const forbidden = error.digest?.startsWith(FORBIDDEN_DIGEST_PREFIX) ?? false;
+  const digest = error.digest ?? "";
+  const forbidden = digest.startsWith(FORBIDDEN_DIGEST_PREFIX);
+  const modulo = forbidden ? digest.slice(FORBIDDEN_DIGEST_PREFIX.length) : null;
 
   return (
     <div className="max-w-xl">
@@ -17,7 +19,7 @@ export default function CatalogoError({
       </h1>
       <p className="text-sm text-muted-foreground mb-4">
         {forbidden
-          ? "Sua conta não tem permissão para acessar o módulo Catálogo."
+          ? `Sua conta não tem permissão para acessar o módulo ${modulo}.`
           : "Tente novamente. Se persistir, contate o admin."}
       </p>
       <Link href="/admin" className="text-sm underline">

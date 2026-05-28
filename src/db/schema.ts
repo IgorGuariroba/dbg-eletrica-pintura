@@ -114,6 +114,15 @@ export const membro = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'::categoria_servico[]`),
+    disponibilidade: jsonb("disponibilidade").$type<{
+      dom?: { inicio: string; fim: string } | null;
+      seg?: { inicio: string; fim: string } | null;
+      ter?: { inicio: string; fim: string } | null;
+      qua?: { inicio: string; fim: string } | null;
+      qui?: { inicio: string; fim: string } | null;
+      sex?: { inicio: string; fim: string } | null;
+      sab?: { inicio: string; fim: string } | null;
+    }>(),
     ativo: boolean("ativo").notNull().default(true),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()

@@ -22,6 +22,9 @@ export default async function AdminLayout({
             <Link href="/admin/catalogo" className="hover:text-foreground">
               Catálogo
             </Link>
+            <Link href="/admin/equipe" className="hover:text-foreground">
+              Equipe
+            </Link>
           </nav>
         </div>
         <span className="text-xs text-muted-foreground">{session.user.email}</span>

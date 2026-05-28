@@ -1,0 +1,1 @@
+ALTER TABLE "membro" ADD COLUMN "disponibilidade" jsonb;
