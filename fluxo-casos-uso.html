@@ -397,6 +397,49 @@
     background: var(--hairline);
   }
 
+  /* Clarity Bar */
+  .clarity-bar {
+    margin-top: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .clarity-bar-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted-soft);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .clarity-bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--hairline);
+    border-radius: var(--rounded-pill);
+    overflow: hidden;
+  }
+
+  .clarity-bar-fill {
+    height: 100%;
+    border-radius: var(--rounded-pill);
+    transition: width 0.3s;
+  }
+
+  .clarity-bar-value {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    min-width: 32px;
+    text-align: right;
+  }
+
+  /* Clarity color thresholds: ≥90 green, 80-89 amber, <80 red */
+  .clarity-low .clarity-bar-fill { background: var(--error); }
+  .clarity-mid .clarity-bar-fill { background: var(--accent-amber); }
+  .clarity-high .clarity-bar-fill { background: var(--success); }
+
   /* Responsive */
   @media (max-width: 768px) {
     body { padding: var(--space-lg) var(--space-sm); }
@@ -480,7 +523,7 @@
         </div>
         <div class="flow-card">
           <h3>4. Acesso ao Site (com ou sem Google)</h3>
-          <p>Cada solicitação tem URL única: site.com/s/{token}. Dois modos de acesso: (A) Sem login (token) — versão limitada: aprovar/rejeitar orçamento, ver status, avaliar, acionar garantia. Ações sensíveis (aprovar orçamento) = token + código de verificação via WhatsApp. Dona Maria funciona 100% por WhatsApp + links. (B) Com Google OAuth — portal completo: histórico de todas OS, múltiplas solicitações, faturas, documentos, link de indicação sempre acessível. Primeiro Google a acessar vincula ao número do form. Outro Google → bloqueado. Admin pode desvincular Google no módulo Equipe (edge case: vinculação errada). Role detection: e-mail na tabela de membros → visão técnico/admin. Senão → visão cliente.</p>
+          <p>Cada solicitação tem URL única: site.com/s/{token}. Dois modos de acesso: (A) Sem login (token) — versão limitada: aprovar/rejeitar orçamento (com código de verificação WhatsApp), ver status, avaliar. Ações com impacto operacional (reagendamento, cancelamento, acionar garantia) não disponíveis por token — requer Google OAuth no site ou wa.me pro número da empresa (atendimento humano). Dona Maria funciona 100% por WhatsApp + links. (B) Com Google OAuth — portal completo: histórico de todas OS, múltiplas solicitações, faturas, documentos, link de indicação sempre acessível, reagendamento, cancelamento e acionamento de garantia pelo site. Primeiro Google a acessar vincula ao número do form. Outro Google → bloqueado. Admin pode desvincular Google no módulo Equipe (edge case: vinculação errada). Role detection: e-mail na tabela de membros → visão técnico/admin. Senão → visão cliente.</p>
           <span class="tag">Token + Google OAuth</span>
         </div>
       </div>
@@ -492,7 +535,7 @@
         </div>
         <div class="flow-card">
           <h3>5. Recebe Orçamento Digital</h3>
-          <p>Técnico monta orçamento no link da solicitação (breakdown: material + mão de obra + deslocamento). Notificação multicanal: WhatsApp sempre + e-mail se Google vinculado. Orçamento válido por 7 dias — lembrete automático no dia 3 e dia 6. Sem resposta no dia 7 → expira e entra no remarketing. Toda comunicação registrada no sistema — ativo de dados pra insights e melhorias.</p>
+          <p>Técnico monta orçamento no link da solicitação (itens do catálogo com preço único embutindo material + mão de obra × quantidade + deslocamento separado = total). Notificação "orçamento pronto" por fase: Fase 1 = admin envia wa.me manualmente com link. Fase 2 = + e-mail automático (Resend). Fase 4 = + WhatsApp Cloud API. Orçamento válido por 7 dias (expiração lazy até Fase 4, cron a partir da Fase 4) — lembrete dia 3 e dia 6 (mesma escada de fases). Sem resposta no dia 7 → expira e entra no remarketing. Toda comunicação registrada no sistema — ativo de dados pra insights e melhorias.</p>
           <span class="tag">Orçamento 7 dias + Rastreio</span>
         </div>
       </div>
@@ -509,7 +552,7 @@
           </div>
           <div class="flow-card option-b">
             <h3>6b. Rejeita Orçamento ✗</h3>
-            <p>Rejeita com motivo opcional. Solicitação encerrada. Histórico salvo no portal. Remarketing 48h: WhatsApp (sempre disponível) + e-mail (se Google vinculado).</p>
+            <p>Rejeita com motivo opcional. Solicitação encerrada. Histórico salvo no portal. Remarketing 48h (Fase 1: admin wa.me manual; Fase 2: e-mail Resend; Fase 4: + Cloud API).</p>
           </div>
         </div>
       </div>
@@ -521,7 +564,7 @@
         </div>
         <div class="flow-card">
           <h3>7. Agendamento após Aprovação</h3>
-          <p>Orçamento aprovado → sistema filtra técnicos por especialidade + disponibilidade automaticamente → cliente escolhe data e horário entre slots vagos (não escolhe técnico). Técnico atribuído automaticamente pelo sistema. Admin pode reatribuir se necessário (módulo Operação). Perfil do técnico designado acessível (foto, nome, bio, especialidades, avaliações, portfólio) — disponível se quiser ver, não obrigatório.</p>
+          <p>Orçamento aprovado → agendamento evolui por fase. Fase 1-2: admin atribui técnico e define data manualmente (equipe pequena, cliente solicita data desejada no formulário). Admin comunica data confirmada via wa.me. Fase 3: sistema mostra slots disponíveis por especialidade, cliente agenda cada OS separadamente (técnicos e durações podem diferir — duração definida pelo técnico no orçamento), sistema sugere técnico, admin confirma. Futuro: totalmente automático. Cliente nunca escolhe técnico. Admin pode reatribuir se necessário (módulo Operação). Perfil do técnico designado acessível (foto, nome, bio, especialidades, avaliações, portfólio) — disponível se quiser ver, não obrigatório.</p>
           <span class="tag">Instant Booking Híbrido</span>
         </div>
       </div>
@@ -533,7 +576,7 @@
         </div>
         <div class="flow-card">
           <h3>8. Reagendamento / Cancelamento</h3>
-          <p>Três atores podem reagendar/cancelar com regras diferentes: (1) Cliente — até 24h antes, sem taxa, pelo site ou WhatsApp. Dentro de 24h → bloqueado no sistema, tela redireciona pra wa.me do admin (decide caso a caso). Notifica técnico + admin. (2) Técnico — pode reagendar OS atribuída a ele. Cancelar só com motivo obrigatório (auditoria). Notifica cliente + admin. (3) Admin (módulo Operação) — pode reagendar/cancelar qualquer OS, inclusive em lote ("cancelar todas de hoje"). Notifica todos envolvidos. Cancelamento libera slot automaticamente (volta pro instant booking). Reagendamento abre nova seleção de slot. Histórico de alterações + motivos registrado na solicitação.</p>
+          <p>Três atores podem reagendar/cancelar com regras diferentes: (1) Cliente — até 24h antes, sem taxa. Dois canais: site (requer Google OAuth — não disponível por token) ou wa.me pro número da empresa (atendimento humano cancela no sistema). Dentro de 24h → bloqueado no sistema, tela redireciona pra wa.me do admin (decide caso a caso). Notifica técnico + admin. (2) Técnico — pode reagendar OS atribuída a ele. Cancelar só com motivo obrigatório (auditoria). Notifica cliente + admin. (3) Admin (módulo Operação) — pode reagendar/cancelar qualquer OS, inclusive em lote ("cancelar todas de hoje"). Notifica todos envolvidos. Cancelamento libera slot automaticamente (volta pro instant booking). Reagendamento abre nova seleção de slot. Histórico de alterações + motivos registrado na solicitação.</p>
           <span class="tag">Reagendamento Multi-Ator</span>
         </div>
       </div>
@@ -545,7 +588,7 @@
         </div>
         <div class="flow-card">
           <h3>9. Acompanha Status do Técnico</h3>
-          <p>Técnico sinaliza "a caminho" → cliente notificado (WhatsApp + e-mail se Google vinculado). Cliente confirma presença no link da solicitação. Técnico vê confirmação na visão interna + botão wa.me pra contato direto com cliente (abre WhatsApp com número pré-preenchido, 1 tap). Se cliente não está, evita viagem perdida.</p>
+          <p>Técnico sinaliza "a caminho" → cliente notificado (Fase 1: técnico envia wa.me 1 tap; Fase 4: Cloud API). Link da solicitação mostra botão "Estou aqui" — cliente confirma presença com 1 tap (disponível por token, sem login). Técnico vê confirmação na visão interna + botão wa.me pra contato direto (1 tap). Se cliente não confirmou após X minutos, técnico vê alerta e pode ligar via wa.me antes de sair. Não bloqueia — técnico decide se vai.</p>
           <span class="tag">Rastreamento + wa.me</span>
         </div>
       </div>
@@ -556,9 +599,9 @@
           <div class="flow-connector"></div>
         </div>
         <div class="flow-card">
-          <h3>10. Conclusão + Pagamento com Upsell</h3>
-          <p>Técnico tira foto do serviço finalizado, registra observações/resolução e confirma conclusão. Pagamento só para OS paga (Normal, Express, Complementar) — OS Preventiva e Garantia terminam em CONCLUÍDA sem pagamento. Checkout consolidado opcional: cada OS gera link individual. Se múltiplas OS concluídas na mesma solicitação, checkout mostra opção "pagar tudo junto" com total consolidado — cliente escolhe. Nenhuma OS bloqueia pagamento de outra. Antes do pagamento: upsell de assinatura com economia visível — só se cliente não é assinante (aparece uma vez só) + social proof. Cliente pode adicionar assinatura e pagar tudo junto (serviço + primeira mensalidade) via Mercado Pago (Pix ou cartão). Descontos de assinante aplicados por OS. Webhook atualiza status e ativa assinatura automaticamente. Alternativa: pagamento manual (dinheiro, transferência) — técnico confirma recebimento na plataforma e registra forma de pagamento. Se Pix expira ou cartão recusa: lembrete WhatsApp dia 1 e dia 3, novo link gerado automaticamente.</p>
-          <span class="tag">Checkout Consolidado + Upsell</span>
+          <h3>10. Conclusão + Pagamento</h3>
+          <p>Técnico tira foto do serviço finalizado, registra observações/resolução e confirma conclusão. Pagamento só para OS paga (Normal, Express, Complementar) — OS Preventiva e Garantia terminam em CONCLUÍDA sem pagamento. Evolui por fase: <strong>Fase 1</strong> — técnico conclui OS → registra forma de pagamento (manual: dinheiro/Pix direto/transferência) → confirma recebimento na plataforma → PAGA. Sem checkout digital. <strong>Fase 3</strong> — + checkout digital via Mercado Pago (link/QR individual por OS). Se múltiplas OS concluídas na mesma solicitação, checkout mostra opção "pagar tudo junto" com total consolidado — cliente escolhe. Nenhuma OS bloqueia pagamento de outra. Descontos de assinante aplicados por OS. Webhook atualiza status. Pagamento manual continua como alternativa. Se Pix expira ou cartão recusa: lembrete dia 1 e dia 3 (Fase 3: admin wa.me manual; Fase 4: + e-mail Resend + Cloud API), novo link gerado. <strong>Fase 5</strong> — + upsell de assinatura com economia visível antes do pagamento — só se cliente não é assinante (aparece uma vez só) + social proof. Cliente pode adicionar assinatura e pagar tudo junto (serviço + primeira mensalidade).</p>
+          <span class="tag">Pagamento por Fase</span>
         </div>
       </div>
 
@@ -569,7 +612,7 @@
         </div>
         <div class="flow-card">
           <h3>11. Recebe Garantia Formal</h3>
-          <p>Certificado de garantia de mão de obra gerado automaticamente em PDF. Prazo definido por tipo de serviço (ex: Elétrica 12 meses, Pintura 6 meses). Na OS concluída e no certificado: botão "Acionar Garantia" visível enquanto prazo válido. Ao clicar: mini-formulário (descrição do problema + foto obrigatória). Sistema valida prazo automaticamente. Se existe Orçamento Complementar rejeitado na OS original → sistema sinaliza pro admin (módulo Garantias) com detalhes. Admin decide se garantia se aplica (correspondência problema-complementar = julgamento humano). Se não se aplica → admin marca com motivo, cliente recebe aviso com contexto. Se válido → OS original transita pra GARANTIA_ABERTA (estado terminal) e sistema gera nova OS tipo GARANTIA sem custo.</p>
+          <p>Certificado de garantia de mão de obra (Fase 1-3: dados visíveis na página da OS, imprimível via browser; Fase 4: PDF gerado via React PDF + enviado por e-mail). Prazo definido por tipo de serviço (ex: Elétrica 12 meses, Pintura 6 meses). Na OS finalizada (CONCLUÍDA ou PAGA) e no certificado: botão "Acionar Garantia" visível enquanto prazo válido — requer Google OAuth (não disponível por token). Sem Google, cliente envia wa.me pro número da empresa (atendimento humano aciona no sistema). Ao clicar: mini-formulário (descrição do problema + foto obrigatória). Sistema valida prazo automaticamente contra data de pagamento da OS original paga (âncora) — prazo não reseta em regarantia. Se existe Orçamento Complementar rejeitado na OS original → sistema sinaliza pro admin (módulo Garantias) com detalhes. Admin decide se garantia se aplica (correspondência problema-complementar = julgamento humano). Se não se aplica → admin marca com motivo, cliente recebe aviso com contexto. Se válido → OS original transita pra GARANTIA_ABERTA (estado terminal) e sistema gera nova OS tipo GARANTIA sem custo.</p>
           <span class="tag">Garantia + Validação Inteligente</span>
         </div>
       </div>
@@ -581,7 +624,7 @@
         </div>
         <div class="flow-card">
           <h3>12. Recebe Documentação</h3>
-          <p>Fatura, fotos antes/depois, certificado de garantia — tudo gerado em PDF com layout profissional. Arquivos em Cloudflare R2 (10 GB free, zero egress). URLs assinadas pra acesso privado — fotos de OS não são públicas. Portfólio aprovado = cópia pública separada. Notificação por prioridade: WhatsApp pra ação imediata, e-mail (Resend) pra documentação PDF. Documentos acessíveis no portal a qualquer momento.</p>
+          <p>Evolui por fase: <strong>Fase 1</strong> — fotos antes/depois visíveis no link da OS. Arquivos em Cloudflare R2 (10 GB free, zero egress). URLs assinadas pra acesso privado — fotos de OS não são públicas. <strong>Fase 2</strong> — + e-mail (Resend) com link pra documentação. Portfólio aprovado = cópia pública separada (técnico marca, admin aprova). <strong>Fase 4</strong> — + fatura PDF e certificado garantia PDF (React PDF server-side). Notificação por prioridade: WhatsApp (Cloud API) pra ação imediata, e-mail (Resend) pra documentação PDF. Documentos acessíveis no portal a qualquer momento (Fase 3+).</p>
           <span class="tag">Documentação + R2</span>
         </div>
       </div>
@@ -593,7 +636,7 @@
         </div>
         <div class="flow-card">
           <h3>13. Avalia o Serviço</h3>
-          <p>Recebe pedido de avaliação multicanal (WhatsApp + e-mail se Google vinculado) com link direto pra avaliar no site. Nota por OS (não por Solicitação): tela única agrupa todas as OS — cliente avalia cada uma separadamente (estrelas individuais) + comentário geral opcional. Cada nota vinculada à OS e ao técnico responsável. Se não avalia, lembrete único 48h depois — sem insistir. Se todas as notas ≥ 4★, recebe link direto para avaliar no Google Business + link de indicação (referral). Reputação da empresa cresce organicamente.</p>
+          <p>Recebe pedido de avaliação multicanal (WhatsApp + e-mail se Google vinculado) com link direto pra avaliar no site. Avaliação disponível por token sem verificação extra (baixa fricção — token único por solicitação). Admin pode invalidar avaliação no módulo Marketing se abuso. Nota por OS (não por Solicitação): tela única agrupa todas as OS — cliente avalia cada uma separadamente (estrelas individuais) + comentário geral opcional. Cada nota vinculada à OS e ao técnico responsável. Se não avalia, lembrete único 48h depois — sem insistir. Se todas as notas ≥ 4★, recebe link direto para avaliar no Google Business + link de indicação (referral). Reputação da empresa cresce organicamente.</p>
           <span class="tag">Avaliações + Google Business + Indicação</span>
         </div>
       </div>
@@ -605,7 +648,7 @@
         </div>
         <div class="flow-card">
           <h3>14. Portal — Histórico e Faturas</h3>
-          <p>Área logada: lista de todas as solicitações (múltiplas simultâneas permitidas) com status individual. Histórico de OS, fotos antes/depois, faturas, certificados de garantia, garantias ativas. Tudo documentado, tudo acessível.</p>
+          <p>Fase 1-2: cliente acompanha tudo pelo link da solicitação (token). Fase 3+: área logada (Google OAuth) com histórico completo: lista de todas as solicitações (múltiplas simultâneas permitidas) com status individual, OS, fotos antes/depois, faturas (Fase 4+), certificados de garantia (Fase 4+), garantias ativas, link de indicação.</p>
           <span class="tag">Portal do Cliente</span>
         </div>
       </div>
@@ -616,7 +659,7 @@
         </div>
         <div class="flow-card">
           <h3>15. Plano de Manutenção (opcional)</h3>
-          <p>Três canais de assinatura: (1) Checkout digital — upsell com economia visível antes do pagamento (só se não é assinante), cliente adiciona sozinho. (2) Presencial — técnico seleciona plano no PWA, mostra detalhes na tela, cliente assina na tela do técnico (aceite formal registrado como "assinatura presencial"). (3) QR na hora — cliente escaneia QR que leva direto pra página de assinatura. Todos os canais: visitas preventivas, desconto em serviços, prioridade no agendamento. Cobrança mensal automática via Mercado Pago. E-mail de boas-vindas com benefícios, desconto %, próxima visita preventiva, data de cobrança. Upgrade: efetivo imediato, diferença proporcional cobrada (portal ou admin). Downgrade: efetivo no fim do ciclo pago. Cancelamento: efetivo no fim do ciclo — preventivas dentro do ciclo acontecem, após efetivação sistema cancela preventivas futuras automaticamente.</p>
+          <p>Fase 5 inteira. Três canais de assinatura: (1) Checkout digital — upsell com economia visível antes do pagamento (só se não é assinante). (2) Presencial — técnico mostra detalhes no PWA, cliente aceita. Pagamento no dispositivo do cliente (QR ou link wa.me → Pix pro Pix da empresa ou cartão via MP). Técnico não toca em dados financeiros. (3) QR na hora — cliente escaneia, vai direto pra página de assinatura. Todos os canais: visitas preventivas, desconto em serviços, prioridade no agendamento. Cobrança recorrente via Mercado Pago (MP gerencia inadimplência). E-mail de boas-vindas (Resend). Upgrade/downgrade: admin ajusta no portal MP. Cancelamento: efetivo no fim do ciclo — preventivas dentro do ciclo acontecem; ao efetivar, sistema cancela futuras via webhook.</p>
           <span class="tag">Assinatura Multicanal</span>
         </div>
       </div>
@@ -660,11 +703,11 @@
         <div class="flow-branch">
           <div class="flow-card option-a">
             <h3>R2a. Orçamento Remoto ✓</h3>
-            <p>Info do formulário suficiente. Seleciona itens do catálogo (preço base × quantidade = total). Envia orçamento ao cliente pelo sistema. Cliente aprova pelo link (assinatura digital) → agenda slot → técnico recebe notificação.</p>
+            <p>Info do formulário suficiente. Seleciona itens do catálogo (preço base × quantidade) + deslocamento (técnico informa km ida+volta → sistema calcula custo: km × preço_litro ÷ km_por_litro — config no módulo Operação). Técnico pode ajustar valor final. Envia orçamento ao cliente pelo sistema. Cliente aprova pelo link (assinatura digital) → agenda slot → técnico recebe notificação.</p>
           </div>
           <div class="flow-card option-b">
             <h3>R2b. Visita Técnica ✦</h3>
-            <p>Info insuficiente pra orçar remotamente. Técnico agenda visita de avaliação. No local: tira fotos melhores, descreve problema real, monta orçamento presencial. Cliente pode aprovar ali (assinatura na tela, dois checkboxes: LGPD + orçamento) ou receber link pra aprovar depois (fluxo remoto normal, 7 dias).</p>
+            <p>Info insuficiente pra orçar remotamente. Técnico agenda visita de avaliação. No local: tira fotos melhores, descreve problema real, monta orçamento presencial. Cliente pode aprovar ali (assinatura na tela, dois checkboxes: LGPD + orçamento) ou receber link pra aprovar depois (fluxo remoto normal, 7 dias). Se aprovação presencial e técnico julga que pode executar na hora → transição APROVADA → EM_EXECUÇÃO direta (permitido quando técnico já está NO_LOCAL). Decisão do técnico, sem critério formal. Fotos da avaliação servem como foto "antes" — PWA não exige nova foto se já tirou no mesmo local.</p>
           </div>
         </div>
       </div>
@@ -676,7 +719,7 @@
         </div>
         <div class="flow-card">
           <h3>R3. Recebe Notificação de Agendamento</h3>
-          <p>Cliente aprovou e agendou → técnico recebe notificação no painel interno + push no PWA. Vê data, horário, endereço, detalhes do serviço. Agenda do dia atualizada automaticamente. Se visita técnica com aprovação presencial e serviço simples, técnico pode executar na hora — estados de deslocamento da visita ficam no histórico (aconteceram de verdade), OS transita APROVADA → EM_EXECUÇÃO direta (permitido quando técnico já está NO_LOCAL). OS continua tipo NORMAL. Reagendamento/cancelamento: antes de A_CAMINHO → reagenda livre (novo slot). Depois de A_CAMINHO → motivo obrigatório. Cancelamento sempre com motivo — OS volta pra fila (AGENDADA sem técnico) pra reatribuição. Em execução: não cancela, cria OS Complementar ou registra motivo como metadado "aguardando complementar".</p>
+          <p>Cliente aprovou e agendou → técnico notificado. Fase 1: técnico vê no painel ao acessar. Fase 2: + push notification no PWA (service worker). Vê data, horário, endereço, detalhes do serviço. Agenda do dia atualizada automaticamente. Se visita técnica com aprovação presencial e serviço simples, técnico pode executar na hora — estados de deslocamento da visita ficam no histórico (aconteceram de verdade), OS transita APROVADA → EM_EXECUÇÃO direta (permitido quando técnico já está NO_LOCAL). OS continua tipo NORMAL. Reagendamento/cancelamento: antes de A_CAMINHO → reagenda livre (novo slot). Depois de A_CAMINHO → motivo obrigatório. Cancelamento sempre com motivo — OS volta pra fila (AGENDADA sem técnico) pra reatribuição. Em execução: não cancela, cria OS Complementar ou registra motivo como metadado "aguardando complementar".</p>
           <span class="tag">Notificação + Reagendamento</span>
         </div>
       </div>
@@ -688,7 +731,7 @@
         </div>
         <div class="flow-card">
           <h3>R4. Sinaliza "A Caminho"</h3>
-          <p>Toca botão "A caminho" no PWA. Cliente recebe notificação automática. Cliente confirma presença no link da solicitação. Técnico vê confirmação + botão wa.me pra contato direto (1 tap). Se cliente não está, evita viagem perdida.</p>
+          <p>Toca botão "A caminho" no PWA. Cliente notificado (Fase 1: técnico envia wa.me 1 tap; Fase 4: Cloud API proativa). Cliente confirma presença no link da solicitação. Técnico vê confirmação + botão wa.me pra contato direto (1 tap). Se cliente não está, evita viagem perdida.</p>
           <span class="tag">Rastreamento Manual</span>
         </div>
       </div>
@@ -700,7 +743,7 @@
         </div>
         <div class="flow-card">
           <h3>R5. Sinaliza "Cheguei"</h3>
-          <p>Chegou no local → toca botão. Cliente recebe notificação. Registro de horário de chegada automático.</p>
+          <p>Chegou no local → toca botão. Cliente notificado (mesma escada de R4). Registro de horário de chegada automático (timestamp).</p>
           <span class="tag">Rastreamento Manual</span>
         </div>
       </div>
@@ -729,7 +772,7 @@
         </div>
         <div class="flow-card">
           <h3>E1. Cria Solicitação + OS Express</h3>
-          <p>Cliente chamou técnico direto (sem formulário prévio). Técnico cria solicitação express no PWA: primeiro consentimento LGPD (checkbox na tela, cliente aceita antes de qualquer dado), depois WhatsApp do cliente + categoria(s) + endereço (geolocalização 1 tap — técnico já está no local, geocoding reverso preenche endereço). Solicitação + OS geradas juntas (1 por categoria). Não passa por fila — técnico já está no local.</p>
+          <p>Cliente chamou técnico direto (sem formulário prévio). Técnico cria solicitação express no PWA: primeiro consentimento LGPD (checkbox na tela, cliente aceita antes de qualquer dado), depois WhatsApp do cliente + categoria(s) + endereço (geolocalização 1 tap — técnico já está no local, geocoding reverso preenche endereço). Solicitação + OS geradas juntas (1 por categoria). OS nasce diretamente em ORÇADA (pula NOVA) com técnico criador já atribuído — nunca aparece na fila pública de OS abertas. Não passa por fila — técnico já está no local.</p>
           <span class="tag">Criação Express + LGPD</span>
         </div>
       </div>
@@ -753,7 +796,7 @@
         </div>
         <div class="flow-card">
           <h3>E3. Monta Orçamento Presencial</h3>
-          <p>Seleciona itens do catálogo (preço base × quantidade = total). Fotos do "antes" já vinculadas ao orçamento. Mostra na tela do PWA pro cliente.</p>
+          <p>Seleciona itens do catálogo (preço base × quantidade) + deslocamento (técnico informa km → sistema calcula custo pela fórmula de combustível, pode ajustar). Fotos do "antes" já vinculadas ao orçamento. Mostra na tela do PWA pro cliente.</p>
           <span class="tag">Orçamento no Local</span>
         </div>
       </div>
@@ -769,7 +812,7 @@
           </div>
           <div class="flow-card option-b">
             <h3>E4b. Rejeição / Indecisão ✗</h3>
-            <p>Cliente recusa orçamento. Técnico pode ajustar valor e reapresentar (renegociação natural, sem estado especial). Se recusa definitiva → OS vai pra REJEITADA com motivo opcional. Remarketing 48h (WhatsApp + e-mail se Google vinculado). Se cliente quer pensar → OS fica ORÇADA, tipo continua EXPRESS. Cliente recebe link pra aprovar remotamente. Se aprovar depois e técnico não está mais no local → segue agendamento normal (APROVADA → AGENDADA → etc).</p>
+            <p>Cliente recusa orçamento. Técnico pode ajustar valor e reapresentar no ato (renegociação natural, sem limite, sem estado especial — OS continua ORÇADA). Se recusa definitiva → OS vai pra REJEITADA com motivo opcional. Remarketing 48h (mesma escada: Fase 1 admin wa.me; Fase 2 e-mail; Fase 4 Cloud API). Se cliente quer pensar → OS fica ORÇADA, tipo continua EXPRESS. Cliente recebe link pra aprovar remotamente. Se aprovar depois e técnico não está mais no local → segue agendamento normal (APROVADA → AGENDADA → etc).</p>
           </div>
         </div>
       </div>
@@ -787,7 +830,7 @@
         </div>
         <div class="flow-card">
           <h3>P1. Recebe OS Preventiva na Agenda</h3>
-          <p>Sistema gera OS tipo PREVENTIVA automaticamente pelo calendário do plano de assinatura (Básico: 1/semestre, Conforto: 2/semestre, Premium: 4/ano). Técnico recebe na agenda com status AGENDADA. Sem orçamento — coberta pelo plano. Admin/cliente pode reagendar.</p>
+          <p>OS Preventiva evolui por fase. Até Fase 5: admin cria manualmente — painel lista assinantes com data da última preventiva + flag "pendente". Fase 5: sistema gera automaticamente pelo calendário do plano (Básico: 1/semestre, Conforto: 2/semestre, Premium: 4/ano). Em ambos: técnico recebe na agenda com status AGENDADA. Sem orçamento — coberta pelo plano. Admin/cliente pode reagendar.</p>
           <span class="tag">Geração Automática</span>
         </div>
       </div>
@@ -822,7 +865,7 @@
         </div>
         <div class="flow-card">
           <h3>P4. Relatório + OS Complementar</h3>
-          <p>Checklist preenchido + fotos + observações → relatório gerado automaticamente e enviado ao cliente (WhatsApp + e-mail). Problema encontrado → técnico cria OS COMPLEMENTAR (paga, vinculada). Cliente pode aprovar ali (presencial) ou depois (link). Se não achou problema: foto depois → conclui direto (CONCLUÍDA, sem pagamento — coberta pelo plano). → Converge para Execução em Campo (C3 em diante, pula C5 — preventiva não tem pagamento).</p>
+          <p>Checklist preenchido + fotos + observações → relatório (Fase 1: dados visíveis no link da OS, técnico envia wa.me; Fase 2: + e-mail Resend com link; Fase 4: PDF gerado + enviado multicanal). Problema encontrado → técnico cria OS COMPLEMENTAR (paga, vinculada). Cliente pode aprovar ali (presencial) ou depois (link). Se não achou problema: foto depois → conclui direto (CONCLUÍDA, sem pagamento — coberta pelo plano). Preventiva não gera certificado de garantia — é inspeção/checklist, não mão de obra. OS Complementar gerada a partir de preventiva tem garantia normal. → Converge para Execução em Campo (C3 em diante, pula C5 — preventiva não tem pagamento).</p>
           <span class="tag">Relatório + Complementar</span>
         </div>
       </div>
@@ -840,7 +883,7 @@
         </div>
         <div class="flow-card">
           <h3>G1. Recebe OS Garantia</h3>
-          <p>Cliente acionou garantia → sistema validou (prazo OK, sem complementar rejeitado) → gera OS tipo GARANTIA vinculada à OS original. Atribuição: técnico original primeiro (conhece o contexto). Se indisponível (saiu, férias, lotado) → cai na fila filtrada por especialidade. Admin pode override. Sem orçamento — coberta pela garantia.</p>
+          <p>Cliente acionou garantia → sistema validou (prazo OK contra data de pagamento da OS original paga — prazo não reseta em regarantia, sem complementar rejeitado) → gera OS tipo GARANTIA vinculada à OS original paga (âncora de prazo). Regarantia permitida enquanto dentro do prazo original. Admin pode override caso a caso. Atribuição: técnico original primeiro (conhece o contexto). Se indisponível (saiu, férias, lotado) → cai na fila filtrada por especialidade. Admin pode override. Sem orçamento — coberta pela garantia.</p>
           <span class="tag">Atribuição Inteligente</span>
         </div>
       </div>
@@ -893,7 +936,7 @@
         </div>
         <div class="flow-card">
           <h3>C2. Orçamento Complementar (se necessário)</h3>
-          <p>Descobriu serviço adicional não previsto (ex: fiação precisa trocar)? Técnico monta orçamento complementar direto na mesma OS pela plataforma. Gera OS tipo COMPLEMENTAR vinculada à OS pai. Aprovação depende da presença: cliente no local → assina na tela do técnico (aprovação presencial), OS Complementar pula pra EM_EXECUÇÃO. Cliente ausente → notificação multicanal. Técnico continua escopo original ou registra motivo "aguardando complementar" como metadado na OS (se não pode continuar sem aprovação). Não existe estado PAUSADA. Se cliente aprova remotamente → OS Complementar vai pra APROVADA → agendamento normal (prioriza técnico original, não garante). Deslocamento na OS Complementar com aprovação remota = decisão do admin caso a caso. Valor adicional somado ao checkout final.</p>
+          <p>Descobriu serviço adicional não previsto (ex: fiação precisa trocar)? Técnico monta orçamento complementar direto na mesma OS pela plataforma. Gera OS tipo COMPLEMENTAR vinculada à OS pai. OS nasce diretamente em ORÇADA com técnico criador já atribuído (técnico já está no local — nunca entra na fila pública). Aprovação depende da presença: cliente no local → assina na tela do técnico (aprovação presencial), OS Complementar pula pra EM_EXECUÇÃO. Cliente ausente → notificação multicanal. Técnico continua escopo original ou registra motivo "aguardando complementar" como metadado na OS (se não pode continuar sem aprovação). Não existe estado PAUSADA. Se cliente aprova remotamente → OS Complementar vai pra APROVADA → agendamento normal (prioriza técnico original, não garante). Deslocamento na OS Complementar com aprovação remota = decisão do admin caso a caso. Valor adicional somado ao checkout final.</p>
           <span class="tag">Complementar Adaptativo</span>
         </div>
       </div>
@@ -928,9 +971,9 @@
           <div class="flow-connector"></div>
         </div>
         <div class="flow-card">
-          <h3>C5. Pagamento Flexível + Upsell (só OS paga)</h3>
-          <p>Só pra OS paga (Normal, Express, Complementar). Antes do pagamento: PWA mostra upsell de assinatura com economia visível — só se cliente não é assinante (aparece uma vez só, mesma mecânica do checkout digital). Cliente pode adicionar — técnico mostra tela, cliente assina (aceite presencial). Pagamento flexível: (A) Na hora — técnico mostra QR Pix na tela do PWA, cliente paga ali (serviço + primeira mensalidade se assinou). Ou pagamento manual (dinheiro/transferência) → técnico confirma recebimento na plataforma. (B) Depois — sistema gera link de pagamento, envia pro cliente via WhatsApp/e-mail. Pagamento nunca obrigatório pra concluir OS. Dados sincronizam quando voltar online.</p>
-          <span class="tag">Pagamento + Upsell + Sync</span>
+          <h3>C5. Pagamento (só OS paga)</h3>
+          <p>Só pra OS paga (Normal, Express, Complementar). Pagamento nunca obrigatório pra concluir OS. Dados sincronizam quando voltar online. Evolui por fase: <strong>Fase 1</strong> — técnico registra forma de pagamento (dinheiro/Pix direto/transferência) → confirma recebimento na plataforma → PAGA. Sem checkout digital. <strong>Fase 3</strong> — + pagamento digital: técnico mostra QR Pix na tela do PWA ou sistema gera link (enviado via wa.me/e-mail). Webhook confirma. Pagamento manual continua como alternativa. <strong>Fase 5</strong> — + upsell de assinatura com economia visível antes do pagamento (só se não é assinante, aparece uma vez). Técnico mostra tela, cliente aceita. Paga tudo junto (serviço + primeira mensalidade).</p>
+          <span class="tag">Pagamento por Fase</span>
         </div>
       </div>
 
@@ -940,8 +983,8 @@
           <div class="flow-connector"></div>
         </div>
         <div class="flow-card">
-          <h3>C6. Avaliação Automática</h3>
-          <p>Sistema envia pedido de avaliação ao cliente automaticamente após conclusão. Nota por OS, tela única (mesma mecânica do passo 13 do cliente). Técnico acumula nota e portfólio (fotos antes/depois) no perfil.</p>
+          <h3>C6. Pedido de Avaliação</h3>
+          <p>Pedido de avaliação ao cliente após conclusão (Fase 1: técnico envia link wa.me; Fase 2: + e-mail Resend; Fase 4: + Cloud API). Nota por OS, tela única (mesma mecânica do passo 13 do cliente). Técnico acumula nota e portfólio (fotos antes/depois) no perfil.</p>
           <span class="tag">Avaliações</span>
         </div>
       </div>
@@ -1011,8 +1054,8 @@
           <div class="flow-connector"></div>
         </div>
         <div class="flow-card">
-          <h3>Fila de Orçamentos</h3>
-          <p>Solicitações dos clientes entram numa fila ordenada por urgência e data. Qualquer técnico vê fila filtrada por suas especialidades e pode se atribuir + montar orçamento (sem precisar de módulo Operação). Membro Interno com módulo Operação também pode. Módulo Operação controla gestão avançada: reatribuir, cancelar em lote, configurar área de cobertura. Vê fotos, descrição e categoria. Monta orçamento com breakdown e envia ao cliente. Orçamento complementar em campo = obrigatoriamente técnico no local.</p>
+          <h3>Fila de Orçamentos + Criação Manual</h3>
+          <p>Solicitações dos clientes entram numa fila ordenada por urgência e data. Qualquer técnico vê fila filtrada por suas especialidades e pode se atribuir + montar orçamento (sem precisar de módulo Operação). Membro Interno com módulo Operação também pode. Módulo Operação controla gestão avançada: reatribuir, cancelar em lote, configurar área de cobertura, e criar Solicitação manualmente (mesmos campos do formulário, preenchidos pelo membro — ex: cliente ligou por telefone). OS gerada nasce em NOVA normalmente. Vê fotos, descrição e categoria. Monta orçamento (itens catálogo + deslocamento) e envia ao cliente. Orçamento complementar em campo = obrigatoriamente técnico no local.</p>
           <span class="tag">Fila de Orçamentos</span>
         </div>
       </div>
@@ -1024,7 +1067,7 @@
         </div>
         <div class="flow-card">
           <h3>Agenda e Atribui Técnicos</h3>
-          <p>Atribuição automática por especialidade + disponibilidade (cliente escolhe slot, não técnico). Admin vê agenda completa da equipe e pode reatribuir/override quando necessário. Prioriza assinantes nos slots.</p>
+          <p>Agendamento evolui por fase. Fase 1-2: admin atribui técnico e define data manualmente. Fase 3: sistema mostra slots, sugere técnico, admin confirma. Admin vê agenda completa da equipe e pode reatribuir/override. Prioriza assinantes nos slots.</p>
           <span class="tag">Instant Booking Híbrido</span>
         </div>
       </div>
@@ -1035,9 +1078,9 @@
           <div class="flow-connector"></div>
         </div>
         <div class="flow-card">
-          <h3>Acompanha Operação em Tempo Real</h3>
-          <p>Vê status de cada técnico (disponível / a caminho / no local / concluído). Monitora OS do dia e pendências. Configura área de atendimento: ponto central + raio em km. Fora do raio → aviso suave no formulário ("Atendemos preferencialmente na região X. Sua solicitação será analisada.") mas não bloqueia envio. Deslocamento calculado automaticamente no orçamento (km × valor/km configurável).</p>
-          <span class="tag">Rastreamento + Área</span>
+          <h3>Acompanha Operação</h3>
+          <p>Painel mostra estado atual de cada OS e técnico (disponível / a caminho / no local / concluído) — dados vêm dos estados da máquina de estados, não GPS. Atualiza no reload ou polling simples (30s). Sem WebSocket. Monitora OS do dia e pendências. Área de cobertura evolui por fase: <strong>Fase 1</strong> — admin vê endereço do cliente e decide manualmente se atende. <strong>Fase 3</strong> — lista de bairros/regiões atendidos configurável no módulo Operação. Fora da lista → aviso suave no formulário ("Atendemos preferencialmente na região X. Sua solicitação será analisada.") mas não bloqueia envio. Sem geocoding — bairro vem do CEP (ViaCEP). Deslocamento no orçamento: técnico informa km → sistema calcula custo (fórmula combustível configurável no módulo Operação).</p>
+          <span class="tag">Painel Operacional</span>
         </div>
       </div>
 
@@ -1046,8 +1089,8 @@
           <div class="flow-dot"></div>
         </div>
         <div class="flow-card">
-          <h3>Configura Mensagens Automáticas WhatsApp</h3>
-          <p>Dois mecanismos separados: (1) wa.me — links que abrem conversa (formulário → empresa, técnico → cliente). Grátis, sem API. (2) Cloud API — sistema envia proativamente: notificações (orçamento pronto, status, lembrete pagamento), remarketing (48h, reativação 6+ meses), avaliação. Templates aprovados pela Meta. 1000 conversas/mês grátis. Pré-requisito: migrar número (11) 95236-0688 de pessoal para WhatsApp Business verificado. Notificações respeitam horário restrito (8h-20h) — gatilho fora do horário → fila de envio, sai às 8h. Exceção: alerta emergência Premium (notifica admin imediatamente). Atendimento continua humano — automação só nas notificações proativas. Admin configura horário comercial (módulo Operação): slots de agendamento respeitam esse range. Técnico configura disponibilidade individual dentro do range. Formulário aceita envio 24h sem restrição.</p>
+          <h3>Configura WhatsApp + Horários</h3>
+          <p>Evolui por fase: <strong>Fase 1-3</strong> — wa.me (links que abrem conversa: formulário → empresa, técnico → cliente). Grátis, sem API. Todas as notificações manuais via wa.me. <strong>Fase 4</strong> — + Cloud API: sistema envia proativamente (orçamento pronto, status, lembrete pagamento, remarketing, avaliação). Templates aprovados pela Meta. 1000 conversas/mês grátis. Pré-requisito: migrar número (11) 95236-0688 de pessoal para WhatsApp Business verificado. Notificações respeitam horário restrito (8h-20h) — gatilho fora do horário → fila de envio, sai às 8h. Exceção: alerta emergência Premium (notifica admin imediatamente). Atendimento continua humano — automação só nas notificações proativas. Em todas as fases: admin configura horário comercial (módulo Operação) — slots de agendamento respeitam esse range. Técnico configura disponibilidade individual dentro do range. Formulário aceita envio 24h.</p>
           <span class="tag">wa.me + Cloud API + Horários</span>
         </div>
       </div>
@@ -1063,7 +1106,7 @@
         </div>
         <div class="flow-card">
           <h3>Gerencia Planos de Assinatura</h3>
-          <p>Cria/edita planos (Básico/Conforto/Premium). Define preços, benefícios, percentuais de desconto. Vê assinantes ativos. Visitas preventivas geradas automaticamente por calendário: sistema calcula datas pela frequência do plano (Básico: 1/semestre, Conforto: 2/semestre, Premium: 4/ano) → cria OS tipo PREVENTIVA (sem custo, coberta pelo plano) com status AGENDADA. Admin/cliente pode reagendar. Técnico executa igual (foto antes/depois obrigatória, mesma máquina de estados — PREVENTIVA termina em CONCLUÍDA, sem PAGA). Inadimplência gerenciada pelo Mercado Pago (retry automático 4x em 10 dias, Card Updater, cancela após 3 parcelas rejeitadas consecutivas). DBG constrói: webhook listener (MP notifica mudança de status → atualiza banco), notificação WhatsApp ao cliente quando pagamento falha (link pra atualizar cartão), pausa/cancelamento manual pelo admin (chama API MP, motivo obrigatório). Upgrade: efetivo imediato, diferença proporcional cobrada (portal ou admin no módulo Financeiro). Downgrade: efetivo no fim do ciclo pago. Cancelamento (portal ou WhatsApp humano): efetivo no fim do ciclo — preventivas dentro do ciclo acontecem normalmente; ao efetivar, sistema cancela automaticamente preventivas futuras (AGENDADA → CANCELADA, motivo: "assinatura encerrada").</p>
+          <p>Fase 5 inteira. <strong>DBG constrói:</strong> CRUD de planos (Básico/Conforto/Premium — preços, benefícios, % desconto). Lista de assinantes ativos. Webhook listener (MP notifica mudança de status → atualiza banco). Pausa/cancelamento pelo admin (chama API MP, motivo obrigatório). Preventivas: até Fase 5 admin cria manualmente; Fase 5 = sistema gera automaticamente por calendário do plano. Cancelamento efetivado → batch update cancela preventivas futuras (AGENDADA → CANCELADA). <strong>Mercado Pago faz:</strong> cobrança recorrente, retry inadimplência, Card Updater, cancelamento por falha. <strong>Upgrade/downgrade:</strong> admin ajusta no portal MP manualmente até ter volume que justifique automação via API. Upgrade = efetivo imediato. Downgrade/cancelamento = efetivo no fim do ciclo pago.</p>
           <span class="tag">Assinatura + MP Subscriptions</span>
         </div>
       </div>
@@ -1074,7 +1117,7 @@
         </div>
         <div class="flow-card">
           <h3>Faturamento Digital</h3>
-          <p>Notificações multicanal em cada etapa: confirmação, orçamento PDF, fatura, fotos antes/depois, certificado de garantia. Sem papel. Resend free (3.000/mês).</p>
+          <p>Evolui por fase: <strong>Fase 1</strong> — dados visíveis no link da OS (sem PDF, sem e-mail). <strong>Fase 2</strong> — + e-mail (Resend, 3.000/mês free) com links pra documentação. React Email pra templates. <strong>Fase 4</strong> — + PDFs gerados server-side (React PDF): fatura, certificado garantia, relatório preventivo. Enviados multicanal (e-mail + Cloud API). Sem papel em nenhuma fase.</p>
           <span class="tag">Resend + React PDF</span>
         </div>
       </div>
@@ -1089,7 +1132,7 @@
         </div>
         <div class="flow-card">
           <h3>Define Garantias por Serviço</h3>
-          <p>Configura prazo de garantia de mão de obra por tipo de serviço (Elétrica: 12 meses, Pintura: 6 meses). Certificado PDF gerado automaticamente ao concluir OS. Gerencia chamados de garantia abertos por clientes.</p>
+          <p>Configura prazo de garantia de mão de obra por tipo de serviço (Elétrica: 12 meses, Pintura: 6 meses). Certificado: Fase 1-3 = página web imprimível; Fase 4 = PDF (React PDF) enviado por e-mail. Gerencia chamados de garantia abertos por clientes.</p>
           <span class="tag">Garantia de Serviço</span>
         </div>
       </div>
@@ -1105,7 +1148,7 @@
         </div>
         <div class="flow-card">
           <h3>Landing Pages de Serviço</h3>
-          <p>Geração automática: cada serviço ativo no catálogo gera landing page com template fixo (nome, descrição, preço, fotos, formulário pré-selecionado). URL limpa automática (site.com/servicos/{slug}). Admin pode customizar via override opcional: título, descrição, fotos, preço promocional (riscado + novo), upsell (sugere outro serviço do catálogo), depoimentos (seleciona avaliações existentes). Sem editor visual — só campos de override num formulário simples. Rastreio automático de origem por página.</p>
+          <p>Geração automática: cada serviço ativo no catálogo gera landing page com template fixo (nome, descrição, preço, fotos, formulário pré-selecionado). URL limpa automática (site.com/servicos/{slug}). Páginas servidas estaticamente (SSG + ISR) — máxima performance, zero compute por request. Admin pode customizar via override opcional: título, descrição, fotos, preço promocional (riscado + novo), upsell (sugere outro serviço do catálogo), depoimentos (seleciona avaliações existentes). Sem editor visual — só campos de override num formulário simples. Rastreio automático de origem por página.</p>
           <span class="tag">Landing Auto + Override</span>
         </div>
       </div>
@@ -1117,7 +1160,7 @@
         </div>
         <div class="flow-card">
           <h3>Geração de Leads + Remarketing</h3>
-          <p>Landing pages + formulário principal capturam leads. Remarketing automático com regras configuráveis pelo admin (módulo Marketing): validade orçamento [7] dias, lembretes dia [3] e [6], remarketing após rejeição [48]h, reativação inativos [6] meses — cada gatilho com toggle on/off e prazo editável. Defaults sensatos de fábrica. Indicação com incentivo duplo (referral loop): quem indica ganha crédito pro próximo serviço, quem foi indicado ganha desconto no primeiro. Valor fixo em reais (ex: R$30), configurável pelo admin. Gatilho: indicado conclui e paga primeiro serviço (evita abuso). Link único por cliente com rastreio automático. Origem rastreada por página/campanha.</p>
+          <p>Evolui por fase: <strong>Fase 1</strong> — landing pages + formulário capturam leads. Admin vê leads no painel (formulários recebidos). Remarketing manual via wa.me. Origem rastreada por página/campanha. <strong>Fase 3</strong> — indicação (referral loop): link único por cliente no portal. Incentivo duplo: quem indica ganha crédito, indicado ganha desconto no primeiro serviço. Valor fixo em reais (ex: R$30), configurável pelo admin. Gatilho: indicado conclui e paga (evita abuso). <strong>Fase 4</strong> — lembretes e remarketing automático por e-mail (Resend): validade orçamento 7 dias, lembretes dia 3 e 6, remarketing 48h pós-rejeição, reativação inativos 6 meses. <strong>Fase 5</strong> — + Cloud API + regras configuráveis pelo admin (módulo Marketing): cada gatilho com toggle on/off e prazo editável. Defaults sensatos de fábrica.</p>
           <span class="tag">Leads + Remarketing Configurável</span>
         </div>
       </div>
@@ -1128,7 +1171,7 @@
         </div>
         <div class="flow-card">
           <h3>Monitora Reputação + Tratativa</h3>
-          <p>Duas camadas: (1) Sem Google verificado (MVP): avaliações internas no sistema + link manual pra Google Review (g.page). Filtro inteligente: nota ≥ 4★ → link Google Review. Nota ≤ 3★ → alerta imediato no módulo Marketing com nota, comentário, OS vinculada, técnico responsável. Admin abre tratativa: registra ação tomada (ligou, ofereceu desconto, abriu OS correção), responde ao cliente (portal + wa.me), marca como resolvido. Após resolução → sistema pede reavaliação. Se nota sobe pra ≥ 4★ → recebe link Google. (2) Com Google verificado (upgrade): conecta API, lê avaliações externas, responde pelo painel, dashboard de reputação com nota média e tendência.</p>
+          <p>Evolui por fase: <strong>Fase 4</strong> — avaliações internas no sistema. Filtro inteligente: nota ≥ 4★ → link manual pra Google Review (g.page). Nota ≤ 3★ → alerta no módulo Marketing com nota, comentário, OS vinculada, técnico responsável. Admin abre tratativa: registra ação tomada (ligou, ofereceu desconto, abriu OS correção), responde ao cliente (portal + wa.me), marca como resolvido. Após resolução → sistema pede reavaliação (e-mail Resend). Se nota sobe pra ≥ 4★ → recebe link Google. <strong>Fase 5</strong> — + Google Business API: conecta API, lê avaliações externas, responde pelo painel, dashboard de reputação com nota média e tendência.</p>
           <span class="tag">Reputação 2 Camadas</span>
         </div>
       </div>
@@ -1143,7 +1186,7 @@
         </div>
         <div class="flow-card">
           <h3>Dashboard</h3>
-          <p>Métricas filtradas por módulo do usuário. Operação: OS do dia, pendentes, fila orçamentos, taxa aprovação, técnicos em campo (status), tempo médio execução. Financeiro: faturamento (dia/semana/mês), pagamentos pendentes, assinantes ativos, receita recorrente (MRR), ticket médio. Marketing: funil (visita → formulário → orçamento → aprovação → conclusão), leads por landing page, taxa conversão, origem tráfego, remarketing ativo. Equipe: técnicos ativos, avaliação média por técnico, OS por técnico, disponibilidade da semana. Garantias: garantias ativas, chamados abertos/resolvidos, taxa acionamento por tipo de serviço. Catálogo: serviços mais pedidos, sem demanda, preço médio por categoria. Admin raiz vê tudo.</p>
+          <p>Métricas filtradas por módulo do usuário. Evolui por fase: <strong>Fase 1</strong> — contadores simples: OS do dia, OS pendentes (fila), orçamentos aguardando resposta. Sem gráficos. <strong>Fase 2</strong> — + OS por técnico, tempo médio entre estados. <strong>Fase 3</strong> — + faturamento (dia/semana/mês), pagamentos pendentes, ticket médio. <strong>Fase 4</strong> — + taxa aprovação, avaliação média por técnico, garantias ativas, chamados abertos/resolvidos. <strong>Fase 5</strong> — + MRR, assinantes ativos, funil completo (visita → formulário → orçamento → aprovação → conclusão), conversão por landing page, remarketing ativo, serviços mais pedidos. Admin raiz vê tudo.</p>
           <span class="tag">Dashboard Filtrado por Módulo</span>
         </div>
       </div>
@@ -1167,15 +1210,15 @@
       </div>
       <div class="integration-card">
         <h4>Caminhos Alternativos</h4>
-        <p>ORÇADA → REJEITADA (cliente rejeita) · ORÇADA → EXPIRADA (7 dias sem resposta) · Qualquer estado → CANCELADA (cliente até 24h antes, técnico com motivo, admin qualquer momento)</p>
+        <p>ORÇADA → REJEITADA (cliente rejeita) · ORÇADA → EXPIRADA (7 dias sem resposta) · EXPIRADA → ORÇADA (admin reativa com novo prazo — técnico revisa preço se necessário) · REJEITADA → ORÇADA (idem — admin reativa) · Qualquer estado → CANCELADA (cliente até 24h antes, técnico com motivo, admin qualquer momento)</p>
       </div>
       <div class="integration-card">
         <h4>Garantia</h4>
-        <p>PAGA → GARANTIA_ABERTA (estado terminal da OS original). Sistema gera nova OS tipo GARANTIA (sem custo): AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA. Validação de prazo = automática. Correspondência com complementar rejeitado = decisão humana (admin sinalizado).</p>
+        <p>PAGA → GARANTIA_ABERTA ou CONCLUÍDA → GARANTIA_ABERTA (estado terminal da OS original). OS paga (Normal, Express, Complementar) transita de PAGA. OS Garantia (regarantia de correção) transita de CONCLUÍDA. OS Preventiva não gera garantia — é inspeção, não mão de obra. Sistema gera nova OS tipo GARANTIA (sem custo): AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA. Validação de prazo = automática. Correspondência com complementar rejeitado = decisão humana (admin sinalizado).</p>
       </div>
       <div class="integration-card">
         <h4>Caminhos por Tipo</h4>
-        <p>NORMAL: NOVA → ORÇADA → APROVADA → AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA → PAGA. EXPRESS: NOVA → ORÇADA → APROVADA → EM_EXECUÇÃO → CONCLUÍDA → PAGA. COMPLEMENTAR (presencial): idem Express. COMPLEMENTAR (ausente): idem Normal. PREVENTIVA: AGENDADA → ... → CONCLUÍDA (sem PAGA). GARANTIA: idem Preventiva. Transição APROVADA → EM_EXECUÇÃO direta permitida quando técnico já está NO_LOCAL.</p>
+        <p>NORMAL: NOVA → ORÇADA → APROVADA → AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA → PAGA. EXPRESS: ORÇADA → APROVADA → EM_EXECUÇÃO → CONCLUÍDA → PAGA (nasce em ORÇADA — técnico criador já atribuído, nunca entra na fila pública). COMPLEMENTAR (presencial): ORÇADA → APROVADA → EM_EXECUÇÃO → CONCLUÍDA → PAGA (nasce em ORÇADA — técnico criador já atribuído). COMPLEMENTAR (ausente): ORÇADA → APROVADA → AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA → PAGA. PREVENTIVA: AGENDADA → ... → CONCLUÍDA (sem PAGA). GARANTIA: idem Preventiva. Transição APROVADA → EM_EXECUÇÃO direta permitida quando técnico já está NO_LOCAL.</p>
       </div>
       <div class="integration-card">
         <h4>Transições (não são estados)</h4>
@@ -1183,7 +1226,7 @@
       </div>
       <div class="integration-card">
         <h4>Quem muda estado</h4>
-        <p>Sistema: NOVA, EXPIRADA, AGENDADA (auto). Cliente: APROVADA, REJEITADA, GARANTIA_ABERTA (terminal, gera OS GARANTIA nova), CANCELADA. Técnico: ORÇADA, A_CAMINHO, NO_LOCAL, EM_EXECUÇÃO, CONCLUÍDA, CANCELADA (com motivo). Admin: qualquer transição (override). Sistema/Técnico: PAGA (webhook MP ou confirmação manual).</p>
+        <p>Sistema: NOVA, EXPIRADA, AGENDADA (auto). Cliente: APROVADA, REJEITADA, GARANTIA_ABERTA (terminal — de CONCLUÍDA ou PAGA, gera OS GARANTIA nova), CANCELADA. Técnico: ORÇADA, A_CAMINHO, NO_LOCAL, EM_EXECUÇÃO, CONCLUÍDA, CANCELADA (com motivo). Admin: qualquer transição (override). Sistema/Técnico: PAGA (webhook MP ou confirmação manual).</p>
       </div>
     </div>
   </section>
@@ -1373,6 +1416,91 @@
   </section>
 
 </div>
+
+<script>
+  const clarityScores = {
+    // CLIENTE
+    ' 1. Chega na Landing Page': 95,
+    '2. Preenche Formulário de Solicitação': 90,
+    '3. Confirmação + Envio via WhatsApp (wa.me)': 95,
+    '4. Acesso ao Site (com ou sem Google)': 90,
+    '5. Recebe Orçamento Digital': 90,
+    '6a. Aprova Orçamento ✓': 90,
+    '6b. Rejeita Orçamento ✗': 90,
+    '7. Agendamento após Aprovação': 90,
+    '8. Reagendamento / Cancelamento': 90,
+    '9. Acompanha Status do Técnico': 90,
+    '10. Conclusão + Pagamento': 90,
+    '11. Recebe Garantia Formal': 90,
+    '12. Recebe Documentação': 90,
+    '13. Avalia o Serviço': 90,
+    '14. Portal — Histórico e Faturas': 90,
+    '15. Plano de Manutenção (opcional)': 90,
+    // TÉCNICO — Remoto
+    'R1. Acessa Painel do Técnico': 90,
+    'R2a. Orçamento Remoto ✓': 90,
+    'R2b. Visita Técnica ✦': 90,
+    'R3. Recebe Notificação de Agendamento': 90,
+    'R4. Sinaliza "A Caminho"': 95,
+    'R5. Sinaliza "Cheguei"': 95,
+    'R6. Foto do "Antes" (obrigatória)': 95,
+    // TÉCNICO — Express
+    'E1. Cria Solicitação + OS Express': 90,
+    'E2. Foto do "Antes" (obrigatória)': 95,
+    'E3. Monta Orçamento Presencial': 90,
+    'E4a. Aprovação Presencial ✓': 90,
+    'E4b. Rejeição / Indecisão ✗': 90,
+    // TÉCNICO — Preventiva
+    'P1. Recebe OS Preventiva na Agenda': 90,
+    'P2. Desloca + Foto Antes': 90,
+    'P3. Segue Checklist Preventivo': 90,
+    'P4. Relatório + OS Complementar': 90,
+    // TÉCNICO — Garantia
+    'G1. Recebe OS Garantia': 90,
+    'G2. Desloca + Foto Antes': 90,
+    'G3. Executa Correção': 90,
+    // TÉCNICO — Execução em Campo
+    'C1. Executa Serviço': 90,
+    'C2. Orçamento Complementar (se necessário)': 90,
+    'C3. Foto do "Depois" (obrigatória)': 95,
+    'C4. Conclui OS': 95,
+    'C5. Pagamento (só OS paga)': 90,
+    'C6. Pedido de Avaliação': 90,
+    '⚠ Regra: Tudo pela Plataforma': 95,
+    // ADMIN
+    'Cadastra Serviços e Preços': 90,
+    'Gerencia Equipe e Permissões': 90,
+    'Fila de Orçamentos + Criação Manual': 90,
+    'Agenda e Atribui Técnicos': 90,
+    'Acompanha Operação': 90,
+    'Configura WhatsApp + Horários': 90,
+    'Gerencia Planos de Assinatura': 90,
+    'Faturamento Digital': 90,
+    'Define Garantias por Serviço': 90,
+    'Landing Pages de Serviço': 90,
+    'Geração de Leads + Remarketing': 90,
+    'Monitora Reputação + Tratativa': 90,
+    'Dashboard': 90,
+  };
+
+  document.querySelectorAll('.flow-card h3').forEach(h3 => {
+    const title = h3.textContent.trim();
+    const score = clarityScores[title];
+    if (score == null) return;
+    const card = h3.closest('.flow-card');
+    const level = score < 80 ? 'clarity-low' : score < 90 ? 'clarity-mid' : 'clarity-high';
+    const bar = document.createElement('div');
+    bar.className = `clarity-bar ${level}`;
+    bar.innerHTML = `
+      <span class="clarity-bar-label">Clareza</span>
+      <div class="clarity-bar-track">
+        <div class="clarity-bar-fill" style="width:${score}%"></div>
+      </div>
+      <span class="clarity-bar-value">${score}%</span>
+    `;
+    card.appendChild(bar);
+  });
+</script>
 
 </body>
 </html>

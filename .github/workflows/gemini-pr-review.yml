@@ -85,7 +85,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number,
               body: `## 🤖 Gemini Code Review\n\n${review}`,
-              event: approved ? 'APPROVE' : 'REQUEST_CHANGES'
+              event: approved ? 'COMMENT' : 'REQUEST_CHANGES'
             });
 
       - name: Gate check

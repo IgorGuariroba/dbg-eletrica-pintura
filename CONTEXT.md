@@ -25,7 +25,7 @@ _Avoid_: Super admin, owner, root
 ### Entidades Centrais
 
 **Solicitação**:
-Pedido de serviço criado pelo **Cliente** via formulário ou pelo **Técnico** via criação express. Uma **Solicitação** gera uma ou mais **Ordens de Serviço** (1 por categoria selecionada). É o agrupador — o **Cliente** vê a **Solicitação** com suas OS filhas.
+Pedido de serviço criado pelo **Cliente** via formulário, pelo **Técnico** via criação express, ou pelo **Membro Interno** com módulo Operação via criação manual (mesmos campos do formulário, preenchidos pelo membro — ex: cliente ligou por telefone). Uma **Solicitação** gera uma ou mais **Ordens de Serviço** (1 por categoria selecionada). É o agrupador — o **Cliente** vê a **Solicitação** com suas OS filhas.
 _Avoid_: Pedido, chamado, ticket, request
 
 **Ordem de Serviço (OS)**:
@@ -33,8 +33,12 @@ Unidade atômica de trabalho. Sempre filha de uma **Solicitação**. Tem um **Ti
 _Avoid_: Tarefa, job, work order, chamado
 
 **Orçamento**:
-Proposta de preço para uma **OS**, composta por itens do **Catálogo** (preço base × quantidade). Todo **Técnico** pode montar orçamento (acesso à fila de OS abertas é inerente ao papel de técnico, sem precisar de **Módulo** Operação). **Membro Interno** com módulo Operação também pode. Válido por prazo configurável.
+Proposta de preço para uma **OS**, composta por itens do **Catálogo** (preço base × quantidade) + **Deslocamento** (campo separado). Preço base do catálogo = preço único (material + mão de obra embutidos). Cliente vê: itens (nome × quantidade × preço = subtotal) + deslocamento = total. Sem breakdown material/mão de obra. Todo **Técnico** pode montar orçamento (acesso à fila de OS abertas é inerente ao papel de técnico, sem precisar de **Módulo** Operação). **Membro Interno** com módulo Operação também pode. Válido por prazo configurável.
 _Avoid_: Proposta, cotação, estimate
+
+**Deslocamento**:
+Componente fixo do **Orçamento**. **Técnico** informa km (ida e volta) → sistema calcula custo: `(km × preço_litro) / km_por_litro`. Preço do litro e km/litro configurados no módulo Operação (muda raramente). **Técnico** pode ajustar valor final (override). Não é item do **Catálogo**. Sem API de geocoding — aritmética pura.
+_Avoid_: Frete, taxa de visita, transporte
 
 **Orçamento Complementar**:
 **Orçamento** adicional criado durante execução de uma **OS**, quando o **Técnico** descobre serviço extra não previsto. Gera **OS** tipo COMPLEMENTAR vinculada à OS pai.
@@ -46,24 +50,24 @@ _Avoid_: Adendo, aditivo, extra
 Originada de formulário remoto. Fluxo completo de estados. Paga.
 
 **OS Express**:
-Criada pelo **Técnico** no local (cliente chamou direto). **Solicitação** + OS geradas juntas. Coleta WhatsApp + categoria + endereço (geolocalização 1 tap — técnico já está no local) + consentimento LGPD obrigatório antes de qualquer dado. Pula estados de agendamento/deslocamento (registrados como "N/A — express"). Se cliente não aprova presencialmente, OS fica ORÇADA e segue aprovação remota — tipo continua EXPRESS, agendamento necessário se técnico não está mais no local. Paga.
+Criada pelo **Técnico** no local (cliente chamou direto). **Solicitação** + OS geradas juntas. Coleta WhatsApp + categoria + endereço (geolocalização 1 tap — técnico já está no local) + consentimento LGPD obrigatório antes de qualquer dado. OS nasce diretamente em ORÇADA (não passa por NOVA) com técnico criador já atribuído — nunca aparece na fila pública de OS abertas. Pula estados de agendamento/deslocamento (registrados como "N/A — express"). Se cliente não aprova presencialmente, OS fica ORÇADA e segue aprovação remota — tipo continua EXPRESS, agendamento necessário se técnico não está mais no local. Paga.
 
 **OS Complementar**:
-Serviço extra descoberto durante execução. Vinculada a uma OS pai. Paga. Dois caminhos de aprovação: (1) cliente presente → **Aprovação Presencial**, pula pra EM_EXECUÇÃO. (2) cliente ausente → notificação, aprovação remota → APROVADA → agendamento normal (prioriza **Técnico** original, não garante). Deslocamento na OS Complementar com aprovação remota = decisão do admin caso a caso.
+Serviço extra descoberto durante execução. Vinculada a uma OS pai. Paga. Nasce diretamente em ORÇADA com técnico criador já atribuído (técnico já está no local — mesma lógica da Express, nunca aparece na fila pública). Dois caminhos de aprovação: (1) cliente presente → **Aprovação Presencial**, pula pra EM_EXECUÇÃO. (2) cliente ausente → notificação, aprovação remota → APROVADA → agendamento normal (prioriza **Técnico** original, não garante). Deslocamento na OS Complementar com aprovação remota = decisão do admin caso a caso.
 
 **OS Preventiva**:
-Gerada automaticamente pelo sistema conforme calendário do **Plano de Assinatura**. Sem custo (coberta pelo plano). Segue **Checklist Preventivo**.
+Gerada automaticamente pelo sistema conforme calendário do **Plano de Assinatura**. Sem custo (coberta pelo plano). Segue **Checklist Preventivo**. Não gera garantia de mão de obra — é inspeção/diagnóstico, não reparo. Se encontrar problema, técnico cria **OS Complementar** (paga) → essa sim tem garantia.
 
 **OS Garantia**:
-Gerada quando **Cliente** aciona garantia válida. Vinculada à OS original. Sem custo. Validação de prazo = automática. Correspondência com **Orçamento Complementar** rejeitado = decisão humana (admin sinalizado pelo sistema). Atribuição: **Técnico** original primeiro; se indisponível, cai na fila filtrada por especialidade. Admin pode override. OS original transita pra GARANTIA_ABERTA (estado terminal).
+Gerada quando **Cliente** aciona garantia válida. Vinculada à OS original paga (âncora de prazo). Sem custo. Prazo de garantia conta a partir da OS original paga — não reseta em regarantia. Regarantia permitida enquanto dentro do prazo original. Admin pode override caso a caso (bom senso comercial). Validação de prazo = automática (sistema verifica contra data de pagamento da OS âncora). Correspondência com **Orçamento Complementar** rejeitado = decisão humana (admin sinalizado pelo sistema). Atribuição: **Técnico** original primeiro; se indisponível, cai na fila filtrada por especialidade. Admin pode override. OS original (ou OS Garantia anterior) transita pra GARANTIA_ABERTA (estado terminal).
 
 ### Estados da OS
 
 **NOVA**: Solicitação criada, aguardando orçamento.
 **ORÇADA**: Orçamento montado e enviado ao cliente.
 **APROVADA**: Cliente assinou (digital ou presencial).
-**REJEITADA**: Cliente recusou orçamento.
-**EXPIRADA**: Prazo de resposta esgotado sem ação do cliente.
+**REJEITADA**: Cliente recusou orçamento. Admin (módulo Operação) pode reativar → volta pra ORÇADA com novo prazo. Técnico revisa preço e reenvia se necessário. Mesma mecânica de EXPIRADA.
+**EXPIRADA**: Prazo de resposta esgotado sem ação do cliente. Admin (módulo Operação) pode reativar → volta pra ORÇADA com novo prazo. Técnico revisa preço e reenvia se necessário.
 **AGENDADA**: Slot de data/horário reservado.
 **A_CAMINHO**: Técnico sinalizou deslocamento.
 **NO_LOCAL**: Técnico sinalizou chegada.
@@ -71,16 +75,16 @@ Gerada quando **Cliente** aciona garantia válida. Vinculada à OS original. Sem
 **CONCLUÍDA**: Foto depois tirada, trabalho finalizado.
 **PAGA**: Pagamento confirmado (webhook ou manual).
 **CANCELADA**: Cancelada por qualquer ator com motivo registrado.
-**GARANTIA_ABERTA**: Cliente acionou garantia válida. Estado terminal da OS original — gera nova **OS Garantia**.
+**GARANTIA_ABERTA**: Cliente acionou garantia válida. Estado terminal da OS original — gera nova **OS Garantia**. Transição possível a partir de CONCLUÍDA (OS Garantia — regarantia de correção) ou PAGA (OS com custo: Normal, Express, Complementar). OS Preventiva não gera garantia — é inspeção/checklist, não mão de obra.
 
 ### Caminhos por Tipo de OS
 
 | Tipo | Caminho |
 |------|---------|
 | NORMAL | NOVA → ORÇADA → APROVADA → AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA → PAGA |
-| EXPRESS | NOVA → ORÇADA → APROVADA → EM_EXECUÇÃO → CONCLUÍDA → PAGA |
-| COMPLEMENTAR (presencial) | NOVA → ORÇADA → APROVADA → EM_EXECUÇÃO → CONCLUÍDA → PAGA |
-| COMPLEMENTAR (ausente) | NOVA → ORÇADA → APROVADA → AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA → PAGA |
+| EXPRESS | ORÇADA → APROVADA → EM_EXECUÇÃO → CONCLUÍDA → PAGA |
+| COMPLEMENTAR (presencial) | ORÇADA → APROVADA → EM_EXECUÇÃO → CONCLUÍDA → PAGA |
+| COMPLEMENTAR (ausente) | ORÇADA → APROVADA → AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA → PAGA |
 | PREVENTIVA | AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA |
 | GARANTIA | AGENDADA → A_CAMINHO → NO_LOCAL → EM_EXECUÇÃO → CONCLUÍDA |
 
@@ -95,11 +99,11 @@ _Avoid_: Permissão, role, escopo, feature flag
 ### Agendamento
 
 **Slot**:
-Bloco de data/horário disponível na agenda de um **Técnico**. Definido dentro do horário comercial configurado pelo admin. **Técnico** pode restringir disponibilidade individual dentro do range.
+Bloco de data/horário disponível na agenda de um **Técnico**. Definido dentro do horário comercial configurado pelo admin. **Técnico** pode restringir disponibilidade individual dentro do range. Duração do slot: **Técnico** define manualmente no **Orçamento**. **Catálogo** pode ter duração sugestiva por serviço (campo opcional).
 _Avoid_: Horário, janela, bloco, time window
 
 **Instant Booking**:
-Modelo híbrido de agendamento. Sistema filtra **Técnicos** por especialidade + disponibilidade automaticamente. **Cliente** escolhe **Slot** (não escolhe técnico). Admin pode reatribuir.
+Modelo de agendamento que evolui por fase. Fase 1-2: admin atribui **Técnico** e define data manualmente (equipe pequena). Fase 3: sistema mostra **Slots** disponíveis por especialidade, **Cliente** escolhe **Slot** por OS (cada OS agendada separadamente), sistema sugere **Técnico**, admin confirma. Futuro: totalmente automático. Em todas as fases: **Cliente** não escolhe técnico. Admin pode reatribuir.
 _Avoid_: Agendamento manual, reserva direta
 
 **Visita Técnica**:
@@ -107,10 +111,10 @@ Variação do fluxo Remoto. Informação do formulário insuficiente pra orçar 
 _Avoid_: Vistoria, inspeção, laudo
 
 **Reagendamento**:
-Transição de AGENDADA → AGENDADA (novo slot). Não é estado — é ação. Três atores podem reagendar com regras diferentes. Cancelamento libera **Slot** automaticamente (volta pro instant booking).
+Transição de AGENDADA → AGENDADA (novo slot). Não é estado — é ação. Três atores podem reagendar com regras diferentes. Pelo site, requer Google OAuth (não disponível por token). Sem Google, cliente usa wa.me. Cancelamento libera **Slot** automaticamente (volta pro instant booking).
 
 **Cancelamento pelo Cliente**:
-Até 24h antes → cancelamento direto (site ou WhatsApp), sem taxa. Dentro de 24h → bloqueado no sistema, tela redireciona pra wa.me do admin. Admin decide caso a caso.
+Até 24h antes → cancelamento direto, sem taxa. Dois canais: (1) site — requer Google OAuth (não disponível por token). (2) wa.me → atendimento humano cancela no sistema. Dentro de 24h → bloqueado no sistema, tela redireciona pra wa.me do admin. Admin decide caso a caso.
 
 ### Pagamento
 
@@ -128,7 +132,7 @@ _Avoid_: Assinatura verbal, aceite oral
 ### Assinatura e Fidelização
 
 **Plano de Assinatura**:
-Contrato de manutenção recorrente com visitas preventivas, desconto e prioridade. Cobrança via Mercado Pago Subscriptions API. Três planos: Básico, Conforto, Premium. Upgrade: efetivo imediato, diferença proporcional cobrada. Downgrade: efetivo no fim do ciclo pago. Cancelamento: efetivo no fim do ciclo pago — preventivas dentro do ciclo acontecem normalmente; ao efetivar, sistema cancela automaticamente preventivas futuras (AGENDADA → CANCELADA, motivo: "assinatura encerrada").
+Contrato de manutenção recorrente com visitas preventivas, desconto e prioridade. Cobrança via Mercado Pago Subscriptions API. Três planos: Básico, Conforto, Premium. Assinatura presencial: técnico mostra QR ou envia link wa.me → cliente completa pagamento no próprio dispositivo (Pix pro Pix da empresa ou cartão via MP). Técnico não toca em dados financeiros. Pix direto = técnico confirma recebimento na plataforma (mesma mecânica de pagamento manual). MP captura método de pagamento pra recorrência (cartão). Upgrade: efetivo imediato, diferença proporcional cobrada. Downgrade: efetivo no fim do ciclo pago. Cancelamento: efetivo no fim do ciclo pago — preventivas dentro do ciclo acontecem normalmente; ao efetivar, sistema cancela automaticamente preventivas futuras (AGENDADA → CANCELADA, motivo: "assinatura encerrada").
 _Avoid_: Contrato, mensalidade, subscription
 
 **Checklist Preventivo**:
@@ -141,7 +145,8 @@ _Avoid_: Programa de afiliados, cupom
 ### Confiança e Garantia
 
 **Garantia de Mão de Obra**:
-Prazo definido por tipo de serviço no **Catálogo**. Certificado PDF gerado ao concluir OS. Acionamento: botão no portal, descrição + foto obrigatória. Validação automática: prazo vigente. Se existe **Orçamento Complementar** rejeitado na OS original → sistema sinaliza pro admin com detalhes. Admin (módulo Garantias) decide se garantia se aplica — correspondência problema-complementar é julgamento humano, não automático.
+Prazo definido por tipo de serviço no **Catálogo**. Aplica-se a OS com execução de serviço (Normal, Express, Complementar, Garantia) — não se aplica a OS Preventiva (inspeção/checklist). Certificado PDF gerado ao concluir OS paga. Prazo conta a partir da data de pagamento da OS original (âncora) — regarantia não reseta prazo. Admin pode override caso a caso.
+_Avoid_: Warranty, seguro, proteção Acionamento: botão no portal (requer Google OAuth — não disponível por token) ou wa.me pro número da empresa (atendimento humano aciona no sistema). Descrição + foto obrigatória. Validação automática: prazo vigente. Se existe **Orçamento Complementar** rejeitado na OS original → sistema sinaliza pro admin com detalhes. Admin (módulo Garantias) decide se garantia se aplica — correspondência problema-complementar é julgamento humano, não automático.
 _Avoid_: Warranty, seguro, proteção
 
 **Tratativa**:
@@ -160,7 +165,7 @@ WhatsApp Business Cloud API (Meta). Mensagens proativas com templates aprovados.
 ### Área de Atendimento
 
 **Raio de Cobertura**:
-Ponto central + distância em km, configurado no módulo Operação. Fora do raio → aviso suave no formulário, não bloqueia envio. Deslocamento calculado automaticamente no orçamento.
+Fase 1: admin vê endereço e decide manualmente. Fase 3: lista de bairros/regiões atendidos configurável no módulo Operação. Fora da lista → aviso suave no formulário, não bloqueia envio. Bairro extraído do CEP (ViaCEP). Sem geocoding.
 
 ### Self-Assign e Devolução
 
@@ -173,7 +178,7 @@ Antes de A_CAMINHO → reagendamento livre (novo **Slot**). Depois de A_CAMINHO 
 
 ### Avaliação
 
-Nota por **OS**, não por **Solicitação**. Tela única agrupa todas as OS da **Solicitação** — cliente avalia cada uma separadamente (estrelas individuais) + comentário geral opcional. Cada nota vinculada à OS e ao **Técnico** responsável. Link Google Business: só se **todas** as notas da **Solicitação** ≥ 4★. Link de **Indicação (Referral)**: entregue junto com link Google Business após avaliação ≥ 4★. Lembrete único 48h se não avaliou.
+Nota por **OS**, não por **Solicitação**. Tela única agrupa todas as OS da **Solicitação** — cliente avalia cada uma separadamente (estrelas individuais) + comentário geral opcional. Cada nota vinculada à OS e ao **Técnico** responsável. Disponível por token sem verificação extra (baixa fricção, token único por solicitação). Admin pode invalidar avaliação no módulo Marketing se abuso. Link Google Business: só se **todas** as notas da **Solicitação** ≥ 4★. Link de **Indicação (Referral)**: entregue junto com link Google Business após avaliação ≥ 4★. Lembrete único 48h se não avaliou.
 
 ### Vinculação Google
 
