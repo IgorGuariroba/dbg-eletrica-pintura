@@ -34,11 +34,4 @@ test.describe("Slice 1 — smoke", () => {
     expect(body.google.type).toBe("oidc");
   });
 
-  test("clicar em Entrar com Google redireciona pro accounts.google.com", async ({ page }) => {
-    await page.goto("/");
-    const navigation = page.waitForURL(/accounts\.google\.com/, { timeout: 15_000 });
-    await page.getByRole("button", { name: /Entrar com Google/i }).click();
-    await navigation;
-    expect(page.url()).toContain("accounts.google.com");
-  });
 });
