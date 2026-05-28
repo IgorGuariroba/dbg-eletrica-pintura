@@ -29,14 +29,22 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          DIFF=$(cat "$RUNNER_TEMP/pr_diff.txt")
-          PROMPT=$(cat .github/prompts/pr-review.md)
+          # Trunca diff p/ evitar estourar token limit do Gemini (8192 out + contexto)
+          # e ARG_MAX do shell. ~500KB ~= 125k tokens, suficiente p/ contexto típico.
+          MAX_BYTES=500000
+          if [ "$(wc -c < "$RUNNER_TEMP/pr_diff.txt")" -gt "$MAX_BYTES" ]; then
+            head -c "$MAX_BYTES" "$RUNNER_TEMP/pr_diff.txt" > "$RUNNER_TEMP/pr_diff_truncated.txt"
+            printf '\n\n[...diff truncado em %s bytes...]\n' "$MAX_BYTES" >> "$RUNNER_TEMP/pr_diff_truncated.txt"
+            mv "$RUNNER_TEMP/pr_diff_truncated.txt" "$RUNNER_TEMP/pr_diff.txt"
+          fi
 
-          PAYLOAD=$(jq -n \
-            --arg prompt "$PROMPT" \
+          # jq lê arquivos com --rawfile (evita ARG_MAX no input)
+          # curl lê payload do arquivo com -d @ (evita ARG_MAX no upload)
+          jq -n \
+            --rawfile prompt .github/prompts/pr-review.md \
             --arg title "$PR_TITLE" \
             --arg body "$PR_BODY" \
-            --arg diff "$DIFF" \
+            --rawfile diff "$RUNNER_TEMP/pr_diff.txt" \
             '{
               contents: [{
                 parts: [{
@@ -47,18 +55,18 @@ jobs:
                 temperature: 0.3,
                 maxOutputTokens: 8192
               }
-            }')
+            }' > "$RUNNER_TEMP/payload.json"
 
-          RESPONSE=$(curl -s -X POST \
+          curl -s -X POST \
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d "$PAYLOAD")
+            -d @"$RUNNER_TEMP/payload.json" > "$RUNNER_TEMP/response.json"
 
-          REVIEW=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // "Erro ao gerar review"')
+          REVIEW=$(jq -r '.candidates[0].content.parts[0].text // "Erro ao gerar review"' "$RUNNER_TEMP/response.json")
 
           if [ "$REVIEW" = "Erro ao gerar review" ]; then
             echo "::error::Gemini API retornou erro"
-            echo "$RESPONSE" | jq .
+            jq . "$RUNNER_TEMP/response.json"
             exit 1
           fi
 
