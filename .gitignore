@@ -1,9 +1,34 @@
 node_modules/
+.pnpm-store/
 .next/
+out/
+dist/
+build/
+
 .env
 .env.local
 .env.*.local
+
 .DS_Store
 *.log
 .vercel
+.turbo
+.idea
+.vscode
 .claude/
+tsconfig.tsbuildinfo
+
+# PWA gerado
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+public/workbox-*.js
+public/workbox-*.js.map
+
+# Drizzle (manter migrations versionadas, ignorar meta cache)
+drizzle/meta
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/

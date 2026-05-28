@@ -1,0 +1,44 @@
+import { expect, test } from "@playwright/test";
+
+test.describe("Slice 1 — smoke", () => {
+  test("home renderiza heading + botão de login", async ({ page }) => {
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", { name: "DBG Elétrica e Pintura" }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /Entrar com Google/i })).toBeVisible();
+  });
+
+  test("manifest.webmanifest válido", async ({ request }) => {
+    const res = await request.get("/manifest.webmanifest");
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.name).toBe("DBG Elétrica e Pintura");
+    expect(body.display).toBe("standalone");
+    expect(body.theme_color).toBe("#0a0a0a");
+    expect(Array.isArray(body.icons)).toBe(true);
+    expect(body.icons.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test("metadata aponta pro manifest", async ({ page }) => {
+    await page.goto("/");
+    const href = await page.locator('link[rel="manifest"]').getAttribute("href");
+    expect(href).toBe("/manifest.webmanifest");
+  });
+
+  test("Auth.js provider Google registrado", async ({ request }) => {
+    const res = await request.get("/api/auth/providers");
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.google).toBeDefined();
+    expect(body.google.type).toBe("oidc");
+  });
+
+  test("clicar em Entrar com Google redireciona pro accounts.google.com", async ({ page }) => {
+    await page.goto("/");
+    const navigation = page.waitForURL(/accounts\.google\.com/, { timeout: 15_000 });
+    await page.getByRole("button", { name: /Entrar com Google/i }).click();
+    await navigation;
+    expect(page.url()).toContain("accounts.google.com");
+  });
+});
