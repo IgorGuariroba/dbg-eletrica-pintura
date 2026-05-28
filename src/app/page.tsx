@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 export default async function Home() {
   const session = await auth();
@@ -29,16 +30,23 @@ export default async function Home() {
               <code className="text-foreground">{session.user.modulos.join(", ") || "—"}</code>
             </div>
           </div>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/" });
-            }}
-          >
-            <Button type="submit" variant="outline" size="sm">
-              Sair
-            </Button>
-          </form>
+          <div className="flex gap-2">
+            {session.user.role !== "cliente" && (
+              <Link href="/admin" className={buttonVariants({ size: "sm" })}>
+                Painel Admin
+              </Link>
+            )}
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/" });
+              }}
+            >
+              <Button type="submit" variant="outline" size="sm">
+                Sair
+              </Button>
+            </form>
+          </div>
         </div>
       ) : (
         <form
