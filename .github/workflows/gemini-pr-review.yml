@@ -49,16 +49,16 @@ jobs:
               }
             }')
 
-          RESPONSE=$(curl -s -X POST \
+          curl -s -X POST \
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d "$PAYLOAD")
+            -d "$PAYLOAD" > "$RUNNER_TEMP/response.json"
 
-          REVIEW=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // "Erro ao gerar review"')
+          REVIEW=$(jq -r '.candidates[0].content.parts[0].text // "Erro ao gerar review"' "$RUNNER_TEMP/response.json")
 
           if [ "$REVIEW" = "Erro ao gerar review" ]; then
             echo "::error::Gemini API retornou erro"
-            echo "$RESPONSE" | jq .
+            jq . "$RUNNER_TEMP/response.json"
             exit 1
           fi
 
