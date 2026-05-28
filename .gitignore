@@ -16,6 +16,9 @@ build/
 .idea
 .vscode
 .claude/
+.agents/
+.antigravitycli/
+skills-lock.json
 tsconfig.tsbuildinfo
 
 # PWA gerado
