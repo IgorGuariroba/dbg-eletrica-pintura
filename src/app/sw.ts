@@ -10,11 +10,18 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith("/api/auth/")) {
+    event.respondWith(fetch(event.request));
+  }
+});
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
-  navigationPreload: true,
+  navigationPreload: false,
   runtimeCaching: defaultCache,
 });
 
