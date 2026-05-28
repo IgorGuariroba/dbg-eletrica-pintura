@@ -70,6 +70,17 @@ describe("detectRole", () => {
     expect(result.role).toBe("cliente");
   });
 
+  it("role composta — técnico + módulo admin retorna ambos", async () => {
+    const result = await detectRole(
+      "carlos@dbg.com.br",
+      ADMIN,
+      lookup({ modulos: ["OPERACAO", "EQUIPE"], isTecnico: true, ativo: true }),
+    );
+    expect(result.role).toBe("membro_interno");
+    expect(result.isTecnico).toBe(true);
+    expect(result.modulos).toEqual(["OPERACAO", "EQUIPE"]);
+  });
+
   it("normaliza email pra lowercase antes de consultar membro", async () => {
     const fn = vi.fn<MembroLookup>(async () => null);
     await detectRole("Bruna@DBG.com.BR", ADMIN, fn);

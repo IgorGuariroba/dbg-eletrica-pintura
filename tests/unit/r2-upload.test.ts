@@ -63,4 +63,20 @@ describe("R2 upload service", () => {
     });
     expect(out.publicUrl).toMatch(/\.png$/);
   });
+
+  it("respeita keyPrefix customizado", async () => {
+    const presigner = vi.fn(async () => "https://signed");
+    const svc = criarUploadService({
+      bucket: "b",
+      baseUrl: "https://x",
+      presignedPut: presigner,
+      keyPrefix: "membros",
+    });
+    const out = await svc.assinarUploadFoto({
+      filename: "a.png",
+      contentType: "image/png",
+    });
+    expect(out.key).toMatch(/^membros\//);
+    expect(out.publicUrl).toMatch(/\/membros\/[a-z0-9-]+\.png$/);
+  });
 });

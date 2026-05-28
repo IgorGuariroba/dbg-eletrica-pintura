@@ -12,6 +12,7 @@ export interface UploadServiceConfig {
   bucket: string;
   baseUrl: string;
   presignedPut: PresignedPut;
+  keyPrefix?: string;
 }
 
 export interface AssinarInput {
@@ -49,7 +50,8 @@ export function criarUploadService(cfg: UploadServiceConfig): UploadService {
         );
       }
       const ext = EXT_POR_TIPO[tipo];
-      const key = `servicos/${randomUUID()}.${ext}`;
+      const prefix = (cfg.keyPrefix ?? "servicos").replace(/^\/+|\/+$/g, "");
+      const key = `${prefix}/${randomUUID()}.${ext}`;
       const uploadUrl = await cfg.presignedPut({
         bucket: cfg.bucket,
         key,

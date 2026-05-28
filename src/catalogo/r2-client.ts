@@ -2,10 +2,11 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { criarUploadService, type UploadService } from "./r2-upload";
 
-let cached: UploadService | null = null;
+const cache = new Map<string, UploadService>();
 
-export function uploadServicePublicoR2(): UploadService {
-  if (cached) return cached;
+export function uploadServicePublicoR2(keyPrefix = "servicos"): UploadService {
+  const existente = cache.get(keyPrefix);
+  if (existente) return existente;
   const accountId = process.env.R2_PUBLIC_ACCOUNT_ID;
   const accessKeyId = process.env.R2_PUBLIC_ACCESS_KEY_ID;
   const secretAccessKey = process.env.R2_PUBLIC_SECRET_ACCESS_KEY;
@@ -19,9 +20,10 @@ export function uploadServicePublicoR2(): UploadService {
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId, secretAccessKey },
   });
-  cached = criarUploadService({
+  const svc = criarUploadService({
     bucket,
     baseUrl,
+    keyPrefix,
     presignedPut: async ({ bucket: b, key, contentType }) => {
       const cmd = new PutObjectCommand({
         Bucket: b,
@@ -31,5 +33,6 @@ export function uploadServicePublicoR2(): UploadService {
       return getSignedUrl(client, cmd, { expiresIn: 300 });
     },
   });
-  return cached;
+  cache.set(keyPrefix, svc);
+  return svc;
 }

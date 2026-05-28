@@ -6,6 +6,7 @@ export default async function AdminHome() {
   const modulos = session?.user.modulos ?? [];
   const isAdmin = session?.user.role === "admin_raiz";
   const podeCatalogo = isAdmin || modulos.includes("CATALOGO");
+  const podeEquipe = isAdmin || modulos.includes("EQUIPE");
 
   return (
     <div className="max-w-3xl">
@@ -23,6 +24,19 @@ export default async function AdminHome() {
               <div className="font-medium">Catálogo de Serviços</div>
               <div className="text-xs text-muted-foreground">
                 Cadastra serviços, preços e prazos de garantia
+              </div>
+            </Link>
+          </li>
+        )}
+        {podeEquipe && (
+          <li>
+            <Link
+              href="/admin/equipe"
+              className="block rounded border border-border p-3 hover:bg-muted"
+            >
+              <div className="font-medium">Equipe</div>
+              <div className="text-xs text-muted-foreground">
+                Cadastra membros internos e técnicos de campo
               </div>
             </Link>
           </li>
