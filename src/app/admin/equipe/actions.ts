@@ -15,6 +15,8 @@ import type {
   Modulo,
   Categoria,
 } from "@/equipe/membro-repo";
+import { avaliarBloqueioAdmin } from "@/equipe/guard-admin-email";
+import { obrigatorioAdminEmail } from "@/auth/env";
 import { exigirEquipe } from "./guard";
 
 function repo() {
@@ -81,14 +83,12 @@ export async function criarMembroAction(
 ): Promise<ActionState> {
   const session = await exigirEquipe();
   const dados = ler(form);
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
-  if (
-    session.user.role !== "admin_raiz" &&
-    adminEmail &&
-    dados.email.toLowerCase() === adminEmail
-  ) {
-    return { erro: "e-mail reservado ao admin raiz" };
-  }
+  const bloqueio = avaliarBloqueioAdmin({
+    emailTentado: dados.email,
+    editorRole: session.user.role,
+    adminEmail: obrigatorioAdminEmail(),
+  });
+  if (bloqueio.tipo !== "ok") return { erro: bloqueio.mensagem };
   try {
     await criarMembro(dados, repo());
   } catch (e) {
@@ -107,21 +107,14 @@ export async function atualizarMembroAction(
   const alvo = await repo().buscarPorId(id);
   if (!alvo) return { erro: "membro não encontrado" };
 
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
-  const editorEhAdminRaiz = session.user.role === "admin_raiz";
-  const alvoEhAdminRaiz = adminEmail === alvo.email.toLowerCase();
-  if (alvoEhAdminRaiz && !editorEhAdminRaiz) {
-    return { erro: "apenas o admin raiz pode editar o próprio cadastro" };
-  }
-
   const dados = ler(form);
-  if (
-    !editorEhAdminRaiz &&
-    adminEmail &&
-    dados.email.toLowerCase() === adminEmail
-  ) {
-    return { erro: "e-mail reservado ao admin raiz" };
-  }
+  const bloqueio = avaliarBloqueioAdmin({
+    emailTentado: dados.email,
+    emailAlvoAtual: alvo.email,
+    editorRole: session.user.role,
+    adminEmail: obrigatorioAdminEmail(),
+  });
+  if (bloqueio.tipo !== "ok") return { erro: bloqueio.mensagem };
 
   try {
     await atualizarMembro(id, dados, repo());

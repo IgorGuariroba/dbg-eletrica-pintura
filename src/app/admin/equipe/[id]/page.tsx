@@ -16,7 +16,8 @@ export default async function EditarMembroPage({
   const membro = await repo.buscarPorId(id);
   if (!membro) notFound();
 
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+  const { obrigatorioAdminEmail } = await import("@/auth/env");
+  const adminEmail = obrigatorioAdminEmail();
   const alvoEhAdminRaiz = adminEmail === membro.email.toLowerCase();
   const editorEhAdminRaiz = session.user.role === "admin_raiz";
   const podeEditar = !alvoEhAdminRaiz || editorEhAdminRaiz;
