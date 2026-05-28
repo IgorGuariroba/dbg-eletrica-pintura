@@ -1,20 +1,9 @@
-export type Role = "admin_raiz" | "membro_interno" | "cliente";
-export type Modulo =
-  | "OPERACAO"
-  | "FINANCEIRO"
-  | "MARKETING"
-  | "EQUIPE"
-  | "GARANTIAS"
-  | "CATALOGO";
+import { moduloEnum } from "@/db/schema";
 
-export const TODOS_MODULOS: Modulo[] = [
-  "OPERACAO",
-  "FINANCEIRO",
-  "MARKETING",
-  "EQUIPE",
-  "GARANTIAS",
-  "CATALOGO",
-];
+export type Role = "admin_raiz" | "membro_interno" | "cliente";
+export type Modulo = (typeof moduloEnum.enumValues)[number];
+
+export const TODOS_MODULOS: readonly Modulo[] = moduloEnum.enumValues;
 
 export interface RoleResult {
   role: Role;
@@ -40,7 +29,7 @@ export async function detectRole(
   if (adminEmail && normalized === adminEmail.toLowerCase()) {
     return {
       role: "admin_raiz",
-      modulos: [...TODOS_MODULOS],
+      modulos: TODOS_MODULOS.slice(),
       isTecnico: true,
     };
   }

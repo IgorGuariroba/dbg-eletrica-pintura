@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   decimal,
   integer,
@@ -180,7 +181,9 @@ export const ordemServico = pgTable("ordem_servico", {
   solicitacaoId: uuid("solicitacao_id")
     .notNull()
     .references(() => solicitacao.id, { onDelete: "cascade" }),
-  osPaiId: uuid("os_pai_id"),
+  osPaiId: uuid("os_pai_id").references((): AnyPgColumn => ordemServico.id, {
+    onDelete: "set null",
+  }),
   tipo: tipoOsEnum("tipo").notNull(),
   estado: estadoOsEnum("estado").notNull().default("NOVA"),
   categoria: categoriaServicoEnum("categoria").notNull(),
@@ -267,6 +270,12 @@ export const ordemServicoRelations = relations(ordemServico, ({ one, many }) => 
     fields: [ordemServico.tecnicoId],
     references: [membro.id],
   }),
+  osPai: one(ordemServico, {
+    fields: [ordemServico.osPaiId],
+    references: [ordemServico.id],
+    relationName: "os_hierarquia",
+  }),
+  osFilhas: many(ordemServico, { relationName: "os_hierarquia" }),
   orcamentos: many(orcamento),
 }));
 
