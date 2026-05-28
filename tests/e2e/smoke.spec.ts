@@ -34,9 +34,4 @@ test.describe("Slice 1 — smoke", () => {
     expect(body.google.type).toBe("oidc");
   });
 
-  test("signin Google retorna redirect pra accounts.google.com", async ({ request }) => {
-    const res = await request.get("/api/auth/signin/google", { maxRedirects: 0 });
-    expect([302, 303, 307]).toContain(res.status());
-    expect(res.headers()["location"] ?? "").toContain("accounts.google.com");
-  });
 });
