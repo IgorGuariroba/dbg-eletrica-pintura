@@ -5,14 +5,16 @@ import {
   type MembroRepo,
 } from "@/equipe/membro-repo";
 
+import type { Categoria, Modulo } from "@/equipe/membro-repo";
+
 const inputValido = {
   nome: "Bruna",
   email: "bruna@dbg.com.br",
-  modulos: ["FINANCEIRO", "MARKETING"] as const,
+  modulos: ["FINANCEIRO", "MARKETING"] as Modulo[],
   isTecnico: false,
-  fotoUrl: null,
-  bio: null,
-  especialidades: [] as const,
+  fotoUrl: null as string | null,
+  bio: null as string | null,
+  especialidades: [] as Categoria[],
   disponibilidade: null,
   ativo: true,
 };
@@ -57,9 +59,9 @@ describe("criarMembro", () => {
     await criarMembro(
       {
         ...inputValido,
-        modulos: [],
+        modulos: [] as Modulo[],
         isTecnico: true,
-        especialidades: ["ELETRICA"],
+        especialidades: ["ELETRICA"] as Categoria[],
       },
       repo,
     );
@@ -69,7 +71,10 @@ describe("criarMembro", () => {
   it("rejeita quando não tem módulos nem flag técnico", async () => {
     const repo = repoFake();
     await expect(
-      criarMembro({ ...inputValido, modulos: [], isTecnico: false }, repo),
+      criarMembro(
+        { ...inputValido, modulos: [] as Modulo[], isTecnico: false },
+        repo,
+      ),
     ).rejects.toThrow(/módulo|técnico/i);
     expect(repo.inserir).not.toHaveBeenCalled();
   });
@@ -101,7 +106,7 @@ describe("criarMembro", () => {
         {
           ...inputValido,
           isTecnico: true,
-          modulos: [],
+          modulos: [] as Modulo[],
           disponibilidade: { seg: { inicio: "18:00", fim: "08:00" } },
         },
         repo,
@@ -115,7 +120,7 @@ describe("criarMembro", () => {
       {
         ...inputValido,
         isTecnico: true,
-        modulos: [],
+        modulos: [] as Modulo[],
         disponibilidade: {
           seg: { inicio: "08:00", fim: "18:00" },
           ter: { inicio: "08:00", fim: "12:00" },
