@@ -32,7 +32,10 @@ describe.skipIf(!hasDb)("FilaRepo Drizzle", () => {
     const r = Math.random().toString(36).slice(2, 10);
     const [cli] = await dbRaw
       .insert(schema.cliente)
-      .values({ nome: `Cli ${r}`, whatsapp: `11${Date.now()}${Math.floor(Math.random() * 1e3)}`.slice(0, 13) })
+      .values({
+        nome: `Cli ${r}`,
+        whatsapp: String(Math.floor(1e12 + Math.random() * 9e12)),
+      })
       .returning();
     const [sol] = await dbRaw
       .insert(schema.solicitacao)
