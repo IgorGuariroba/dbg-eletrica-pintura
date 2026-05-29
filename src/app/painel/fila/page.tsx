@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { EmptyState } from "../../admin/_components/empty-state";
 import { exigirFila } from "../guard";
-import { DevolverButton, PegarButton } from "./fila-row-actions";
+import { DevolverButton, OrcarButton, PegarButton } from "./fila-row-actions";
 
 const ESTADO_LABEL: Record<string, string> = {
   NOVA: "Nova",
@@ -101,8 +101,9 @@ export default async function FilaPage() {
                           : "Atribuída"
                         : "—"}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="space-x-2 text-right">
                       {podePegar && disponivel && <PegarButton osId={os.id} />}
+                      {podePegar && minha && <OrcarButton osId={os.id} />}
                       {podePegar && minha && <DevolverButton osId={os.id} />}
                     </TableCell>
                   </TableRow>

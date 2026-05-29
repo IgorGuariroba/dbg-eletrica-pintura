@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
+import type { Route } from "next";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +39,17 @@ export function PegarButton({ osId }: { osId: string }) {
     <Button type="button" size="sm" disabled={pending} onClick={pegar}>
       {pending ? "Pegando…" : "Pegar"}
     </Button>
+  );
+}
+
+export function OrcarButton({ osId }: { osId: string }) {
+  return (
+    <Link
+      href={`/painel/os/${osId}/orcamento` as Route}
+      className={buttonVariants({ size: "sm", variant: "default" })}
+    >
+      Orçar
+    </Link>
   );
 }
 

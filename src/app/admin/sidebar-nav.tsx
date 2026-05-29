@@ -3,7 +3,13 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
-import { Boxes, ClipboardList, LayoutDashboard, Users } from "lucide-react";
+import {
+  Boxes,
+  ClipboardList,
+  LayoutDashboard,
+  Settings,
+  Users,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +34,12 @@ const ITENS: Item[] = [
   { label: "Fila de OS", href: "/painel/fila", icon: ClipboardList, modulo: "OPERACAO" },
   { label: "Catálogo", href: "/admin/catalogo", icon: Boxes, modulo: "CATALOGO" },
   { label: "Equipe", href: "/admin/equipe", icon: Users, modulo: "EQUIPE" },
+  {
+    label: "Config Operação",
+    href: "/admin/operacao/config" as Route,
+    icon: Settings,
+    modulo: "OPERACAO",
+  },
 ];
 
 export function AdminSidebarNav({

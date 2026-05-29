@@ -276,6 +276,25 @@ export const orcamentoItem = pgTable("orcamento_item", {
 });
 
 // ============================================================
+// Config do módulo Operação (linha única)
+// ============================================================
+
+export const operacaoConfig = pgTable("operacao_config", {
+  // Singleton: sempre a chave "default".
+  id: text("id").primaryKey().default("default"),
+  precoLitro: decimal("preco_litro", { precision: 10, scale: 2 })
+    .notNull()
+    .default("6.00"),
+  kmPorLitro: decimal("km_por_litro", { precision: 10, scale: 2 })
+    .notNull()
+    .default("10.00"),
+  atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+// ============================================================
 // Relations
 // ============================================================
 
