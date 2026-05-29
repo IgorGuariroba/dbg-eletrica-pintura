@@ -1,6 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Camera, MapPin, Mic, Square, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -69,14 +74,12 @@ export function SolicitarForm() {
   const [lng, setLng] = useState<number | null>(null);
   const [erroLocal, setErroLocal] = useState<string | null>(null);
   const [gravando, setGravando] = useState(false);
-  const [speechSuportado, setSpeechSuportado] = useState(false);
+  const speechSuportado = useSyncExternalStore(
+    () => () => {},
+    () => Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+    () => false,
+  );
   const recRef = useRef<SpeechRec | null>(null);
-
-  useEffect(() => {
-    setSpeechSuportado(
-      Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
-    );
-  }, []);
 
   function toggleCategoria(c: Categoria) {
     const n = new Set(categorias);
