@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { LogOut, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,8 +34,10 @@ export function UserMenu({
   email: string | null;
   image: string | null;
 }) {
-  const { theme, setTheme } = useTheme();
-  const dark = theme === "dark";
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const dark = resolvedTheme === "dark";
 
   return (
     <div className="flex items-center gap-2">
@@ -43,8 +46,15 @@ export function UserMenu({
         variant="ghost"
         aria-label="Alternar tema"
         onClick={() => setTheme(dark ? "light" : "dark")}
+        suppressHydrationWarning
       >
-        {dark ? <Sun /> : <Moon />}
+        {!mounted ? (
+          <Sun className="opacity-0" />
+        ) : dark ? (
+          <Sun />
+        ) : (
+          <Moon />
+        )}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger
