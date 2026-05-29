@@ -575,13 +575,19 @@ export function SolicitarForm() {
         <Label>Fotos (opcional, até 5)</Label>
         <div className="mt-2">
           <label
-            className={`flex items-center gap-2 rounded border border-dashed p-3 text-sm cursor-pointer ${fotos.length >= 5 ? "opacity-50 cursor-not-allowed" : "hover:bg-muted"}`}
+            className={`flex items-center gap-2 rounded border border-dashed p-3 text-sm transition-all duration-200 ${
+              fotos.length >= 5
+                ? "opacity-50 cursor-not-allowed bg-muted/30 border-muted text-muted-foreground"
+                : "cursor-pointer hover:bg-muted hover:border-muted-foreground/30"
+            }`}
           >
             <Camera className="size-4" />
             <span>
               {fotos.length === 0
                 ? "Adicionar fotos"
-                : `${fotos.length} / 5 enviada${fotos.length === 1 ? "" : "s"}`}
+                : fotos.length >= 5
+                  ? "Limite máximo de 5 fotos atingido"
+                  : `${fotos.length} / 5 fotos enviadas`}
             </span>
             <input
               type="file"
