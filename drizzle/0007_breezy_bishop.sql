@@ -1,0 +1,1 @@
+CREATE INDEX "orcamento_os_criado_idx" ON "orcamento" USING btree ("os_id","criado_em" DESC NULLS LAST);

@@ -43,6 +43,20 @@
       "when": 1780062440099,
       "tag": "0005_lively_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780065104561,
+      "tag": "0006_real_post",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780066179027,
+      "tag": "0007_breezy_bishop",
+      "breakpoints": true
     }
   ]
 }
