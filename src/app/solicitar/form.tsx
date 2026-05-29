@@ -2,6 +2,7 @@
 
 import {
   useActionState,
+  useEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -16,6 +17,7 @@ import {
   assinarUploadFotoSolicitacaoAction,
   buscarCepAction,
   criarSolicitacaoAction,
+  geocodeReversoAction,
   type SolicitarState,
 } from "./actions";
 
@@ -42,7 +44,7 @@ interface SpeechRec extends EventTarget {
   stop(): void;
   onresult: ((e: { results: { transcript: string }[][] }) => void) | null;
   onend: (() => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((e: { error: string }) => void) | null;
 }
 
 declare global {
@@ -50,6 +52,58 @@ declare global {
     webkitSpeechRecognition?: { new (): SpeechRec };
     SpeechRecognition?: { new (): SpeechRec };
   }
+}
+
+/**
+ * Obtém as coordenadas geográficas do usuário com alta precisão.
+ * Utiliza watchPosition para rastrear a melhor precisão disponível por até 12 segundos,
+ * interrompendo a busca assim que uma precisão de <= 20 metros é atingida.
+ */
+function obterCoordenadasPrecisas(
+  onUpdate?: (pos: GeolocationPosition) => void
+): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      return reject(new Error("Geolocalização não disponível no navegador"));
+    }
+
+    let watchId: number | null = null;
+    let melhorPosicao: GeolocationPosition | null = null;
+
+    const timeoutId = setTimeout(() => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        if (melhorPosicao) {
+          resolve(melhorPosicao);
+        } else {
+          reject(new Error("Não foi possível obter uma localização precisa a tempo."));
+        }
+      }
+    }, 12000); // 12 segundos esperando o sinal ideal
+
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (!melhorPosicao || pos.coords.accuracy < melhorPosicao.coords.accuracy) {
+          melhorPosicao = pos;
+          if (onUpdate) onUpdate(pos);
+        }
+
+        if (pos.coords.accuracy <= 20) {
+          clearTimeout(timeoutId);
+          if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+          resolve(pos);
+        }
+      },
+      (err) => {
+        if (!melhorPosicao) {
+          clearTimeout(timeoutId);
+          if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+          reject(err);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  });
 }
 
 export function SolicitarForm() {
@@ -73,13 +127,16 @@ export function SolicitarForm() {
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [erroLocal, setErroLocal] = useState<string | null>(null);
+  const [buscandoLocal, setBuscandoLocal] = useState(false);
   const [gravando, setGravando] = useState(false);
+
   const speechSuportado = useSyncExternalStore(
     () => () => {},
     () => Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
     () => false,
   );
   const recRef = useRef<SpeechRec | null>(null);
+  const textoBaseRef = useRef("");
 
   function toggleCategoria(c: Categoria) {
     const n = new Set(categorias);
@@ -89,19 +146,43 @@ export function SolicitarForm() {
 
   async function pegarLocalizacao() {
     setErroLocal(null);
-    if (!navigator.geolocation) {
-      setErroLocal("Geolocalização não disponível no navegador");
-      return;
+    setBuscandoLocal(true);
+
+    try {
+      const pos = await obterCoordenadasPrecisas((p) => {
+        setLat(p.coords.latitude);
+        setLng(p.coords.longitude);
+      });
+
+      const { latitude, longitude } = pos.coords;
+      setLat(latitude);
+      setLng(longitude);
+
+      try {
+        const e = await geocodeReversoAction(latitude, longitude);
+        if (e.cep) setCep(e.cep);
+        if (e.logradouro) setLogradouro(e.logradouro);
+        if (e.bairro) setBairro(e.bairro);
+        if (e.cidade) setCidade(e.cidade);
+        if (e.uf) setUf(e.uf);
+      } catch {
+        setErroLocal(
+          "Localização capturada, mas não consegui preencher o endereço. Complete manualmente.",
+        );
+      }
+    } catch (err: any) {
+      if (err.message === "Geolocalização não disponível no navegador") {
+        setErroLocal(err.message);
+      } else if (err.message === "Não foi possível obter uma localização precisa a tempo.") {
+        setErroLocal(err.message);
+      } else {
+        setErroLocal("Não foi possível obter sua localização");
+      }
+    } finally {
+      setBuscandoLocal(false);
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude);
-        setLng(pos.coords.longitude);
-      },
-      () => setErroLocal("Não foi possível obter sua localização"),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
   }
+
 
   async function preencherViaCep() {
     setErroLocal(null);
@@ -156,6 +237,7 @@ export function SolicitarForm() {
       recRef.current?.stop();
       return;
     }
+    setErroLocal(null); // Limpa erros antigos ao iniciar a gravação
     const Ctor =
       window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!Ctor) return;
@@ -163,14 +245,42 @@ export function SolicitarForm() {
     rec.lang = "pt-BR";
     rec.continuous = true;
     rec.interimResults = false;
+
+    // Guarda o texto inicial da descrição antes de começar a falar
+    textoBaseRef.current = descricao;
+
     rec.onresult = (e) => {
-      const transcript = Array.from(e.results)
-        .map((r) => r[0].transcript)
-        .join(" ");
-      setDescricao((d) => (d ? d + " " : "") + transcript.trim());
+      // Loop padrão compatível com todos os navegadores (incluindo Safari móvel)
+      let transcript = "";
+      for (let i = 0; i < e.results.length; i++) {
+        transcript += e.results[i][0].transcript;
+      }
+      
+      const textoFinal = textoBaseRef.current
+        ? `${textoBaseRef.current} ${transcript.trim()}`
+        : transcript.trim();
+
+      setDescricao(textoFinal);
     };
-    rec.onend = () => setGravando(false);
-    rec.onerror = () => setGravando(false);
+
+    rec.onend = () => {
+      setGravando(false);
+    };
+
+    rec.onerror = (event: any) => {
+      console.error("Erro SpeechRecognition:", event.error);
+      if (event.error === "not-allowed") {
+        setErroLocal("Permissão para usar o microfone foi negada pelo navegador.");
+      } else if (event.error === "no-speech") {
+        setErroLocal("Nenhuma fala detectada. Tente falar mais perto do microfone.");
+      } else if (event.error === "network") {
+        setErroLocal("Erro de conexão. O reconhecimento de voz precisa de internet.");
+      } else {
+        setErroLocal(`Falha ao capturar áudio: ${event.error}`);
+      }
+      setGravando(false);
+    };
+
     rec.start();
     recRef.current = rec;
     setGravando(true);
@@ -235,10 +345,11 @@ export function SolicitarForm() {
             type="button"
             variant="outline"
             size="sm"
+            disabled={buscandoLocal}
             onClick={pegarLocalizacao}
           >
             <MapPin className="mr-1 size-4" />
-            Usar localização
+            {buscandoLocal ? "Buscando…" : "Usar localização"}
           </Button>
           {lat !== null && (
             <span className="text-xs text-muted-foreground self-center">
@@ -408,7 +519,10 @@ export function SolicitarForm() {
           name="descricao"
           rows={4}
           value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
+          onChange={(e) => {
+            setDescricao(e.target.value);
+            textoBaseRef.current = e.target.value;
+          }}
           placeholder={
             speechSuportado
               ? "Escreva ou clique em Falar para ditar"

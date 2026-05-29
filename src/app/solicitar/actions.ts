@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { buscarCep } from "@/operacao/cep";
+import { reverseGeocode } from "@/operacao/geo";
 import { criarSolicitacao } from "@/operacao/criar-solicitacao";
 import { criarSolicitacaoRepoDrizzle } from "@/operacao/solicitacao-repo-drizzle";
 import { uploadServiceSolicitacaoR2 } from "@/operacao/r2-privado";
@@ -34,6 +35,10 @@ function lerEndereco(form: FormData) {
 
 export async function buscarCepAction(cep: string) {
   return buscarCep(cep);
+}
+
+export async function geocodeReversoAction(lat: number, lng: number) {
+  return reverseGeocode(lat, lng);
 }
 
 export async function assinarUploadFotoSolicitacaoAction(input: {
