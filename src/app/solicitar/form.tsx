@@ -54,6 +54,58 @@ declare global {
   }
 }
 
+/**
+ * Obtém as coordenadas geográficas do usuário com alta precisão.
+ * Utiliza watchPosition para rastrear a melhor precisão disponível por até 12 segundos,
+ * interrompendo a busca assim que uma precisão de <= 20 metros é atingida.
+ */
+function obterCoordenadasPrecisas(
+  onUpdate?: (pos: GeolocationPosition) => void
+): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      return reject(new Error("Geolocalização não disponível no navegador"));
+    }
+
+    let watchId: number | null = null;
+    let melhorPosicao: GeolocationPosition | null = null;
+
+    const timeoutId = setTimeout(() => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        if (melhorPosicao) {
+          resolve(melhorPosicao);
+        } else {
+          reject(new Error("Não foi possível obter uma localização precisa a tempo."));
+        }
+      }
+    }, 12000); // 12 segundos esperando o sinal ideal
+
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (!melhorPosicao || pos.coords.accuracy < melhorPosicao.coords.accuracy) {
+          melhorPosicao = pos;
+          if (onUpdate) onUpdate(pos);
+        }
+
+        if (pos.coords.accuracy <= 20) {
+          clearTimeout(timeoutId);
+          if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+          resolve(pos);
+        }
+      },
+      (err) => {
+        if (!melhorPosicao) {
+          clearTimeout(timeoutId);
+          if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+          reject(err);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  });
+}
+
 export function SolicitarForm() {
   const [state, action, pending] = useActionState<SolicitarState, FormData>(
     criarSolicitacaoAction,
@@ -77,19 +129,6 @@ export function SolicitarForm() {
   const [erroLocal, setErroLocal] = useState<string | null>(null);
   const [buscandoLocal, setBuscandoLocal] = useState(false);
   const [gravando, setGravando] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-    const isMobileUA = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-    const hasTouch = window.matchMedia("(pointer: coarse)").matches;
-    const value = isMobileUA || hasTouch;
-    
-    // Defer the state change to avoid synchronous setState inside useEffect warning
-    setTimeout(() => {
-      setIsMobile(value);
-    }, 0);
-  }, []);
 
   const speechSuportado = useSyncExternalStore(
     () => () => {},
@@ -107,22 +146,20 @@ export function SolicitarForm() {
 
   async function pegarLocalizacao() {
     setErroLocal(null);
-    if (!navigator.geolocation) {
-      setErroLocal("Geolocalização não disponível no navegador");
-      return;
-    }
     setBuscandoLocal(true);
 
-    let watchId: number | null = null;
-    let melhorPosicao: GeolocationPosition | null = null;
+    try {
+      const pos = await obterCoordenadasPrecisas((p) => {
+        setLat(p.coords.latitude);
+        setLng(p.coords.longitude);
+      });
 
-    async function processarPosicao(pos: GeolocationPosition) {
       const { latitude, longitude } = pos.coords;
       setLat(latitude);
       setLng(longitude);
+
       try {
         const e = await geocodeReversoAction(latitude, longitude);
-        // Preenche o que veio; campos vazios o cliente completa.
         if (e.cep) setCep(e.cep);
         if (e.logradouro) setLogradouro(e.logradouro);
         if (e.bairro) setBairro(e.bairro);
@@ -132,49 +169,18 @@ export function SolicitarForm() {
         setErroLocal(
           "Localização capturada, mas não consegui preencher o endereço. Complete manualmente.",
         );
-      } finally {
-        setBuscandoLocal(false);
       }
+    } catch (err: any) {
+      if (err.message === "Geolocalização não disponível no navegador") {
+        setErroLocal(err.message);
+      } else if (err.message === "Não foi possível obter uma localização precisa a tempo.") {
+        setErroLocal(err.message);
+      } else {
+        setErroLocal("Não foi possível obter sua localização");
+      }
+    } finally {
+      setBuscandoLocal(false);
     }
-
-    // Timeout de segurança para caso a precisão desejada não seja atingida a tempo
-    const timeoutId = setTimeout(() => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-        if (melhorPosicao) {
-          processarPosicao(melhorPosicao);
-        } else {
-          setErroLocal("Não foi possível obter uma localização precisa a tempo.");
-          setBuscandoLocal(false);
-        }
-      }
-    }, 12000); // 12 segundos esperando o sinal ideal
-
-    watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        // Armazena a posição se for a primeira ou se for mais precisa que a anterior
-        if (!melhorPosicao || pos.coords.accuracy < melhorPosicao.coords.accuracy) {
-          melhorPosicao = pos;
-        }
-
-        // Se a precisão for excelente (menor ou igual a 20 metros), já podemos usar
-        if (pos.coords.accuracy <= 20) {
-          clearTimeout(timeoutId);
-          if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-          processarPosicao(pos);
-        }
-      },
-      () => {
-        // Se falhar e ainda não tiver nenhuma posição salva
-        if (!melhorPosicao) {
-          clearTimeout(timeoutId);
-          if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-          setErroLocal("Não foi possível obter sua localização");
-          setBuscandoLocal(false);
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
   }
 
 
@@ -334,25 +340,23 @@ export function SolicitarForm() {
       {/* Endereço */}
       <div className="space-y-3">
         <Label>Endereço</Label>
-        {isMobile && (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={buscandoLocal}
-              onClick={pegarLocalizacao}
-            >
-              <MapPin className="mr-1 size-4" />
-              {buscandoLocal ? "Buscando…" : "Usar localização"}
-            </Button>
-            {lat !== null && (
-              <span className="text-xs text-muted-foreground self-center">
-                GPS capturado ({lat.toFixed(4)}, {lng?.toFixed(4)})
-              </span>
-            )}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={buscandoLocal}
+            onClick={pegarLocalizacao}
+          >
+            <MapPin className="mr-1 size-4" />
+            {buscandoLocal ? "Buscando…" : "Usar localização"}
+          </Button>
+          {lat !== null && (
+            <span className="text-xs text-muted-foreground self-center">
+              GPS capturado ({lat.toFixed(4)}, {lng?.toFixed(4)})
+            </span>
+          )}
+        </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="col-span-2">
             <Label htmlFor="end_cep" className="text-xs">
