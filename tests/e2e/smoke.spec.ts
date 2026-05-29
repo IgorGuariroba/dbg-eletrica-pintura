@@ -1,12 +1,23 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("Slice 1 — smoke", () => {
-  test("home renderiza heading + botão de login", async ({ page }) => {
+test.describe("Smoke", () => {
+  test("home renderiza landing pública com CTA", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "DBG Elétrica e Pintura" }),
+      page.getByRole("heading", {
+        name: /Serviço transparente, com preço fixo e garantia/i,
+      }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: /Entrar com Google/i })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Solicitar orçamento/i }).first(),
+    ).toBeVisible();
+  });
+
+  test("login expõe botão Google", async ({ page }) => {
+    await page.goto("/login");
+    await expect(
+      page.getByRole("button", { name: /Entrar com Google/i }),
+    ).toBeVisible();
   });
 
   test("manifest.webmanifest válido", async ({ request }) => {
