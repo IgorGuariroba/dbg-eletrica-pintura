@@ -1,0 +1,1 @@
+ALTER TABLE "ordem_servico" ADD COLUMN "metadados" jsonb DEFAULT '{}'::jsonb NOT NULL;
