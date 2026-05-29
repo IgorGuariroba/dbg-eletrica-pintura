@@ -106,9 +106,28 @@ function obterCoordenadasPrecisas(
   });
 }
 
-export function SolicitarForm() {
+export interface SolicitarFormProps {
+  /** Server action a executar no submit. Default: fluxo público. */
+  onSubmitAction?: (
+    state: SolicitarState,
+    form: FormData,
+  ) => Promise<SolicitarState>;
+  /** Texto do consentimento LGPD. Default: termo do cliente final. */
+  consentLabel?: React.ReactNode;
+  /** Rótulo do botão de envio. */
+  submitLabel?: string;
+}
+
+const CONSENT_LABEL_PUBLICO =
+  "Concordo em compartilhar meus dados (nome, WhatsApp, endereço, fotos) com a DBG para análise da solicitação, conforme a LGPD. Posso pedir a remoção a qualquer momento.";
+
+export function SolicitarForm({
+  onSubmitAction = criarSolicitacaoAction,
+  consentLabel = CONSENT_LABEL_PUBLICO,
+  submitLabel = "Enviar solicitação",
+}: SolicitarFormProps = {}) {
   const [state, action, pending] = useActionState<SolicitarState, FormData>(
-    criarSolicitacaoAction,
+    onSubmitAction,
     {},
   );
   const [categorias, setCategorias] = useState<Set<Categoria>>(new Set());
@@ -661,9 +680,7 @@ export function SolicitarForm() {
           onCheckedChange={(v) => setLgpd(v === true)}
         />
         <label htmlFor="lgpd" className="text-xs leading-relaxed">
-          Concordo em compartilhar meus dados (nome, WhatsApp, endereço, fotos)
-          com a DBG para análise da solicitação, conforme a LGPD. Posso pedir a
-          remoção a qualquer momento.
+          {consentLabel}
         </label>
         <input type="hidden" name="lgpdAceito" value={lgpd ? "true" : "false"} />
       </div>
@@ -682,7 +699,7 @@ export function SolicitarForm() {
           pending || enviandoFoto || categorias.size === 0 || !lgpd
         }
       >
-        {pending ? "Enviando…" : "Enviar solicitação"}
+        {pending ? "Enviando…" : submitLabel}
       </Button>
     </form>
   );
