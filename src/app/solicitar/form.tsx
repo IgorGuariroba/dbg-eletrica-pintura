@@ -2,6 +2,7 @@
 
 import {
   useActionState,
+  useEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -16,6 +17,7 @@ import {
   assinarUploadFotoSolicitacaoAction,
   buscarCepAction,
   criarSolicitacaoAction,
+  geocodeReversoAction,
   type SolicitarState,
 } from "./actions";
 
@@ -42,7 +44,7 @@ interface SpeechRec extends EventTarget {
   stop(): void;
   onresult: ((e: { results: { transcript: string }[][] }) => void) | null;
   onend: (() => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((e: { error: string }) => void) | null;
 }
 
 declare global {
@@ -73,13 +75,29 @@ export function SolicitarForm() {
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [erroLocal, setErroLocal] = useState<string | null>(null);
+  const [buscandoLocal, setBuscandoLocal] = useState(false);
   const [gravando, setGravando] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    const isMobileUA = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const hasTouch = window.matchMedia("(pointer: coarse)").matches;
+    const value = isMobileUA || hasTouch;
+    
+    // Defer the state change to avoid synchronous setState inside useEffect warning
+    setTimeout(() => {
+      setIsMobile(value);
+    }, 0);
+  }, []);
+
   const speechSuportado = useSyncExternalStore(
     () => () => {},
     () => Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
     () => false,
   );
   const recRef = useRef<SpeechRec | null>(null);
+  const textoBaseRef = useRef("");
 
   function toggleCategoria(c: Categoria) {
     const n = new Set(categorias);
@@ -93,15 +111,72 @@ export function SolicitarForm() {
       setErroLocal("Geolocalização não disponível no navegador");
       return;
     }
-    navigator.geolocation.getCurrentPosition(
+    setBuscandoLocal(true);
+
+    let watchId: number | null = null;
+    let melhorPosicao: GeolocationPosition | null = null;
+
+    async function processarPosicao(pos: GeolocationPosition) {
+      const { latitude, longitude } = pos.coords;
+      setLat(latitude);
+      setLng(longitude);
+      try {
+        const e = await geocodeReversoAction(latitude, longitude);
+        // Preenche o que veio; campos vazios o cliente completa.
+        if (e.cep) setCep(e.cep);
+        if (e.logradouro) setLogradouro(e.logradouro);
+        if (e.bairro) setBairro(e.bairro);
+        if (e.cidade) setCidade(e.cidade);
+        if (e.uf) setUf(e.uf);
+      } catch {
+        setErroLocal(
+          "Localização capturada, mas não consegui preencher o endereço. Complete manualmente.",
+        );
+      } finally {
+        setBuscandoLocal(false);
+      }
+    }
+
+    // Timeout de segurança para caso a precisão desejada não seja atingida a tempo
+    const timeoutId = setTimeout(() => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        if (melhorPosicao) {
+          processarPosicao(melhorPosicao);
+        } else {
+          setErroLocal("Não foi possível obter uma localização precisa a tempo.");
+          setBuscandoLocal(false);
+        }
+      }
+    }, 12000); // 12 segundos esperando o sinal ideal
+
+    watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        setLat(pos.coords.latitude);
-        setLng(pos.coords.longitude);
+        // Armazena a posição se for a primeira ou se for mais precisa que a anterior
+        if (!melhorPosicao || pos.coords.accuracy < melhorPosicao.coords.accuracy) {
+          melhorPosicao = pos;
+        }
+
+        // Se a precisão for excelente (menor ou igual a 20 metros), já podemos usar
+        if (pos.coords.accuracy <= 20) {
+          clearTimeout(timeoutId);
+          if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+          processarPosicao(pos);
+        }
       },
-      () => setErroLocal("Não foi possível obter sua localização"),
-      { enableHighAccuracy: true, timeout: 10000 },
+      () => {
+        // Se falhar e ainda não tiver nenhuma posição salva
+        if (!melhorPosicao) {
+          clearTimeout(timeoutId);
+          if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+          setErroLocal("Não foi possível obter sua localização");
+          setBuscandoLocal(false);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   }
+
 
   async function preencherViaCep() {
     setErroLocal(null);
@@ -156,6 +231,7 @@ export function SolicitarForm() {
       recRef.current?.stop();
       return;
     }
+    setErroLocal(null); // Limpa erros antigos ao iniciar a gravação
     const Ctor =
       window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!Ctor) return;
@@ -163,14 +239,42 @@ export function SolicitarForm() {
     rec.lang = "pt-BR";
     rec.continuous = true;
     rec.interimResults = false;
+
+    // Guarda o texto inicial da descrição antes de começar a falar
+    textoBaseRef.current = descricao;
+
     rec.onresult = (e) => {
-      const transcript = Array.from(e.results)
-        .map((r) => r[0].transcript)
-        .join(" ");
-      setDescricao((d) => (d ? d + " " : "") + transcript.trim());
+      // Loop padrão compatível com todos os navegadores (incluindo Safari móvel)
+      let transcript = "";
+      for (let i = 0; i < e.results.length; i++) {
+        transcript += e.results[i][0].transcript;
+      }
+      
+      const textoFinal = textoBaseRef.current
+        ? `${textoBaseRef.current} ${transcript.trim()}`
+        : transcript.trim();
+
+      setDescricao(textoFinal);
     };
-    rec.onend = () => setGravando(false);
-    rec.onerror = () => setGravando(false);
+
+    rec.onend = () => {
+      setGravando(false);
+    };
+
+    rec.onerror = (event: any) => {
+      console.error("Erro SpeechRecognition:", event.error);
+      if (event.error === "not-allowed") {
+        setErroLocal("Permissão para usar o microfone foi negada pelo navegador.");
+      } else if (event.error === "no-speech") {
+        setErroLocal("Nenhuma fala detectada. Tente falar mais perto do microfone.");
+      } else if (event.error === "network") {
+        setErroLocal("Erro de conexão. O reconhecimento de voz precisa de internet.");
+      } else {
+        setErroLocal(`Falha ao capturar áudio: ${event.error}`);
+      }
+      setGravando(false);
+    };
+
     rec.start();
     recRef.current = rec;
     setGravando(true);
@@ -230,22 +334,25 @@ export function SolicitarForm() {
       {/* Endereço */}
       <div className="space-y-3">
         <Label>Endereço</Label>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={pegarLocalizacao}
-          >
-            <MapPin className="mr-1 size-4" />
-            Usar localização
-          </Button>
-          {lat !== null && (
-            <span className="text-xs text-muted-foreground self-center">
-              GPS capturado ({lat.toFixed(4)}, {lng?.toFixed(4)})
-            </span>
-          )}
-        </div>
+        {isMobile && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={buscandoLocal}
+              onClick={pegarLocalizacao}
+            >
+              <MapPin className="mr-1 size-4" />
+              {buscandoLocal ? "Buscando…" : "Usar localização"}
+            </Button>
+            {lat !== null && (
+              <span className="text-xs text-muted-foreground self-center">
+                GPS capturado ({lat.toFixed(4)}, {lng?.toFixed(4)})
+              </span>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-2">
           <div className="col-span-2">
             <Label htmlFor="end_cep" className="text-xs">
@@ -408,7 +515,10 @@ export function SolicitarForm() {
           name="descricao"
           rows={4}
           value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
+          onChange={(e) => {
+            setDescricao(e.target.value);
+            textoBaseRef.current = e.target.value;
+          }}
           placeholder={
             speechSuportado
               ? "Escreva ou clique em Falar para ditar"
