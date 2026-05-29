@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { LogOut, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -33,8 +35,13 @@ export function UserMenu({
   email: string | null;
   image: string | null;
 }) {
-  const { theme, setTheme } = useTheme();
-  const dark = theme === "dark";
+  const { resolvedTheme, setTheme } = useTheme();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const dark = resolvedTheme === "dark";
 
   return (
     <div className="flex items-center gap-2">
@@ -43,8 +50,15 @@ export function UserMenu({
         variant="ghost"
         aria-label="Alternar tema"
         onClick={() => setTheme(dark ? "light" : "dark")}
+        suppressHydrationWarning
       >
-        {dark ? <Sun /> : <Moon />}
+        {!mounted ? (
+          <Sun className="opacity-0" />
+        ) : dark ? (
+          <Sun />
+        ) : (
+          <Moon />
+        )}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -58,13 +72,16 @@ export function UserMenu({
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>
-            <div className="text-sm font-medium">{name ?? "Usuário"}</div>
-            <div className="text-xs text-muted-foreground">{email}</div>
-          </DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>
+              <div className="text-sm font-medium">{name ?? "Usuário"}</div>
+              <div className="text-xs text-muted-foreground">{email}</div>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <form action={signOutAction}>
             <DropdownMenuItem
+              nativeButton
               render={<button type="submit" className="w-full text-left" />}
             >
               <LogOut className="mr-2 size-4" />
