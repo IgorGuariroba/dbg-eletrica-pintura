@@ -28,10 +28,16 @@ async function origem(): Promise<string> {
   // pelo cliente e geraria um link de aprovação apontando para outro domínio.
   const canonica = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.AUTH_URL;
   if (canonica) return canonica.replace(/\/$/, "");
-  // Em produção, exige a env: cair no header seria vetor de phishing.
+  // Fallback confiável na Vercel: domínio de produção injetado pela plataforma
+  // (estável, não vem do request) — cobre preview e prod sem env manual.
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  // Em produção sem nenhuma origem confiável, falha em vez de usar o header
+  // Host (vetor de phishing).
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "NEXT_PUBLIC_SITE_URL (ou AUTH_URL) é obrigatória em produção para gerar o link de aprovação",
+      "Defina NEXT_PUBLIC_SITE_URL/AUTH_URL para gerar o link de aprovação",
     );
   }
   // Fora de produção, deriva do request para conveniência de dev.
