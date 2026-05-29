@@ -20,6 +20,52 @@ pnpm db:push                  # cria schema no Neon
 pnpm dev
 ```
 
+## Configuração do Cloudflare R2 (CORS)
+
+Como o upload de fotos é feito diretamente do navegador do cliente para o Cloudflare R2 usando URLs assinadas, ambos os buckets (`dbg-public` e `dbg-private`) precisam ter uma política de **CORS** configurada para permitir requisições de origem cruzada (CORS) a partir do seu domínio local e de produção.
+
+### Passo a passo para configurar no painel da Cloudflare:
+
+1. Acesse o **Cloudflare Dashboard** -> **R2** -> **Buckets**.
+2. Selecione o bucket (faça isso para `dbg-private` e `dbg-public`).
+3. Vá na aba **Settings** (Configurações).
+4. Role até a seção **CORS Policy** e clique em **Add CORS policy** (ou Edit).
+5. Cole a seguinte configuração JSON (ajustando os domínios se necessário):
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "https://dbg-eletrica-pintura.vercel.app"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "PUT",
+      "POST",
+      "DELETE",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "content-type"
+    ],
+    "ExposeHeaders": [],
+    "MaxAgeSeconds": 3000
+  }
+]
+```
+
+6. Salve as alterações.
+
+### Script Utilitário (Alternativa para configuração local/rápida)
+
+Você também pode utilizar o script `configure-r2-cors.js` para configurar as políticas de CORS via API. Ele carrega as credenciais do seu arquivo `.env.local`:
+
+```bash
+node configure-r2-cors.js
+```
+*Nota: Este script é uma ferramenta de conveniência de desenvolvimento e não é necessário rodá-lo no pipeline de deploy contínuo (CI/CD).*
+
 ## Variáveis de ambiente
 
 Ver [`.env.example`](.env.example). Resumo:
