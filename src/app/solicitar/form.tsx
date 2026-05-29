@@ -114,6 +114,34 @@ export function SolicitarForm() {
   const [categorias, setCategorias] = useState<Set<Categoria>>(new Set());
   const [fotos, setFotos] = useState<string[]>([]);
   const [enviandoFoto, setEnviandoFoto] = useState(false);
+  const [previews, setPreviews] = useState<Record<string, string>>({});
+  const previewsRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    previewsRef.current = previews;
+  }, [previews]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(previewsRef.current).forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+    };
+  }, []);
+
+  const removerFoto = (key: string) => {
+    setPreviews((prev) => {
+      const url = prev[key];
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+    setFotos((prev) => prev.filter((x) => x !== key));
+  };
+
   const [descricao, setDescricao] = useState("");
   const [duracao, setDuracao] = useState<string>("");
   const [lgpd, setLgpd] = useState(false);
@@ -209,21 +237,31 @@ export function SolicitarForm() {
     if (arr.length === 0) return;
     setEnviandoFoto(true);
     try {
-      const novas: string[] = [];
-      for (const file of arr) {
-        const { uploadUrl, key } = await assinarUploadFotoSolicitacaoAction({
-          filename: file.name,
-          contentType: file.type,
-        });
-        const res = await fetch(uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-        if (!res.ok) throw new Error(`Upload falhou (${res.status})`);
-        novas.push(key);
-      }
-      setFotos([...fotos, ...novas]);
+      await Promise.all(
+        arr.map(async (file) => {
+          const { uploadUrl, key } = await assinarUploadFotoSolicitacaoAction({
+            filename: file.name,
+            contentType: file.type,
+          });
+          const res = await fetch(uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": file.type },
+            body: file,
+          });
+          if (!res.ok) throw new Error(`Upload falhou (${res.status})`);
+
+          // Cria e armazena URL de pré-visualização local
+          const objectUrl = URL.createObjectURL(file);
+          setPreviews((prev) => ({ ...prev, [key]: objectUrl }));
+
+          // Adiciona fotos incrementalmente de forma segura
+          setFotos((prev) => {
+            if (prev.includes(key)) return prev;
+            if (prev.length >= 5) return prev;
+            return [...prev, key];
+          });
+        })
+      );
     } catch (e) {
       setErroLocal(e instanceof Error ? e.message : "falha no upload");
     } finally {
@@ -553,28 +591,54 @@ export function SolicitarForm() {
               onChange={(e) => enviarFotos(e.target.files)}
             />
           </label>
-          {enviandoFoto && (
-            <p className="text-xs text-muted-foreground mt-1">Enviando…</p>
-          )}
-          {fotos.length > 0 && (
-            <ul className="mt-2 flex flex-wrap gap-2">
-              {fotos.map((k) => (
-                <li
-                  key={k}
-                  className="flex items-center gap-1 rounded border px-2 py-1 text-xs"
-                >
-                  <span className="truncate max-w-[8rem]">{k.split("/").pop()}</span>
-                  <button
-                    type="button"
-                    aria-label="Remover foto"
-                    onClick={() => setFotos(fotos.filter((x) => x !== k))}
-                    className="text-muted-foreground hover:text-foreground"
+          {(fotos.length > 0 || enviandoFoto) && (
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {fotos.map((k) => {
+                const previewUrl = previews[k];
+                return (
+                  <div
+                    key={k}
+                    className="group relative aspect-square w-full overflow-hidden rounded-xl border border-border bg-muted shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                   >
-                    <X className="size-3" />
-                  </button>
-                </li>
-              ))}
-            </ul>
+                    {previewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={previewUrl}
+                        alt="Miniatura"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <Camera className="size-6 animate-pulse" />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removerFoto(k)}
+                      className="absolute top-1.5 right-1.5 z-10 flex size-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-destructive hover:text-destructive-foreground hover:scale-105"
+                      title="Remover foto"
+                      aria-label="Remover foto"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-[2px] p-1 text-[9px] text-muted-foreground border-t border-border opacity-0 transition-opacity duration-200 group-hover:opacity-100 truncate text-center">
+                      {k.split("/").pop()}
+                    </div>
+                  </div>
+                );
+              })}
+              {enviandoFoto && (
+                <div className="aspect-square w-full rounded-xl border border-dashed border-border bg-muted/30 flex flex-col items-center justify-center text-muted-foreground animate-pulse">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-background border border-border shadow-sm">
+                    <svg className="size-4 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] mt-2 font-medium">Enviando…</span>
+                </div>
+              )}
+            </div>
           )}
           {fotos.map((k) => (
             <input key={k} type="hidden" name="fotosKeys" value={k} />
