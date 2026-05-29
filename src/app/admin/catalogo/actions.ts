@@ -46,6 +46,7 @@ export async function criarServicoAction(
     return { erro: e instanceof Error ? e.message : "erro desconhecido" };
   }
   revalidatePath("/admin/catalogo");
+  revalidatePath("/");
   redirect("/admin/catalogo");
 }
 
@@ -61,6 +62,7 @@ export async function atualizarServicoAction(
     return { erro: e instanceof Error ? e.message : "erro desconhecido" };
   }
   revalidatePath("/admin/catalogo");
+  revalidatePath("/");
   redirect("/admin/catalogo");
 }
 
@@ -68,6 +70,7 @@ export async function toggleAtivoAction(id: string) {
   await exigirCatalogo();
   await toggleAtivoServico(id, repo());
   revalidatePath("/admin/catalogo");
+  revalidatePath("/");
 }
 
 export async function assinarUploadFotoAction(input: {

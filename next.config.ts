@@ -11,4 +11,16 @@ const withSerwist = withSerwistInit({
 export default withSerwist({
   reactStrictMode: true,
   typedRoutes: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "pub-d9b6217240d14580bf675ccacfd26a3f.r2.dev",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+    ],
+  },
 });
