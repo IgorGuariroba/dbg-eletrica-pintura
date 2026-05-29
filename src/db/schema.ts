@@ -93,6 +93,7 @@ export const cliente = pgTable(
   (t) => ({
     emailUq: uniqueIndex("cliente_email_uq").on(t.email),
     googleIdUq: uniqueIndex("cliente_google_id_uq").on(t.googleId),
+    whatsappUq: uniqueIndex("cliente_whatsapp_uq").on(t.whatsapp),
   }),
 );
 
@@ -155,31 +156,40 @@ export const servico = pgTable("servico", {
 // Solicitação
 // ============================================================
 
-export const solicitacao = pgTable("solicitacao", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  clienteId: uuid("cliente_id")
-    .notNull()
-    .references(() => cliente.id, { onDelete: "restrict" }),
-  categorias: categoriaServicoEnum("categorias").array().notNull(),
-  descricao: text("descricao"),
-  fotosUrls: text("fotos_urls").array().notNull().default(sql`'{}'::text[]`),
-  endereco: jsonb("endereco").$type<{
-    logradouro: string;
-    numero?: string;
-    complemento?: string;
-    bairro?: string;
-    cidade: string;
-    uf: string;
-    cep?: string;
-    lat?: number;
-    lng?: number;
-  }>().notNull(),
-  lgpdAceito: boolean("lgpd_aceito").notNull().default(false),
-  origem: varchar("origem", { length: 20 }).notNull().default("FORMULARIO"), // FORMULARIO | EXPRESS | MANUAL
-  criadoEm: timestamp("criado_em", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
+export const solicitacao = pgTable(
+  "solicitacao",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    token: varchar("token", { length: 64 }).notNull(),
+    clienteId: uuid("cliente_id")
+      .notNull()
+      .references(() => cliente.id, { onDelete: "restrict" }),
+    categorias: categoriaServicoEnum("categorias").array().notNull(),
+    descricao: text("descricao"),
+    fotosUrls: text("fotos_urls").array().notNull().default(sql`'{}'::text[]`),
+    endereco: jsonb("endereco").$type<{
+      logradouro: string;
+      numero?: string;
+      complemento?: string;
+      bairro?: string;
+      cidade: string;
+      uf: string;
+      cep?: string;
+      lat?: number;
+      lng?: number;
+    }>().notNull(),
+    dataDesejada: timestamp("data_desejada", { withTimezone: true }),
+    duracaoEstimada: varchar("duracao_estimada", { length: 20 }),
+    lgpdAceito: boolean("lgpd_aceito").notNull().default(false),
+    origem: varchar("origem", { length: 20 }).notNull().default("FORMULARIO"), // FORMULARIO | EXPRESS | MANUAL
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    tokenUq: uniqueIndex("solicitacao_token_uq").on(t.token),
+  }),
+);
 
 // ============================================================
 // Ordem de Serviço (OS)
