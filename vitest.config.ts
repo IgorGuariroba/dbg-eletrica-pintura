@@ -11,5 +11,8 @@ export default defineConfig({
     environment: "node",
     include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
     globals: false,
+    // Varre lixo de seeds de runs anteriores antes de spawnar os workers,
+    // evitando que a janela `limit` da fila caia em OS órfãs (ver global-setup).
+    globalSetup: ["./tests/integration/global-setup.ts"],
   },
 });
