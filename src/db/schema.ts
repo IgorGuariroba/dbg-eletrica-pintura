@@ -253,6 +253,10 @@ export const orcamento = pgTable("orcamento", {
   validoAte: timestamp("valido_ate", { withTimezone: true }).notNull(),
   aprovadoEm: timestamp("aprovado_em", { withTimezone: true }),
   rejeitadoEm: timestamp("rejeitado_em", { withTimezone: true }),
+  // Assinatura digital da aprovação: posse do link (token) + IP + carimbo.
+  assinaturaToken: varchar("assinatura_token", { length: 64 }),
+  assinaturaIp: varchar("assinatura_ip", { length: 64 }),
+  motivoRejeicao: text("motivo_rejeicao"),
   criadoEm: timestamp("criado_em", { withTimezone: true })
     .defaultNow()
     .notNull(),

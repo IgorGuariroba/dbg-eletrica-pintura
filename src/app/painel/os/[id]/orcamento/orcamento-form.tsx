@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,7 +96,7 @@ export function OrcamentoForm({
           deslocamentoOverride: override,
         });
         toast.success("Orçamento enviado — OS marcada como Orçada");
-        router.push("/painel/fila");
+        router.push(`/painel/os/${osId}` as Route);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Não foi possível enviar");
       }
