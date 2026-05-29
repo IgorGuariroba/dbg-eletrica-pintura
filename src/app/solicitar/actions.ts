@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { buscarCep } from "@/operacao/cep";
 import { criarSolicitacao } from "@/operacao/criar-solicitacao";
 import { criarSolicitacaoRepoDrizzle } from "@/operacao/solicitacao-repo-drizzle";
@@ -89,6 +88,5 @@ export async function criarSolicitacaoAction(
     return { erro: e instanceof Error ? e.message : "erro desconhecido" };
   }
 
-  revalidatePath("/solicitar");
   redirect(`/s/${resultado.solicitacao.token}/confirmacao`);
 }
