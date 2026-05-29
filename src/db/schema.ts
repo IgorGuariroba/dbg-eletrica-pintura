@@ -3,6 +3,7 @@ import {
   type AnyPgColumn,
   boolean,
   decimal,
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -260,7 +261,10 @@ export const orcamento = pgTable("orcamento", {
   criadoEm: timestamp("criado_em", { withTimezone: true })
     .defaultNow()
     .notNull(),
-});
+}, (t) => ({
+  // Acelera a busca do orçamento mais recente por OS (aprovação/expiração).
+  osRecenteIdx: index("orcamento_os_criado_idx").on(t.osId, t.criadoEm.desc()),
+}));
 
 // ============================================================
 // Item de Orçamento

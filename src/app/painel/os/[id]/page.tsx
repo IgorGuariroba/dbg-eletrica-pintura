@@ -24,10 +24,17 @@ const ESTADO_LABEL: Record<string, string> = {
 };
 
 async function origem(): Promise<string> {
-  // URL canônica do site quando configurada — o header Host é influenciável
+  // URL canônica do site é a fonte da verdade — o header Host é influenciável
   // pelo cliente e geraria um link de aprovação apontando para outro domínio.
   const canonica = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.AUTH_URL;
   if (canonica) return canonica.replace(/\/$/, "");
+  // Em produção, exige a env: cair no header seria vetor de phishing.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL (ou AUTH_URL) é obrigatória em produção para gerar o link de aprovação",
+    );
+  }
+  // Fora de produção, deriva do request para conveniência de dev.
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? "https";

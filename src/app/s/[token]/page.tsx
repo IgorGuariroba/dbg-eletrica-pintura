@@ -4,6 +4,7 @@ import { carregarParaCliente } from "@/operacao/aprovacao";
 import { criarAprovacaoRepoDrizzle } from "@/operacao/aprovacao-repo-drizzle";
 import { TokenInvalidoError } from "@/operacao/aprovacao-repo";
 import { Badge } from "@/components/ui/badge";
+import { formatBRL } from "@/lib/utils";
 import { SiteHeader } from "../../_landing/site-header";
 import { SiteFooter } from "../../_landing/site-footer";
 import { AcoesOrcamento } from "./acoes-orcamento";
@@ -28,9 +29,6 @@ const ESTADO: Record<
   REJEITADA: { label: "Recusado", variant: "destructive" },
   EXPIRADA: { label: "Expirado", variant: "outline" },
 };
-
-const brl = (v: string) =>
-  Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export default async function AcompanhamentoPage({
   params,
@@ -88,17 +86,17 @@ export default async function AcompanhamentoPage({
                               × {Number(it.quantidade)}
                             </span>
                           </span>
-                          <span>{brl(it.subtotal)}</span>
+                          <span>{formatBRL(it.subtotal)}</span>
                         </li>
                       ))}
                     </ul>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Deslocamento</span>
-                      <span>{brl(os.orcamento.totalDeslocamento)}</span>
+                      <span>{formatBRL(os.orcamento.totalDeslocamento)}</span>
                     </div>
                     <div className="flex justify-between border-t pt-2 text-base font-bold">
                       <span>Total</span>
-                      <span>{brl(os.orcamento.total)}</span>
+                      <span>{formatBRL(os.orcamento.total)}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Válido até{" "}

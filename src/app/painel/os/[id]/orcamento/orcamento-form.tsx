@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { calcularDeslocamento } from "@/operacao/orcamento";
+import { formatBRL } from "@/lib/utils";
 import { montarOrcamentoAction } from "./actions";
 
 interface ServicoOpcao {
@@ -35,9 +36,6 @@ interface Linha {
   servicoId: string;
   quantidade: string;
 }
-
-const brl = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export function OrcamentoForm({
   osId,
@@ -131,7 +129,7 @@ export function OrcamentoForm({
                     <SelectContent>
                       {servicos.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
-                          {s.nome} — {brl(Number(s.precoBase))}
+                          {s.nome} — {formatBRL(Number(s.precoBase))}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -147,7 +145,7 @@ export function OrcamentoForm({
                     }
                   />
                 </TableCell>
-                <TableCell className="text-right">{brl(subtotais[i])}</TableCell>
+                <TableCell className="text-right">{formatBRL(subtotais[i])}</TableCell>
                 <TableCell>
                   {linhas.length > 1 && (
                     <Button
@@ -218,15 +216,15 @@ export function OrcamentoForm({
       <div className="max-w-md space-y-1 border-t pt-4 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Itens</span>
-          <span>{brl(totalItens)}</span>
+          <span>{formatBRL(totalItens)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Deslocamento</span>
-          <span>{brl(deslocamento)}</span>
+          <span>{formatBRL(deslocamento)}</span>
         </div>
         <div className="flex justify-between text-base font-bold">
           <span>Total</span>
-          <span>{brl(total)}</span>
+          <span>{formatBRL(total)}</span>
         </div>
       </div>
 

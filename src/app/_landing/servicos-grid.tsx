@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Servico } from "@/catalogo/servico-repo";
+import { formatBRL } from "@/lib/utils";
 
 const ORDEM_CATEGORIA: Servico["categoria"][] = ["ELETRICA", "PINTURA", "DRYWALL"];
 
@@ -14,13 +15,6 @@ const LABEL_UNIDADE: Record<Servico["unidade"], string> = {
   M2: "por m²",
   HORA: "por hora",
 };
-
-function formatBRL(v: string) {
-  return Number(v).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
 
 export function ServicosGrid({ servicos }: { servicos: Servico[] }) {
   const porCategoria = new Map<Servico["categoria"], Servico[]>();
