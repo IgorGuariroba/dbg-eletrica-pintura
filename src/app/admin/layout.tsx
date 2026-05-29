@@ -1,6 +1,14 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { auth } from "@/auth";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { AdminSidebarNav } from "./sidebar-nav";
+import { UserMenu } from "./user-menu";
+import { BreadcrumbNav } from "./breadcrumb-nav";
 
 export default async function AdminLayout({
   children,
@@ -12,24 +20,26 @@ export default async function AdminLayout({
   if (session.user.role === "cliente") redirect("/");
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/admin" className="font-bold">
-            DBG Admin
-          </Link>
-          <nav className="text-sm text-muted-foreground flex gap-3">
-            <Link href="/admin/catalogo" className="hover:text-foreground">
-              Catálogo
-            </Link>
-            <Link href="/admin/equipe" className="hover:text-foreground">
-              Equipe
-            </Link>
-          </nav>
-        </div>
-        <span className="text-xs text-muted-foreground">{session.user.email}</span>
-      </header>
-      <main className="p-6">{children}</main>
-    </div>
+    <SidebarProvider>
+      <AdminSidebarNav
+        modulos={session.user.modulos}
+        isAdminRaiz={session.user.role === "admin_raiz"}
+      />
+      <SidebarInset>
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <BreadcrumbNav />
+          <div className="ml-auto">
+            <UserMenu
+              name={session.user.name ?? null}
+              email={session.user.email ?? null}
+              image={session.user.image ?? null}
+            />
+          </div>
+        </header>
+        <main className="p-6">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

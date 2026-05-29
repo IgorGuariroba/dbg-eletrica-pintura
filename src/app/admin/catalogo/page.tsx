@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
+import { Boxes } from "lucide-react";
 import { listarServicos } from "@/catalogo/listar-servicos";
 import { criarServicoRepoDrizzle } from "@/catalogo/servico-repo-drizzle";
 import { db } from "@/db/client";
@@ -15,7 +16,9 @@ import {
 } from "@/components/ui/table";
 import { categoriaServicoEnum } from "@/db/schema";
 import { exigirCatalogo } from "./guard";
-import { ToggleAtivoButton } from "./toggle-button";
+import { CatalogoRowActions } from "./row-actions";
+import { FiltrosCatalogo } from "./filtros";
+import { EmptyState } from "../_components/empty-state";
 
 type SP = { categoria?: string; ativo?: string; page?: string };
 
@@ -27,7 +30,7 @@ export default async function CatalogoPage({
   await exigirCatalogo();
   const sp = await searchParams;
 
-  const categoria = (sp.categoria ?? undefined) as
+  const categoria = sp.categoria as
     | "ELETRICA"
     | "PINTURA"
     | "DRYWALL"
@@ -39,30 +42,31 @@ export default async function CatalogoPage({
   const ativo =
     sp.ativo === "true" ? true : sp.ativo === "false" ? false : undefined;
   const page = Math.max(Number(sp.page ?? 1), 1);
-
   const perPage = 20;
+
   const { itens, total } = await listarServicos(
     { categoria: categoriaValida, ativo, page, perPage },
     criarServicoRepoDrizzle(db),
   );
   const totalPaginas = Math.max(Math.ceil(total / perPage), 1);
+  const temFiltros = categoriaValida || ativo !== undefined;
 
-  function linkFiltro(over: Partial<SP>): Route {
+  function paginaHref(p: number): Route {
     const params = new URLSearchParams();
-    const merged = { ...sp, ...over };
-    Object.entries(merged).forEach(([k, v]) => {
-      if (v !== undefined && v !== "") params.set(k, String(v));
-    });
-    return `/admin/catalogo?${params.toString()}` as Route;
+    if (categoriaValida) params.set("categoria", categoriaValida);
+    if (ativo !== undefined) params.set("ativo", String(ativo));
+    if (p > 1) params.set("page", String(p));
+    return `/admin/catalogo${params.size ? `?${params}` : ""}` as Route;
   }
 
   return (
-    <div className="max-w-6xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-6xl space-y-6">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Catálogo de Serviços</h1>
           <p className="text-sm text-muted-foreground">
-            {total} serviço{total === 1 ? "" : "s"} cadastrado
+            {total} serviço{total === 1 ? "" : "s"}{" "}
+            {temFiltros ? "encontrado" : "cadastrado"}
             {total === 1 ? "" : "s"}
           </p>
         </div>
@@ -71,101 +75,75 @@ export default async function CatalogoPage({
         </Link>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4 text-sm">
-        <span className="text-muted-foreground self-center">Categoria:</span>
-        <Link
-          href={linkFiltro({ categoria: undefined, page: undefined })}
-          className={`rounded border px-2 py-1 ${!categoriaValida ? "bg-foreground text-background" : "border-border"}`}
-        >
-          Todas
-        </Link>
-        {categoriaServicoEnum.enumValues.map((c) => (
-          <Link
-            key={c}
-            href={linkFiltro({ categoria: c, page: undefined })}
-            className={`rounded border px-2 py-1 ${categoriaValida === c ? "bg-foreground text-background" : "border-border"}`}
-          >
-            {c}
-          </Link>
-        ))}
-        <span className="text-muted-foreground self-center ml-4">Status:</span>
-        <Link
-          href={linkFiltro({ ativo: undefined, page: undefined })}
-          className={`rounded border px-2 py-1 ${ativo === undefined ? "bg-foreground text-background" : "border-border"}`}
-        >
-          Todos
-        </Link>
-        <Link
-          href={linkFiltro({ ativo: "true", page: undefined })}
-          className={`rounded border px-2 py-1 ${ativo === true ? "bg-foreground text-background" : "border-border"}`}
-        >
-          Ativos
-        </Link>
-        <Link
-          href={linkFiltro({ ativo: "false", page: undefined })}
-          className={`rounded border px-2 py-1 ${ativo === false ? "bg-foreground text-background" : "border-border"}`}
-        >
-          Inativos
-        </Link>
+      <div className="flex items-center gap-2">
+        <FiltrosCatalogo />
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Categoria</TableHead>
-            <TableHead>Unidade</TableHead>
-            <TableHead className="text-right">Preço base</TableHead>
-            <TableHead className="text-right">Garantia (meses)</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {itens.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                Nenhum serviço encontrado
-              </TableCell>
-            </TableRow>
-          )}
-          {itens.map((s) => (
-            <TableRow key={s.id}>
-              <TableCell className="font-medium">{s.nome}</TableCell>
-              <TableCell>{s.categoria}</TableCell>
-              <TableCell>{s.unidade}</TableCell>
-              <TableCell className="text-right">
-                R$ {Number(s.precoBase).toFixed(2)}
-              </TableCell>
-              <TableCell className="text-right">{s.prazoGarantiaMeses}</TableCell>
-              <TableCell>
-                <Badge variant={s.ativo ? "default" : "secondary"}>
-                  {s.ativo ? "Ativo" : "Inativo"}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right space-x-2">
-                <Link
-                  href={`/admin/catalogo/${s.id}` as Route}
-                  className={buttonVariants({ size: "sm", variant: "outline" })}
-                >
-                  Editar
-                </Link>
-                <ToggleAtivoButton id={s.id} ativo={s.ativo} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      {itens.length === 0 ? (
+        temFiltros ? (
+          <EmptyState
+            icon={Boxes}
+            titulo="Nenhum serviço encontrado"
+            descricao="Tente ajustar os filtros ou limpar para ver tudo."
+          />
+        ) : (
+          <EmptyState
+            icon={Boxes}
+            titulo="Catálogo vazio"
+            descricao="Cadastre o primeiro serviço para liberar o orçamento da equipe."
+            acao={{ label: "Novo serviço", href: "/admin/catalogo/novo" }}
+          />
+        )
+      ) : (
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Unidade</TableHead>
+                <TableHead className="text-right">Preço base</TableHead>
+                <TableHead className="text-right">Garantia (meses)</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {itens.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell className="font-medium">{s.nome}</TableCell>
+                  <TableCell>{s.categoria}</TableCell>
+                  <TableCell>{s.unidade}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    R$ {Number(s.precoBase).toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {s.prazoGarantiaMeses}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={s.ativo ? "default" : "secondary"}>
+                      {s.ativo ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <CatalogoRowActions id={s.id} nome={s.nome} ativo={s.ativo} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {totalPaginas > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm">
+        <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
             Página {page} de {totalPaginas}
           </span>
           <div className="flex gap-2">
             {page > 1 && (
               <Link
-                href={linkFiltro({ page: String(page - 1) })}
+                href={paginaHref(page - 1)}
                 className={buttonVariants({ size: "sm", variant: "outline" })}
               >
                 Anterior
@@ -173,7 +151,7 @@ export default async function CatalogoPage({
             )}
             {page < totalPaginas && (
               <Link
-                href={linkFiltro({ page: String(page + 1) })}
+                href={paginaHref(page + 1)}
                 className={buttonVariants({ size: "sm", variant: "outline" })}
               >
                 Próxima
