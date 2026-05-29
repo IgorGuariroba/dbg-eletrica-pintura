@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
-import { Boxes, LayoutDashboard, Users } from "lucide-react";
+import { Boxes, ClipboardList, LayoutDashboard, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +25,7 @@ interface Item {
 
 const ITENS: Item[] = [
   { label: "Visão geral", href: "/admin", icon: LayoutDashboard },
+  { label: "Fila de OS", href: "/painel/fila", icon: ClipboardList, modulo: "OPERACAO" },
   { label: "Catálogo", href: "/admin/catalogo", icon: Boxes, modulo: "CATALOGO" },
   { label: "Equipe", href: "/admin/equipe", icon: Users, modulo: "EQUIPE" },
 ];

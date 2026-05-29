@@ -211,6 +211,16 @@ export const ordemServico = pgTable("ordem_servico", {
   }),
   prazoGarantiaMeses: integer("prazo_garantia_meses"),
   agendadoPara: timestamp("agendado_para", { withTimezone: true }),
+  metadados: jsonb("metadados")
+    .$type<{
+      devolucoes?: {
+        tecnicoId: string;
+        motivo: string;
+        em: string;
+      }[];
+    }>()
+    .notNull()
+    .default(sql`'{}'::jsonb`),
   criadoEm: timestamp("criado_em", { withTimezone: true })
     .defaultNow()
     .notNull(),
