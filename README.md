@@ -47,7 +47,7 @@ Como o upload de fotos é feito diretamente do navegador do cliente para o Cloud
       "HEAD"
     ],
     "AllowedHeaders": [
-      "*"
+      "content-type"
     ],
     "ExposeHeaders": [],
     "MaxAgeSeconds": 3000
@@ -56,6 +56,15 @@ Como o upload de fotos é feito diretamente do navegador do cliente para o Cloud
 ```
 
 6. Salve as alterações.
+
+### Script Utilitário (Alternativa para configuração local/rápida)
+
+Você também pode utilizar o script `configure-r2-cors.js` para configurar as políticas de CORS via API. Ele carrega as credenciais do seu arquivo `.env.local`:
+
+```bash
+node configure-r2-cors.js
+```
+*Nota: Este script é uma ferramenta de conveniência de desenvolvimento e não é necessário rodá-lo no pipeline de deploy contínuo (CI/CD).*
 
 ## Variáveis de ambiente
 

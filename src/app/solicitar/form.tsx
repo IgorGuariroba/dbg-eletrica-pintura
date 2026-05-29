@@ -263,6 +263,7 @@ export function SolicitarForm() {
         })
       );
     } catch (e) {
+      console.error("Erro no upload de fotos:", e);
       setErroLocal(e instanceof Error ? e.message : "falha no upload");
     } finally {
       setEnviandoFoto(false);

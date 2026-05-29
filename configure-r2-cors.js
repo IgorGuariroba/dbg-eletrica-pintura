@@ -28,7 +28,7 @@ async function configurarCors(prefix) {
     {
       AllowedOrigins: ["http://localhost:3000", "https://dbg-eletrica-pintura.vercel.app"],
       AllowedMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
-      AllowedHeaders: ["*"],
+      AllowedHeaders: ["content-type"],
       ExposeHeaders: [],
       MaxAgeSeconds: 3000,
     },
