@@ -1,6 +1,5 @@
 import React from "react";
-import { render } from "@react-email/render";
-import { Html, Body, Head, Container, Heading, Text, Link } from "@react-email/components";
+import { render, Html, Body, Head, Container, Heading, Text, Link } from "react-email";
 import { Resend } from "resend";
 import { CORES } from "./cores";
 
