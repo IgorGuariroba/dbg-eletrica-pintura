@@ -18,6 +18,18 @@ import { assinarUploadFotoAction, type ActionState } from "./actions";
 
 type Action = (state: ActionState, form: FormData) => Promise<ActionState>;
 
+// Base UI Select.Value mostra o valor cru; estes mapas traduzem para o rótulo.
+const LABEL_CATEGORIA: Record<string, string> = {
+  ELETRICA: "Elétrica",
+  PINTURA: "Pintura",
+  DRYWALL: "Drywall",
+};
+const LABEL_UNIDADE: Record<string, string> = {
+  PONTO: "Ponto",
+  M2: "m²",
+  HORA: "Hora",
+};
+
 export function ServicoForm({
   action,
   servico,
@@ -68,7 +80,9 @@ export function ServicoForm({
           <Label htmlFor="categoria">Categoria</Label>
           <Select name="categoria" defaultValue={servico?.categoria ?? "ELETRICA"}>
             <SelectTrigger id="categoria">
-              <SelectValue />
+              <SelectValue>
+                {(v: string) => LABEL_CATEGORIA[v] ?? v}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ELETRICA">Elétrica</SelectItem>
@@ -81,7 +95,9 @@ export function ServicoForm({
           <Label htmlFor="unidade">Unidade</Label>
           <Select name="unidade" defaultValue={servico?.unidade ?? "PONTO"}>
             <SelectTrigger id="unidade">
-              <SelectValue />
+              <SelectValue>
+                {(v: string) => LABEL_UNIDADE[v] ?? v}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="PONTO">Ponto</SelectItem>
