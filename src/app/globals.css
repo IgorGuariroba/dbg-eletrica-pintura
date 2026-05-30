@@ -31,6 +31,10 @@
   --border: oklch(0.9288 0.0126 255.5078);
   --input: oklch(1.0000 0 0);
   --ring: oklch(0.7072 0.1414 241.2584);
+  /* Assinatura manuscrita: tinta escura sobre papel branco, independente de
+     tema (artefato legal, PNG armazenado consistente). */
+  --signature-paper: oklch(1.0000 0 0);
+  --signature-ink: oklch(0.1776 0 0);
   --chart-1: oklch(0.7072 0.1414 241.2584);
   --chart-2: oklch(0.7610 0.2015 149.7403);
   --chart-3: oklch(0.6263 0.1369 244.0440);
@@ -95,6 +99,10 @@
   --border: oklch(0.2973 0.0325 284.2512);
   --input: oklch(0.1743 0.0227 283.7998);
   --ring: oklch(0.7072 0.1414 241.2584);
+  /* Mesmo papel branco/tinta escura no tema escuro: a assinatura é sempre
+     dark-on-white, como um documento assinado. */
+  --signature-paper: oklch(1.0000 0 0);
+  --signature-ink: oklch(0.1776 0 0);
   --chart-1: oklch(0.7072 0.1414 241.2584);
   --chart-2: oklch(0.7610 0.2015 149.7403);
   --chart-3: oklch(0.6263 0.1369 244.0440);
@@ -136,6 +144,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-signature-paper: var(--signature-paper);
+  --color-signature-ink: var(--signature-ink);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

@@ -6,6 +6,7 @@ import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
 export interface ContextoTecnico {
   membroId: string;
   nome: string | null;
+  email: string | null;
   especialidades: string[];
 }
 
@@ -26,6 +27,7 @@ export async function exigirTecnico(): Promise<ContextoTecnico> {
   return {
     membroId: membro.id,
     nome: user.name ?? user.email ?? null,
+    email: user.email ?? null,
     especialidades: membro.especialidades ?? [],
   };
 }

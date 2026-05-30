@@ -257,6 +257,14 @@ export const orcamento = pgTable("orcamento", {
   // Assinatura digital da aprovação: posse do link (token) + IP + carimbo.
   assinaturaToken: varchar("assinatura_token", { length: 64 }),
   assinaturaIp: varchar("assinatura_ip", { length: 64 }),
+  // Aprovação presencial (assinada no PWA do técnico): DIGITAL | PRESENCIAL.
+  aprovacaoTipo: varchar("aprovacao_tipo", { length: 20 }),
+  // Chave da assinatura manuscrita no R2 privado (assinaturas/os/{id}/{uuid}.png).
+  assinaturaUrl: text("assinatura_url"),
+  // E-mail do técnico que captou a aprovação presencial.
+  aprovacaoPor: varchar("aprovacao_por", { length: 255 }),
+  // Aceite da LGPD registrado no ato (presencial).
+  aprovacaoLgpd: boolean("aprovacao_lgpd"),
   motivoRejeicao: text("motivo_rejeicao"),
   criadoEm: timestamp("criado_em", { withTimezone: true })
     .defaultNow()

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import type { UploadAssinatura } from "./aprovacao-presencial";
 
 export interface AssinarInput {
   filename: string;
@@ -61,6 +62,37 @@ function init(): { client: S3Client; bucket: string } {
   });
   bucketCached = bucket;
   return { client: clientCached, bucket: bucketCached };
+}
+
+/** Chave da assinatura no R2: `assinaturas/os/{id}/{uuid}.png`. */
+export function montarChaveAssinaturaOs(osId: string): string {
+  return `assinaturas/os/${osId}/${randomUUID()}.png`;
+}
+
+/**
+ * Envio server-side da assinatura manuscrita (data URL base64 → PNG no R2).
+ * Server-side em vez de presigned: o PWA pode replayar no sync offline sem
+ * precisar de uma URL assinada válida no momento.
+ */
+export function uploadAssinaturaOsR2(): UploadAssinatura {
+  return {
+    async enviarAssinatura({ osId, dataUrl }) {
+      const virgula = dataUrl.indexOf(",");
+      if (virgula < 0) throw new Error("data URL de assinatura inválido");
+      const corpo = Buffer.from(dataUrl.slice(virgula + 1), "base64");
+      const key = montarChaveAssinaturaOs(osId);
+      const { client, bucket } = init();
+      await client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          Body: corpo,
+          ContentType: "image/png",
+        }),
+      );
+      return { url: key };
+    },
+  };
 }
 
 export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
