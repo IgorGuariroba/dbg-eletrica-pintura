@@ -15,3 +15,12 @@ export function mensagemACaminho(input: {
 }): string {
   return `Olá ${input.clienteNome}, sou ${input.tecnicoNome} da DBG, estou a caminho do endereço ${input.endereco}`;
 }
+
+/** Mensagem pedindo aprovação remota de um Orçamento Complementar. */
+export function mensagemAprovacaoComplementar(input: {
+  clienteNome: string;
+  tecnicoNome: string;
+  link: string;
+}): string {
+  return `Olá ${input.clienteNome}, sou ${input.tecnicoNome} da DBG. Identifiquei um serviço adicional necessário. Veja o orçamento complementar e aprove por aqui: ${input.link}`;
+}

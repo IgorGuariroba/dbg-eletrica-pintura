@@ -15,6 +15,12 @@ import { obterLocalizacao } from "@/features/campo/geo";
 import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { mensagemACaminho, montarLinkWhatsApp } from "@/lib/whatsapp";
 
+interface Complementar {
+  id: string;
+  estado: string;
+  categoria: string;
+}
+
 interface Detalhe {
   estado: string;
   clienteNome: string;
@@ -22,6 +28,7 @@ interface Detalhe {
   endereco: string;
   tecnicoNome: string;
   presencaConfirmada: boolean;
+  complementares: Complementar[];
 }
 
 export function RastreamentoView({ osId }: { osId: string }) {
@@ -179,6 +186,28 @@ export function RastreamentoView({ osId }: { osId: string }) {
           </a>
         </CardContent>
       </Card>
+
+      {detalhe.complementares.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Orçamentos complementares</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {detalhe.complementares.map((c) => (
+              <Link
+                key={c.id}
+                href={`/campo/os/${c.id}` as Route}
+                className="flex items-center justify-between gap-2 rounded-lg border p-3 text-sm"
+              >
+                <span>{c.categoria}</span>
+                <Badge variant="secondary">
+                  {rotularEstadoCliente(c.estado)}
+                </Badge>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {detalhe.estado === "ORCADA" ? (
         <Link

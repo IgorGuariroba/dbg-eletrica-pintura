@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import type { Route } from "next";
+import { Camera, Loader2, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -275,6 +277,16 @@ export function ExecucaoView({ osId }: { osId: string }) {
           </div>
         </CardContent>
       </Card>
+
+      {estado === "EM_EXECUCAO" && (
+        <Link
+          href={`/campo/os/${osId}/complementar/nova` as Route}
+          className={buttonVariants({ variant: "outline", className: "w-full" })}
+        >
+          <Plus className="size-4" aria-hidden />
+          Orçamento complementar
+        </Link>
+      )}
 
       <Button
         className="w-full"

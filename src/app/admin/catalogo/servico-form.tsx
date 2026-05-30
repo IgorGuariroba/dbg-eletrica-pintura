@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { Camera, X } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,18 @@ import type { Servico } from "@/catalogo/servico-repo";
 import { assinarUploadFotoAction, type ActionState } from "./actions";
 
 type Action = (state: ActionState, form: FormData) => Promise<ActionState>;
+
+// Base UI Select.Value mostra o valor cru; estes mapas traduzem para o rótulo.
+const LABEL_CATEGORIA: Record<string, string> = {
+  ELETRICA: "Elétrica",
+  PINTURA: "Pintura",
+  DRYWALL: "Drywall",
+};
+const LABEL_UNIDADE: Record<string, string> = {
+  PONTO: "Ponto",
+  M2: "m²",
+  HORA: "Hora",
+};
 
 export function ServicoForm({
   action,
@@ -68,7 +81,9 @@ export function ServicoForm({
           <Label htmlFor="categoria">Categoria</Label>
           <Select name="categoria" defaultValue={servico?.categoria ?? "ELETRICA"}>
             <SelectTrigger id="categoria">
-              <SelectValue />
+              <SelectValue>
+                {(v: string) => LABEL_CATEGORIA[v] ?? v}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ELETRICA">Elétrica</SelectItem>
@@ -81,7 +96,9 @@ export function ServicoForm({
           <Label htmlFor="unidade">Unidade</Label>
           <Select name="unidade" defaultValue={servico?.unidade ?? "PONTO"}>
             <SelectTrigger id="unidade">
-              <SelectValue />
+              <SelectValue>
+                {(v: string) => LABEL_UNIDADE[v] ?? v}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="PONTO">Ponto</SelectItem>
@@ -120,30 +137,57 @@ export function ServicoForm({
       </div>
 
       <div>
-        <Label htmlFor="foto">Foto (opcional)</Label>
-        <Input
-          id="foto"
-          type="file"
-          accept="image/*"
-          disabled={enviandoFoto}
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) enviarFoto(f);
-          }}
-        />
+        <Label>Foto (opcional)</Label>
         <input type="hidden" name="fotoUrl" value={fotoUrl} />
-        {enviandoFoto && (
-          <p className="text-xs text-muted-foreground mt-1">Enviando…</p>
-        )}
-        {erroFoto && <p className="text-xs text-destructive mt-1">{erroFoto}</p>}
-        {fotoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={fotoUrl}
-            alt="Pré-visualização"
-            className="mt-2 h-24 w-24 rounded object-cover border border-border"
-          />
-        )}
+        <div className="mt-2 flex items-start gap-3">
+          {fotoUrl && (
+            <div className="group relative size-24 shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={fotoUrl}
+                alt="Pré-visualização do serviço"
+                className="h-full w-full object-cover"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setFotoUrl("")}
+                aria-label="Remover foto"
+                className="absolute top-1 right-1 size-6 rounded-full border-border bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <X className="size-3.5" />
+              </Button>
+            </div>
+          )}
+          <label
+            className={`flex flex-1 items-center gap-2 rounded-lg border border-dashed p-3 text-sm transition-colors ${
+              enviandoFoto
+                ? "cursor-not-allowed bg-muted/30 text-muted-foreground"
+                : "cursor-pointer hover:border-muted-foreground/40 hover:bg-muted"
+            }`}
+          >
+            <Camera className="size-4 shrink-0" aria-hidden />
+            <span>
+              {enviandoFoto
+                ? "Enviando…"
+                : fotoUrl
+                  ? "Trocar foto"
+                  : "Adicionar foto"}
+            </span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              hidden
+              disabled={enviandoFoto}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) enviarFoto(f);
+              }}
+            />
+          </label>
+        </div>
+        {erroFoto && <p className="mt-1 text-xs text-destructive">{erroFoto}</p>}
       </div>
 
       <div className="flex items-center gap-3">

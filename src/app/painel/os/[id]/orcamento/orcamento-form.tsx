@@ -124,7 +124,13 @@ export function OrcamentoForm({
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um serviço" />
+                      {/* Base UI mostra o valor cru por padrão — exibe o nome. */}
+                      <SelectValue placeholder="Selecione um serviço">
+                        {() =>
+                          servicos.find((s) => s.id === l.servicoId)?.nome ??
+                          "Selecione um serviço"
+                        }
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {servicos.map((s) => (

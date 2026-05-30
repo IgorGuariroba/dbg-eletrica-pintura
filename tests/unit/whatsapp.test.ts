@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { montarLinkWhatsApp } from "@/lib/whatsapp";
+import {
+  montarLinkWhatsApp,
+  mensagemAprovacaoComplementar,
+} from "@/lib/whatsapp";
 
 describe("montarLinkWhatsApp", () => {
   it("monta a URL wa.me com o telefone só com dígitos", () => {
@@ -16,5 +19,18 @@ describe("montarLinkWhatsApp", () => {
       texto: "Olá, João & Maria",
     });
     expect(url).toContain("text=Ol%C3%A1%2C%20Jo%C3%A3o%20%26%20Maria");
+  });
+});
+
+describe("mensagemAprovacaoComplementar", () => {
+  it("cita cliente, técnico e o link de aprovação", () => {
+    const msg = mensagemAprovacaoComplementar({
+      clienteNome: "Ana",
+      tecnicoNome: "Bruno",
+      link: "https://dbg.app/s/tok-1",
+    });
+    expect(msg).toContain("Ana");
+    expect(msg).toContain("Bruno");
+    expect(msg).toContain("https://dbg.app/s/tok-1");
   });
 });
