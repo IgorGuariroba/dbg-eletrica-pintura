@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import type { DB } from "@/db/client";
 import { orcamento, ordemServico } from "@/db/schema";
 import type { ReativacaoRepo } from "./reativacao-repo";
@@ -19,38 +19,37 @@ export function criarReativacaoRepoDrizzle(db: DB): ReativacaoRepo {
     },
 
     async reativar(osId, novoEstado, novosMetadados, novaValidade) {
-      const atualizados = await db
-        .update(ordemServico)
-        .set({
-          estado: novoEstado,
-          metadados: novosMetadados,
-        })
-        .where(eq(ordemServico.id, osId))
-        .returning({ id: ordemServico.id });
-
-      if (atualizados.length === 0) {
-        return false;
-      }
-
-      // Busca o orçamento mais recente da OS para atualizar a validade
-      const [orc] = await db
+      // Subquery: o orçamento mais recente da OS. Resolvida dentro do mesmo
+      // UPDATE para dispensar um SELECT prévio e caber no batch transacional.
+      const orcamentoMaisRecente = db
         .select({ id: orcamento.id })
         .from(orcamento)
         .where(eq(orcamento.osId, osId))
         .orderBy(desc(orcamento.criadoEm))
         .limit(1);
 
-      if (orc) {
-        await db
+      // Atomicidade: o driver neon-http só suporta transações em batch
+      // (array de queries, único round-trip). Os dois UPDATEs vão juntos —
+      // ou ambos aplicam, ou nenhum.
+      const [atualizados] = await db.batch([
+        db
+          .update(ordemServico)
+          .set({
+            estado: novoEstado,
+            metadados: novosMetadados,
+          })
+          .where(eq(ordemServico.id, osId))
+          .returning({ id: ordemServico.id }),
+        db
           .update(orcamento)
           .set({
             validoAte: novaValidade,
             rejeitadoEm: null,
           })
-          .where(eq(orcamento.id, orc.id));
-      }
+          .where(inArray(orcamento.id, orcamentoMaisRecente)),
+      ]);
 
-      return true;
+      return atualizados.length > 0;
     },
   };
 }
