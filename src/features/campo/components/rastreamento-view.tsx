@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AcoesOs } from "@/features/campo/components/acoes-os";
 import { getCampoDb } from "@/features/campo/db";
 import { enfileirarTransicao } from "@/features/campo/execucao-repo";
 import { obterLocalizacao } from "@/features/campo/geo";
@@ -186,6 +187,8 @@ export function RastreamentoView({ osId }: { osId: string }) {
           </a>
         </CardContent>
       </Card>
+
+      <AcoesOs osId={osId} estado={detalhe.estado} onConcluido={carregar} />
 
       {detalhe.complementares.length > 0 && (
         <Card>
