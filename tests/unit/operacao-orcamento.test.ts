@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { calcularDeslocamento } from "@/operacao/deslocamento-calculo";
 import {
-  calcularDeslocamento,
   montarOrcamento,
   type ConfigDeslocamento,
   type MontarOrcamentoInput,

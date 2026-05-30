@@ -4,6 +4,7 @@ import type {
   OrcamentoRepo,
   ServicoPreco,
 } from "./orcamento-repo";
+import { calcularDeslocamento } from "./deslocamento-calculo";
 import {
   EstadoInvalidoError,
   ItensObrigatorioError,
@@ -42,20 +43,6 @@ export interface MontarOrcamentoInput {
 
 export interface OrcamentoMontado {
   id: string;
-}
-
-/**
- * Deslocamento = (km × preço do litro) ÷ km por litro.
- * Valores monetários circulam como string decimal (mesmo padrão do Catálogo).
- */
-export function calcularDeslocamento(
-  km: number,
-  precoLitro: string,
-  kmPorLitro: string,
-): string {
-  const litros = km / Number(kmPorLitro);
-  const valor = litros * Number(precoLitro);
-  return valor.toFixed(2);
 }
 
 function somar(valores: string[]): string {
@@ -157,6 +144,13 @@ export async function montarOrcamento(
     validoAte,
   });
   if (!criado) throw new OsIndisponivelError();
+
+  // Dispara a notificação de e-mail de forma assíncrona (não-bloqueante)
+  const { notificarMudancaEstadoOs } = await import("@/notificacao/notificador");
+  notificarMudancaEstadoOs(os.id, "ORCADA").catch((e) => {
+    console.error(`Erro ao notificar e-mail de orçamento pronto da OS ${os.id}:`, e);
+  });
+
   return { id: criado.id };
 }
 

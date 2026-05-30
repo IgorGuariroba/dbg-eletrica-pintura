@@ -99,6 +99,11 @@ export async function processarItemSync(
         new Date(item.criadoEm),
         payload.lat && payload.lon ? { lat: payload.lat, lon: payload.lon } : undefined
       );
+
+      const { notificarMudancaEstadoOs } = await import("@/notificacao/notificador");
+      notificarMudancaEstadoOs(osId, payload.alvo).catch((e) => {
+        console.error(`Erro ao notificar transição offline da OS ${osId}:`, e);
+      });
     } else if (item.tipo === "FOTO") {
       const uploadService = options?.uploadFoto ?? uploadFotoOsR2();
       await uploadService.enviarFoto({
