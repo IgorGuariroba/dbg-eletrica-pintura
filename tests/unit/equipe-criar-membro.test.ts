@@ -21,11 +21,12 @@ const inputValido = {
 
 function repoFake(over: Partial<MembroRepo> = {}): MembroRepo {
   return {
-    inserir: vi.fn(async (n) => ({ id: "uuid-1", ...n, criadoEm: new Date() })),
+    inserir: vi.fn(async (n) => ({ id: "uuid-1", slug: "bruna", ...n, criadoEm: new Date() })),
     atualizar: vi.fn(),
     toggleAtivo: vi.fn(),
     buscarPorId: vi.fn(),
     buscarPorEmail: vi.fn(async () => null),
+    buscarPorSlug: vi.fn(async () => null),
     listar: vi.fn(),
     ...over,
   };
@@ -83,6 +84,7 @@ describe("criarMembro", () => {
     const existente = {
       id: "outro",
       ...inputValido,
+      slug: "outro",
       criadoEm: new Date(),
     };
     const repo = repoFake({ buscarPorEmail: vi.fn(async () => existente) });

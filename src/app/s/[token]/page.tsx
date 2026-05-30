@@ -1,15 +1,20 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import type { Route } from "next";
 import { db } from "@/db/client";
 import { carregarParaCliente } from "@/operacao/aprovacao";
 import { criarAprovacaoRepoDrizzle } from "@/operacao/aprovacao-repo-drizzle";
 import { TokenInvalidoError } from "@/operacao/aprovacao-repo";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { buttonVariants } from "@/components/ui/button";
 import { formatBRL } from "@/lib/utils";
 import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { SiteHeader } from "../../_landing/site-header";
 import { SiteFooter } from "../../_landing/site-footer";
 import { AcoesOrcamento } from "./acoes-orcamento";
 import { EstouAqui } from "./estou-aqui";
+import { ArrowRight } from "lucide-react";
 
 export const metadata = {
   title: "Seu orçamento — DBG Elétrica e Pintura",
@@ -73,6 +78,33 @@ export default async function AcompanhamentoPage({
                   </Badge>
                 </div>
 
+                 {os.tecnico && (
+                  <div className="mt-4 flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 p-3 text-sm">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-10 border shadow-sm">
+                        {os.tecnico.fotoUrl && (
+                          <AvatarImage src={os.tecnico.fotoUrl} alt={os.tecnico.nome} className="object-cover" />
+                        )}
+                        <AvatarFallback className="text-sm font-bold bg-primary/10 text-primary">
+                          {os.tecnico.nome.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground leading-none">Seu técnico</p>
+                        <p className="font-semibold text-foreground mt-0.5">{os.tecnico.nome}</p>
+                      </div>
+                    </div>
+                    {os.tecnico.slug && (
+                      <Link
+                        href={`/tecnico/${os.tecnico.slug}` as Route}
+                        className={buttonVariants({ variant: "ghost", size: "sm", className: "text-xs font-semibold gap-1 text-primary hover:text-primary/85 hover:bg-primary/5 h-8 px-2" })}
+                      >
+                        Ver perfil <ArrowRight className="size-3" />
+                      </Link>
+                    )}
+                  </div>
+                )}
+
                 {os.estado === "A_CAMINHO" && (
                   <div className="mt-4 space-y-3 rounded-md bg-muted/50 p-4">
                     <p className="text-sm text-muted-foreground">
@@ -84,35 +116,52 @@ export default async function AcompanhamentoPage({
                 )}
 
                 {os.orcamento && (
-                  <div className="mt-4 space-y-2 text-sm">
-                    <ul className="divide-y">
-                      {os.orcamento.itens.map((it, i) => (
-                        <li key={i} className="flex justify-between py-2">
-                          <span>
-                            {it.nome}
-                            <span className="text-muted-foreground">
-                              {" "}
-                              × {Number(it.quantidade)}
-                            </span>
-                          </span>
-                          <span>{formatBRL(it.subtotal)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Deslocamento</span>
-                      <span>{formatBRL(os.orcamento.totalDeslocamento)}</span>
+                  <div className="mt-6 space-y-4 text-sm">
+                    <div className="rounded-lg border border-border/80 overflow-hidden">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-muted/50 border-b border-border/80 text-muted-foreground font-semibold uppercase tracking-wider">
+                            <th className="p-3">Serviço</th>
+                            <th className="p-3 text-center">Qtd</th>
+                            <th className="p-3 text-right">Preço Base</th>
+                            <th className="p-3 text-right">Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/60 text-foreground">
+                          {os.orcamento.itens.map((it, i) => (
+                            <tr key={i} className="hover:bg-muted/10 transition-colors">
+                              <td className="p-3 font-medium">{it.nome}</td>
+                              <td className="p-3 text-center">{Number(it.quantidade)}</td>
+                              <td className="p-3 text-right">{formatBRL(it.precoUnitario)}</td>
+                              <td className="p-3 text-right">{formatBRL(it.subtotal)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    <div className="flex justify-between border-t pt-2 text-base font-bold">
-                      <span>Total</span>
-                      <span>{formatBRL(os.orcamento.total)}</span>
+
+                    <div className="space-y-2 border-t pt-4 border-border">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Deslocamento</span>
+                        <span>{formatBRL(os.orcamento.totalDeslocamento)}</span>
+                      </div>
+                      <div className="flex justify-between text-base font-bold">
+                        <span>Total</span>
+                        <span className="text-primary">{formatBRL(os.orcamento.total)}</span>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Válido até{" "}
-                      {os.orcamento.validoAte.toLocaleDateString("pt-BR", {
-                        timeZone: "America/Sao_Paulo",
-                      })}
-                    </p>
+
+                    <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center text-xs text-muted-foreground border-t pt-3 border-dashed border-border">
+                      <span className="font-medium text-emerald-600 dark:text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 w-fit">
+                        Preços fixos por serviço, sem surpresa
+                      </span>
+                      <span>
+                        Válido até{" "}
+                        {os.orcamento.validoAte.toLocaleDateString("pt-BR", {
+                          timeZone: "America/Sao_Paulo",
+                        })}
+                      </span>
+                    </div>
 
                     {os.estado === "ORCADA" && (
                       <div className="pt-3">

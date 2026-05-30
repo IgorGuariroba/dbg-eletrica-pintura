@@ -1,12 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
+import type { Route } from "next";
 import { criarSolicitacaoRepoDrizzle } from "@/operacao/solicitacao-repo-drizzle";
 import { db } from "@/db/client";
 import { buttonVariants } from "@/components/ui/button";
 import { urlWhatsApp } from "@/lib/contato";
 import { SiteHeader } from "../../../_landing/site-header";
 import { SiteFooter } from "../../../_landing/site-footer";
+import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const LABEL_CATEGORIA: Record<string, string> = {
   ELETRICA: "Elétrica",
@@ -37,6 +40,12 @@ export default async function ConfirmacaoPage({
     `Olá! Acabei de enviar a solicitação #${protocoloCurto} ` +
     `(${categoriasLabel}). Pode confirmar o recebimento?`;
 
+  const osComTecnico = ordens.find((o) => o.tecnicoId !== null);
+  let tecnico = null;
+  if (osComTecnico && osComTecnico.tecnicoId) {
+    tecnico = await criarMembroRepoDrizzle(db).buscarPorId(osComTecnico.tecnicoId);
+  }
+
   return (
     <>
       <SiteHeader />
@@ -51,6 +60,33 @@ export default async function ConfirmacaoPage({
           Obrigado, {cliente.nome.split(" ")[0]}. Recebemos seu pedido e vamos
           retornar pelo WhatsApp.
         </p>
+
+        {tecnico && (
+          <div className="mt-6 mx-auto max-w-sm rounded-lg border border-border/60 bg-muted/20 p-4 text-left text-sm flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar className="size-10 border shadow-sm">
+                {tecnico.fotoUrl && (
+                  <AvatarImage src={tecnico.fotoUrl} alt={tecnico.nome} className="object-cover" />
+                )}
+                <AvatarFallback className="text-sm font-bold bg-primary/10 text-primary">
+                  {tecnico.nome.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground leading-none">Técnico Designado</p>
+                <p className="font-semibold text-foreground mt-1">{tecnico.nome}</p>
+              </div>
+            </div>
+            {tecnico.slug && (
+              <Link
+                href={`/tecnico/${tecnico.slug}` as Route}
+                className={buttonVariants({ variant: "ghost", size: "sm", className: "text-xs font-semibold gap-1 text-primary hover:text-primary/85 hover:bg-primary/5 h-8 px-2" })}
+              >
+                Ver perfil <ArrowRight className="size-3" />
+              </Link>
+            )}
+          </div>
+        )}
 
         <ul className="mt-6 inline-flex flex-col gap-2 text-left text-sm">
           <li>
