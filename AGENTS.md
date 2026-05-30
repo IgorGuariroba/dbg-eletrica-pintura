@@ -287,7 +287,71 @@ A densidade ideal varia conforme a categoria de tela e o dispositivo. Antes de r
 
 ---
 
-## 11. Referências Importantes
+## 11. Diretrizes de Organização e Arquitetura (Pastas e Componentes)
+
+Para garantir escalabilidade, legibilidade e manutenibilidade do código, a estrutura de pastas e componentes do projeto deve seguir estritamente o padrão abaixo:
+
+### 11.1. Arquitetura de Diretórios (`src/`)
+
+```txt
+src/
+├── app/          # Apenas composição de páginas, layouts e roteamento.
+├── components/   # Componentes globais e reutilizáveis (divididos em ui, layout e shared).
+│   ├── ui/       # Componentes primitivos do Design System (shadcn/ui e extensões diretas).
+│   ├── layout/   # Estruturas reutilizáveis globais de layout (sidebar, header, etc.).
+│   └── shared/   # Componentes de negócio reutilizáveis e independentes de domínio.
+├── features/     # Módulos específicos de negócio agrupados por domínio/entidade.
+│   └── <feature>/
+│       ├── components/
+│       ├── hooks/
+│       ├── services/
+│       └── types/
+├── lib/          # Configurações de clientes, utilitários globais e bibliotecas.
+├── hooks/        # Hooks globais não atrelados a uma feature.
+└── types/        # Tipos globais e compartilhados da aplicação.
+```
+
+### 11.2. Regras de Distribuição de Responsabilidades
+
+1. **`components/ui` (Design System):**
+   - Destinado **apenas** a componentes base de UI do shadcn/ui ou pequenas customizações/extensões diretas, desde que continuem sendo componentes genéricos de UI (ex: `button.tsx`, `input.tsx`, ou um `<StatusBadge status="..." />` genérico).
+   - **NÃO** colocar qualquer componente de negócio ou com lógica específica de domínio aqui.
+
+2. **`components/layout` (Estruturas de Layout):**
+   - Estruturas de layout reaproveitáveis globais (ex: `app-sidebar.tsx`, `app-header.tsx`, `page-container.tsx`, `page-title.tsx`).
+
+3. **`components/shared` (Componentes Compartilhados):**
+   - Componentes funcionais e de negócio reutilizáveis que **não pertencem a uma feature ou domínio específico** (ex: `<EmptyState />`, `<SearchBar />`, `<ConfirmDialog />`).
+
+4. **`features/<dominio>` (Componentes e Lógica de Negócio):**
+   - Todo componente com acoplamento a regras de negócio, dados de entidades específicas (ex: cliente, técnico, orçamento, OS) deve ser armazenado dentro de sua respectiva feature (ex: `features/customers/components/customer-form.tsx`).
+   - Evita encher o diretório global `components/` com centenas de arquivos específicos de negócio.
+
+5. **`app/` (Composição de Páginas):**
+   - Páginas e rotas devem conter **apenas composição de componentes** e conexão com as features ou layouts. Lógica de negócio pesada ou formulários complexos devem ser encapsulados em suas respectivas features ou hooks e apenas importados no `app/`.
+
+### 11.3. Fluxo de Dependências Recomendado
+
+A árvore de dependências deve fluir de componentes de baixo nível (genéricos) para alto nível (páginas/negócio).
+```txt
+ui (design system)
+   ↓
+shared / layout
+   ↓
+feature (domínio específico)
+   ↓
+page (composição de rota)
+```
+*Exemplo prático:* Um componente de domínio `<CustomerTable />` (de `features/customers`) importa `<Table />`, `<Button />` e `<Badge />` (de `components/ui`).
+
+### 11.4. Armadilhas a Evitar
+
+* **Wrappers Desnecessários:** Evite criar wrappers simples sem alteração de comportamento ou estilização estendida, como `<AppButton />` que apenas encapsula `<Button />`. Isso gera redundância e complexidade desnecessária.
+* **Poluição do Diretório `components/`:** Nunca solte arquivos de negócio diretamente em `components/`. Use sempre `components/shared/`, `components/layout/` ou o diretório de `features/` adequado.
+
+---
+
+## 12. Referências Importantes
 
 Para entender o domínio de negócios e a estrutura visual:
 * **Regras de Negócio e Domínio:** Veja o arquivo [CONTEXT.md](file:///home/movida/projetos/dbg/CONTEXT.md).
@@ -295,7 +359,7 @@ Para entender o domínio de negócios e a estrutura visual:
 
 ---
 
-## 12. Workflow de Mudanças
+## 13. Workflow de Mudanças
 
 Toda alteração de código deve seguir estritamente estes passos:
 1. **Preparar branch:** `git checkout main && git pull` → `git switch -c <tipo>/<nome-descritivo>` (tipos permitidos: `feat/`, `fix/`, `docs/`, `refactor/`, `chore/`).
