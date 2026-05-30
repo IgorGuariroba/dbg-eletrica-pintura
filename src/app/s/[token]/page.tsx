@@ -63,7 +63,7 @@ export default async function AcompanhamentoPage({
         <div className="mt-8 space-y-6">
           {view.ordens.map((os) => {
             return (
-              <section key={os.id} className="rounded-lg border bg-background p-5">
+              <section key={os.id} className="rounded-lg border bg-background p-6">
                 <div className="flex items-center justify-between">
                   <h2 className="font-semibold">
                     {LABEL_CATEGORIA[os.categoria] ?? os.categoria}
