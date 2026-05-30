@@ -24,6 +24,8 @@ export interface FotoPendente {
   /** Geolocalização da captura (quando autorizada). */
   lat?: number;
   lon?: number;
+  /** Técnico marcou esta foto como candidata a portfólio. */
+  portfolio?: boolean;
   criadoEm: string;
 }
 

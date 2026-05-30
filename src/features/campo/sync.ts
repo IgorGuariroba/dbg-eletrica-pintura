@@ -15,6 +15,7 @@ import {
   uploadAssinaturaOsR2,
 } from "@/operacao/r2-privado";
 import type { UploadAssinatura } from "@/operacao/aprovacao-presencial";
+import type { PortfolioRepo } from "@/marketing/portfolio-repo";
 
 export interface SyncItem {
   id?: number;
@@ -31,6 +32,7 @@ export interface SyncResult {
 export interface SyncOptions {
   uploadFoto?: UploadFotoOs;
   uploadAssinatura?: UploadAssinatura;
+  portfolioRepo?: PortfolioRepo;
 }
 
 export async function processarItemSync(
@@ -47,6 +49,8 @@ export async function processarItemSync(
     const [os] = await db
       .select({
         tecnicoEmail: membro.email,
+        tecnicoId: ordemServico.tecnicoId,
+        categoria: ordemServico.categoria,
         estado: ordemServico.estado,
         metadados: ordemServico.metadados,
         origem: solicitacao.origem,
@@ -106,11 +110,24 @@ export async function processarItemSync(
       });
     } else if (item.tipo === "FOTO") {
       const uploadService = options?.uploadFoto ?? uploadFotoOsR2();
-      await uploadService.enviarFoto({
+      const { url } = await uploadService.enviarFoto({
         osId,
         tipo: payload.tipo,
         dataUrl: payload.dataUrl,
       });
+      // Foto marcada "boa pra portfólio" pelo técnico entra na fila do Marketing.
+      if (payload.portfolio) {
+        const repo =
+          options?.portfolioRepo ??
+          (await import("@/marketing/portfolio-repo-drizzle")).criarPortfolioRepoDrizzle(db);
+        await repo.marcar({
+          osId,
+          tecnicoId: os.tecnicoId,
+          categoria: os.categoria,
+          tipo: payload.tipo,
+          chavePrivada: url,
+        });
+      }
     } else if (item.tipo === "NOTA") {
       const novosMetadados = {
         ...os.metadados,

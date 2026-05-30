@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { Camera, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Camera, Loader2, Plus, RefreshCw, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -21,12 +21,14 @@ import {
 } from "@/features/campo/execucao-regras";
 import {
   adicionarMaterial,
-  contarFotos,
   contarPendentesSync,
+  listarFotos,
   listarMateriais,
   lerNota,
   salvarFotoPendente,
   salvarNota,
+  togglePortfolio,
+  type FotoLocal,
 } from "@/features/campo/execucao-repo";
 
 type Tipo = "ANTES" | "DEPOIS";
@@ -40,8 +42,8 @@ const ESTADO_LABEL: Record<string, string> = {
 export function ExecucaoView({ osId }: { osId: string }) {
   const [carregando, setCarregando] = useState(true);
   const [estado, setEstado] = useState<string>("");
-  const [antes, setAntes] = useState(0);
-  const [depois, setDepois] = useState(0);
+  const [antes, setAntes] = useState<FotoLocal[]>([]);
+  const [depois, setDepois] = useState<FotoLocal[]>([]);
   const [nota, setNota] = useState("");
   const [materiais, setMateriais] = useState<MaterialConsumido[]>([]);
   const [pendentes, setPendentes] = useState(0);
@@ -59,8 +61,8 @@ export function ExecucaoView({ osId }: { osId: string }) {
     const db = getCampoDb();
     const osLocal = await db.os_local_cache.get(osId);
     setEstado(osLocal?.estado ?? "");
-    setAntes(await contarFotos(db, osId, "ANTES"));
-    setDepois(await contarFotos(db, osId, "DEPOIS"));
+    setAntes(await listarFotos(db, osId, "ANTES"));
+    setDepois(await listarFotos(db, osId, "DEPOIS"));
     setNota(await lerNota(db, osId));
     setMateriais(await listarMateriais(db, osId));
     setPendentes(await contarPendentesSync(db));
@@ -99,6 +101,11 @@ export function ExecucaoView({ osId }: { osId: string }) {
     } finally {
       setCapturando(null);
     }
+  }
+
+  async function aoTogglePortfolio(fotoId: number) {
+    await togglePortfolio(getCampoDb(), fotoId);
+    await recarregar();
   }
 
   async function transitar(alvo: "EM_EXECUCAO" | "CONCLUIDA") {
@@ -175,16 +182,17 @@ export function ExecucaoView({ osId }: { osId: string }) {
       <FotoCard
         titulo="Fotos antes"
         ajuda="Pelo menos 1 foto para iniciar a execução"
-        total={antes}
+        fotos={antes}
         capturando={capturando === "ANTES"}
         inputRef={inputAntes}
         onSelecionar={(f) => aoCapturar("ANTES", f)}
+        onTogglePortfolio={aoTogglePortfolio}
       />
 
       <Button
         className="w-full"
         size="lg"
-        disabled={!podeIniciarExecucao(estado, antes) || transitando}
+        disabled={!podeIniciarExecucao(estado, antes.length) || transitando}
         onClick={() => transitar("EM_EXECUCAO")}
       >
         {transitando && <Loader2 className="size-4 animate-spin" aria-hidden />}
@@ -194,10 +202,11 @@ export function ExecucaoView({ osId }: { osId: string }) {
       <FotoCard
         titulo="Fotos depois"
         ajuda="Pelo menos 1 foto para concluir a OS"
-        total={depois}
+        fotos={depois}
         capturando={capturando === "DEPOIS"}
         inputRef={inputDepois}
         onSelecionar={(f) => aoCapturar("DEPOIS", f)}
+        onTogglePortfolio={aoTogglePortfolio}
       />
 
       <Card>
@@ -291,7 +300,7 @@ export function ExecucaoView({ osId }: { osId: string }) {
       <Button
         className="w-full"
         size="lg"
-        disabled={!podeConcluir(estado, depois) || transitando}
+        disabled={!podeConcluir(estado, depois.length) || transitando}
         onClick={() => transitar("CONCLUIDA")}
       >
         {transitando && <Loader2 className="size-4 animate-spin" aria-hidden />}
@@ -304,18 +313,21 @@ export function ExecucaoView({ osId }: { osId: string }) {
 function FotoCard({
   titulo,
   ajuda,
-  total,
+  fotos,
   capturando,
   inputRef,
   onSelecionar,
+  onTogglePortfolio,
 }: {
   titulo: string;
   ajuda: string;
-  total: number;
+  fotos: FotoLocal[];
   capturando: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   onSelecionar: (arquivo: File | undefined) => void;
+  onTogglePortfolio: (fotoId: number) => void;
 }) {
+  const total = fotos.length;
   return (
     <Card>
       <CardHeader>
@@ -328,6 +340,17 @@ function FotoCard({
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">{ajuda}</p>
+        {total > 0 && (
+          <ul className="grid grid-cols-3 gap-3">
+            {fotos.map((f) => (
+              <FotoThumb
+                key={f.id}
+                foto={f}
+                onToggle={() => onTogglePortfolio(f.id)}
+              />
+            ))}
+          </ul>
+        )}
         <Input
           ref={inputRef}
           type="file"
@@ -354,5 +377,46 @@ function FotoCard({
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+function FotoThumb({
+  foto,
+  onToggle,
+}: {
+  foto: FotoLocal;
+  onToggle: () => void;
+}) {
+  const url = useMemo(() => URL.createObjectURL(foto.blob), [foto.blob]);
+
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+
+  return (
+    <li className="relative aspect-square overflow-hidden rounded-md border border-border bg-muted">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt="Foto da execução"
+        className="size-full object-cover"
+      />
+      <Button
+        type="button"
+        size="icon"
+        variant={foto.portfolio ? "default" : "secondary"}
+        aria-pressed={foto.portfolio}
+        aria-label={
+          foto.portfolio
+            ? "Remover do portfólio"
+            : "Marcar como boa pra portfólio"
+        }
+        onClick={onToggle}
+        className="absolute bottom-1 right-1 size-8 shadow-sm"
+      >
+        <Star
+          className={`size-4 ${foto.portfolio ? "fill-current" : ""}`}
+          aria-hidden
+        />
+      </Button>
+    </li>
   );
 }

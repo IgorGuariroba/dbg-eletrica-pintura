@@ -1,38 +1,65 @@
-const ITENS = [
-  { titulo: "Pintura interna", descricao: "Sala de estar repintada em 1 dia" },
-  { titulo: "Instalação elétrica", descricao: "Quadro reorganizado + 6 pontos" },
-  { titulo: "Drywall", descricao: "Divisória em ambiente integrado" },
-];
+export interface FotoPortfolioView {
+  id: string;
+  url: string;
+  categoria: "ELETRICA" | "PINTURA" | "DRYWALL";
+  tipo: "ANTES" | "DEPOIS";
+  tecnicoNome: string | null;
+}
 
-export function Portfolio() {
+const CATEGORIA_LABEL: Record<string, string> = {
+  ELETRICA: "Elétrica",
+  PINTURA: "Pintura",
+  DRYWALL: "Drywall",
+};
+
+export function Portfolio({ fotos }: { fotos: FotoPortfolioView[] }) {
   return (
     <section className="bg-muted">
       <div className="container mx-auto px-4 py-16 max-w-5xl">
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold">Portfólio</h2>
           <p className="text-muted-foreground text-sm md:text-base mt-2">
-            Fotos antes e depois de cada serviço, com permissão do cliente.
+            Fotos reais de serviços concluídos, publicadas com permissão do
+            cliente.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {ITENS.map((i) => (
-            <article
-              key={i.titulo}
-              className="rounded-lg border bg-card overflow-hidden"
-            >
-              <div className="aspect-square bg-gradient-to-br from-muted to-card" />
-              <div className="p-4">
-                <h3 className="font-medium">{i.titulo}</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {i.descricao}
-                </p>
-              </div>
-            </article>
-          ))}
-        </div>
-        <p className="mt-6 text-xs text-muted-foreground">
-          Galeria completa em breve. Por ora, mostramos exemplos representativos.
-        </p>
+
+        {fotos.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Galeria em breve — estamos selecionando os melhores trabalhos.
+          </p>
+        ) : (
+          <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {fotos.map((f) => (
+              <li
+                key={f.id}
+                className="rounded-lg border bg-card overflow-hidden"
+              >
+                <div className="relative aspect-square bg-muted">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={f.url}
+                    alt={`${CATEGORIA_LABEL[f.categoria] ?? f.categoria} — foto ${
+                      f.tipo === "ANTES" ? "antes" : "depois"
+                    }`}
+                    loading="lazy"
+                    className="size-full object-cover"
+                  />
+                </div>
+                <div className="p-3">
+                  <span className="text-xs font-medium">
+                    {CATEGORIA_LABEL[f.categoria] ?? f.categoria}
+                  </span>
+                  {f.tecnicoNome && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      por {f.tecnicoNome}
+                    </p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   );

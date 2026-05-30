@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { db } from "@/db/client";
 import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
+import { criarPortfolioRepoDrizzle } from "@/marketing/portfolio-repo-drizzle";
+import { urlPublicaFoto } from "@/marketing/copiador-r2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +10,18 @@ import { ShieldCheck, UserCheck } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+async function carregarTrabalhos(tecnicoId: string) {
+  try {
+    const fotos = await criarPortfolioRepoDrizzle(db).listarPublicasPorTecnico(
+      tecnicoId,
+      8,
+    );
+    return fotos.map((f) => ({ id: f.id, url: urlPublicaFoto(f.chavePublica) }));
+  } catch {
+    return [];
+  }
 }
 
 export default async function TecnicoPerfilPage({ params }: Props) {
@@ -19,6 +33,7 @@ export default async function TecnicoPerfilPage({ params }: Props) {
     notFound();
   }
 
+  const trabalhos = await carregarTrabalhos(tecnico.id);
   const inicial = tecnico.nome.charAt(0).toUpperCase();
 
   return (
@@ -53,6 +68,30 @@ export default async function TecnicoPerfilPage({ params }: Props) {
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line bg-muted/20 p-3 rounded-lg border border-border/40">
                 {tecnico.bio}
               </p>
+            </div>
+          )}
+
+          {trabalhos.length > 0 && (
+            <div className="space-y-2 border-t pt-4 border-border">
+              <h3 className="text-sm font-semibold text-foreground">
+                Trabalhos recentes
+              </h3>
+              <ul className="grid grid-cols-3 gap-2">
+                {trabalhos.map((t) => (
+                  <li
+                    key={t.id}
+                    className="relative aspect-square overflow-hidden rounded-md border border-border bg-muted"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={t.url}
+                      alt={`Trabalho de ${tecnico.nome}`}
+                      loading="lazy"
+                      className="size-full object-cover"
+                    />
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

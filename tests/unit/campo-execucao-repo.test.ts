@@ -4,6 +4,8 @@ import { CampoDB } from "@/features/campo/db";
 import {
   salvarFotoPendente,
   contarFotos,
+  listarFotos,
+  togglePortfolio,
   salvarNota,
   lerNota,
   adicionarMaterial,
@@ -35,6 +37,24 @@ describe("execucao-repo — fotos", () => {
 
     expect(await contarFotos(db, "os-1", "ANTES")).toBe(1);
     expect(await contarFotos(db, "os-1", "DEPOIS")).toBe(0);
+  });
+
+  it("foto nasce fora do portfólio e o toggle alterna a flag", async () => {
+    await salvarFotoPendente(db, {
+      osId: "os-1",
+      tipo: "DEPOIS",
+      blob: blobFake(),
+    });
+    const [foto] = await listarFotos(db, "os-1", "DEPOIS");
+    expect(foto.portfolio).toBe(false);
+
+    await togglePortfolio(db, foto.id);
+    const [depois] = await listarFotos(db, "os-1", "DEPOIS");
+    expect(depois.portfolio).toBe(true);
+
+    await togglePortfolio(db, foto.id);
+    const [denovo] = await listarFotos(db, "os-1", "DEPOIS");
+    expect(denovo.portfolio).toBe(false);
   });
 
   it("guarda metadata (lat/lon/timestamp) na foto", async () => {
