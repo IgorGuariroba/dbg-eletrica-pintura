@@ -82,6 +82,15 @@ export function criarFilaRepoDrizzle(db: DB): FilaRepo {
       };
     },
 
+    async listarPorTecnico(tecnicoId: string): Promise<OsFila[]> {
+      const linhas = await baseSelect()
+        .where(eq(ordemServico.tecnicoId, tecnicoId))
+        .orderBy(asc(ordemServico.criadoEm));
+      return linhas.map((l) =>
+        osFila({ os: l.os, clienteNome: l.clienteNome, endereco: l.endereco! }),
+      );
+    },
+
     async buscarPorId(id: string): Promise<OsFila | null> {
       const [l] = await baseSelect().where(eq(ordemServico.id, id)).limit(1);
       if (!l) return null;

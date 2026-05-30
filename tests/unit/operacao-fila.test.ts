@@ -33,6 +33,7 @@ function repoFake(over: Partial<FilaRepo> = {}): FilaRepo {
   return {
     listar: vi.fn(async () => ({ itens: [], total: 0 })),
     buscarPorId: vi.fn(async () => null),
+    listarPorTecnico: vi.fn(async () => []),
     autoatribuir: vi.fn(async () => os({ tecnicoId: "tec-1" })),
     devolver: vi.fn(async () => os({ tecnicoId: null })),
     ...over,

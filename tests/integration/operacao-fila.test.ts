@@ -133,6 +133,20 @@ describe.skipIf(!hasDb)("FilaRepo Drizzle", () => {
     expect(minha?.tecnicoId).toBe(tec);
   });
 
+  it("listarPorTecnico traz só as OS atribuídas ao técnico, mais antigas primeiro", async () => {
+    const tec = await seedTecnico();
+    const os1 = await seedOs("ELETRICA");
+    const os2 = await seedOs("PINTURA");
+    await seedOs("ELETRICA"); // fica sem dono — não deve aparecer
+    await repo.autoatribuir(os1, tec);
+    await repo.autoatribuir(os2, tec);
+
+    const minhas = await repo.listarPorTecnico(tec);
+
+    expect(minhas.map((o) => o.id)).toEqual([os1, os2]);
+    expect(minhas.every((o) => o.tecnicoId === tec)).toBe(true);
+  });
+
   it("técnico não vê OS NOVA atribuída a outro técnico", async () => {
     const osId = await seedOs("ELETRICA");
     const dono = await seedTecnico();
