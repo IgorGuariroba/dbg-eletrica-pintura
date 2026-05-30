@@ -222,6 +222,12 @@ export const ordemServico = pgTable("ordem_servico", {
       // OS pai aguardando aprovação de uma Complementar para prosseguir.
       aguardandoComplementar?: boolean;
       complementarId?: string;
+      notaServico?: string;
+      materiais?: {
+        item: string;
+        quantidade: number;
+        observacao?: string;
+      }[];
     }>()
     .notNull()
     .default(sql`'{}'::jsonb`),
@@ -355,6 +361,39 @@ export const operacaoConfig = pgTable("operacao_config", {
 });
 
 // ============================================================
+// Histórico de Conflitos
+// ============================================================
+
+export const osHistoricoConflito = pgTable("os_historico_conflito", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  osId: uuid("os_id")
+    .notNull()
+    .references(() => ordemServico.id, { onDelete: "cascade" }),
+  tipo: varchar("tipo", { length: 50 }).notNull(), // TRANSICAO, FOTO, NOTA, MATERIAL, ASSINATURA, CRIACAO_EXPRESS, CRIACAO_COMPLEMENTAR
+  payload: jsonb("payload").notNull(),
+  tecnicoEmail: varchar("tecnico_email", { length: 255 }).notNull(),
+  criadoEm: timestamp("criado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ============================================================
+// Notificação In-App
+// ============================================================
+
+export const notificacaoInApp = pgTable("notificacao_in_app", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  destinatarioEmail: varchar("destinatario_email", { length: 255 }), // Nulo se for voltada a um módulo/role (ex: admin)
+  destinatarioModulo: moduloEnum("destinatario_modulo"), // Ex: "OPERACAO" para administradores
+  titulo: varchar("titulo", { length: 200 }).notNull(),
+  mensagem: text("mensagem").notNull(),
+  lida: boolean("lida").notNull().default(false),
+  criadoEm: timestamp("criado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ============================================================
 // Relations
 // ============================================================
 
@@ -387,6 +426,7 @@ export const ordemServicoRelations = relations(ordemServico, ({ one, many }) => 
   osFilhas: many(ordemServico, { relationName: "os_hierarquia" }),
   orcamentos: many(orcamento),
   transicoes: many(transicaoOs),
+  conflitos: many(osHistoricoConflito),
 }));
 
 export const transicaoOsRelations = relations(transicaoOs, ({ one }) => ({
@@ -414,3 +454,11 @@ export const orcamentoItemRelations = relations(orcamentoItem, ({ one }) => ({
     references: [servico.id],
   }),
 }));
+
+export const osHistoricoConflitoRelations = relations(osHistoricoConflito, ({ one }) => ({
+  os: one(ordemServico, {
+    fields: [osHistoricoConflito.osId],
+    references: [ordemServico.id],
+  }),
+}));
+

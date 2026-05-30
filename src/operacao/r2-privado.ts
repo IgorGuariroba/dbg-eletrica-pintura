@@ -69,11 +69,41 @@ export function montarChaveAssinaturaOs(osId: string): string {
   return `assinaturas/os/${osId}/${randomUUID()}.png`;
 }
 
+export interface UploadFotoOs {
+  enviarFoto(input: {
+    osId: string;
+    tipo: TipoFotoOs;
+    dataUrl: string;
+  }): Promise<{ url: string }>;
+}
+
+export function uploadFotoOsR2(): UploadFotoOs {
+  return {
+    async enviarFoto({ osId, tipo, dataUrl }) {
+      const virgula = dataUrl.indexOf(",");
+      if (virgula < 0) throw new Error("data URL de foto inválido");
+      const corpo = Buffer.from(dataUrl.slice(virgula + 1), "base64");
+      const key = montarChaveFotoOs(osId, tipo);
+      const { client, bucket } = init();
+      await client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          Body: corpo,
+          ContentType: "image/jpeg",
+        }),
+      );
+      return { url: key };
+    },
+  };
+}
+
 /**
  * Envio server-side da assinatura manuscrita (data URL base64 → PNG no R2).
  * Server-side em vez de presigned: o PWA pode replayar no sync offline sem
  * precisar de uma URL assinada válida no momento.
  */
+
 export function uploadAssinaturaOsR2(): UploadAssinatura {
   return {
     async enviarAssinatura({ osId, dataUrl }) {
