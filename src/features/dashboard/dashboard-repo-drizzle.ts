@@ -5,8 +5,14 @@ import type { Categoria } from "@/operacao/fila-repo";
 import type { DashboardRepo } from "./dashboard";
 
 export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
-  async function contar(tabela: typeof servico | typeof membro | typeof ordemServico, where: SQL) {
-    const [{ value }] = await db.select({ value: count() }).from(tabela).where(where);
+  async function contar(
+    tabela: typeof servico | typeof membro | typeof ordemServico,
+    where: SQL | undefined,
+  ) {
+    const [{ value }] = await db
+      .select({ value: count() })
+      .from(tabela)
+      .where(where ?? sql`true`);
     return Number(value);
   }
 
@@ -17,10 +23,10 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
       return contar(servico, eq(servico.ativo, true));
     },
     contarTecnicosAtivos() {
-      return contar(membro, and(eq(membro.isTecnico, true), eq(membro.ativo, true))!);
+      return contar(membro, and(eq(membro.isTecnico, true), eq(membro.ativo, true)));
     },
     contarMembrosInternos() {
-      return contar(membro, and(possuiModulo, eq(membro.ativo, true))!);
+      return contar(membro, and(possuiModulo, eq(membro.ativo, true)));
     },
     contarOsCriadasHoje() {
       return contar(ordemServico, gte(ordemServico.criadoEm, sql`date_trunc('day', now())`));
@@ -28,7 +34,7 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
     contarOsNovasNaFila() {
       return contar(
         ordemServico,
-        and(eq(ordemServico.estado, "NOVA"), isNull(ordemServico.tecnicoId))!,
+        and(eq(ordemServico.estado, "NOVA"), isNull(ordemServico.tecnicoId)),
       );
     },
     contarOsAguardandoAprovacao() {
@@ -45,7 +51,7 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
           eq(ordemServico.estado, "NOVA"),
           isNull(ordemServico.tecnicoId),
           inArray(ordemServico.categoria, especialidades),
-        )!,
+        ),
       );
     },
   };
