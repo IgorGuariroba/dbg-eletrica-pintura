@@ -21,6 +21,26 @@ export interface FotoPendente {
   osId: string;
   tipo: "ANTES" | "DEPOIS";
   blob: Blob;
+  /** Geolocalização da captura (quando autorizada). */
+  lat?: number;
+  lon?: number;
+  criadoEm: string;
+}
+
+/** Nota de serviço da OS (texto livre, uma por OS). */
+export interface NotaServico {
+  osId: string;
+  texto: string;
+  atualizadoEm: string;
+}
+
+/** Material consumido na execução, registrado offline. */
+export interface MaterialConsumido {
+  id?: number;
+  osId: string;
+  item: string;
+  quantidade: number;
+  observacao?: string;
   criadoEm: string;
 }
 
@@ -36,6 +56,8 @@ export interface FilaSync {
 export class CampoDB extends Dexie {
   os_local_cache!: Table<OsLocal, string>;
   fotos_pendentes!: Table<FotoPendente, number>;
+  notas_servico!: Table<NotaServico, string>;
+  materiais!: Table<MaterialConsumido, number>;
   fila_sync!: Table<FilaSync, number>;
 
   constructor(name = "dbg-campo") {
@@ -44,6 +66,12 @@ export class CampoDB extends Dexie {
       os_local_cache: "id, estado, categoria, criadoEm",
       fotos_pendentes: "++id, osId, tipo",
       fila_sync: "++id, tipo",
+    });
+    this.version(2).stores({
+      // Índice composto [osId+tipo] acelera a contagem por OS e tipo de foto.
+      fotos_pendentes: "++id, osId, tipo, [osId+tipo]",
+      notas_servico: "osId",
+      materiais: "++id, osId",
     });
   }
 }
