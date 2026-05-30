@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { UploadAssinatura } from "./aprovacao-presencial";
 
@@ -166,4 +166,44 @@ export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
     },
   };
   return cached;
+}
+
+export async function enviarPdfDocumento(key: string, corpo: Buffer): Promise<void> {
+  const { client, bucket } = init();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: corpo,
+      ContentType: "application/pdf",
+    }),
+  );
+}
+
+export async function obterUrlLeituraAssinada(
+  key: string,
+  expiresInSeconds: number = 7 * 24 * 60 * 60,
+): Promise<string> {
+  const { client, bucket } = init();
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  });
+  return getSignedUrl(client, command, { expiresIn: expiresInSeconds });
+}
+
+export async function listarFotosOs(osId: string, tipo: TipoFotoOs): Promise<string[]> {
+  try {
+    const { client, bucket } = init();
+    const prefix = `os/${osId}/${tipo.toLowerCase()}/`;
+    const command = new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: prefix,
+    });
+    const res = await client.send(command);
+    return res.Contents?.map((c) => c.Key).filter((k): k is string => !!k) ?? [];
+  } catch (e) {
+    console.error(`Erro ao listar fotos do R2 para OS ${osId}:`, e);
+    return [];
+  }
 }

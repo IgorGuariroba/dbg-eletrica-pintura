@@ -73,6 +73,13 @@ export async function POST(
       new Date(),
       geo,
     );
+
+    // Dispara a notificação de e-mail de forma assíncrona (não-bloqueante)
+    const { notificarMudancaEstadoOs } = await import("@/notificacao/notificador");
+    notificarMudancaEstadoOs(id, registro.estadoNovo).catch((e) => {
+      console.error(`Erro ao enviar notificação de e-mail da OS ${id}:`, e);
+    });
+
     return NextResponse.json({ estado: registro.estadoNovo });
   } catch (erro) {
     if (erro instanceof TransicaoInvalidaError) {

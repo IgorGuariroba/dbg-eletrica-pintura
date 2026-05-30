@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { calcularDeslocamento } from "@/operacao/orcamento";
+import { calcularDeslocamento } from "@/operacao/deslocamento-calculo";
 import { formatBRL } from "@/lib/utils";
 import { montarOrcamentoAction } from "./actions";
 
