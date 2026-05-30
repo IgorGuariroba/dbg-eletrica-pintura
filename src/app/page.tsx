@@ -42,12 +42,19 @@ async function carregarServicos(): Promise<Servico[]> {
 
 export default async function Home() {
   const servicos = await carregarServicos();
-  const { itens: tecnicos } = await criarMembroRepoDrizzle(db).listar({
-    papel: "tecnico",
-    ativo: true,
-    limit: 100,
-    offset: 0,
-  });
+  
+  let tecnicos: import("@/equipe/membro-repo").Membro[] = [];
+  try {
+    const res = await criarMembroRepoDrizzle(db).listar({
+      papel: "tecnico",
+      ativo: true,
+      limit: 100,
+      offset: 0,
+    });
+    tecnicos = res.itens;
+  } catch (err) {
+    console.error("Erro ao carregar técnicos:", err);
+  }
  
   return (
     <>
