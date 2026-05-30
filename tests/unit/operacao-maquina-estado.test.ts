@@ -164,4 +164,27 @@ describe("transicionar", () => {
       ).toThrow(TransicaoInvalidaError);
     },
   );
+
+  it("permite APROVADA → A_CAMINHO direto (técnico sai sem agendar)", () => {
+    expect(() =>
+      transicionar(
+        { tipo: "NORMAL", estado: "APROVADA", historico: ["APROVADA"] },
+        "A_CAMINHO",
+        "ana@dbg.com",
+      ),
+    ).not.toThrow();
+  });
+
+  it("carrega a geolocalização no registro quando informada", () => {
+    const registro = transicionar(
+      { tipo: "NORMAL", estado: "APROVADA", historico: ["APROVADA"] },
+      "A_CAMINHO",
+      "ana@dbg.com",
+      null,
+      new Date(),
+      { lat: -23.5, lon: -46.6 },
+    );
+    expect(registro.lat).toBe(-23.5);
+    expect(registro.lon).toBe(-46.6);
+  });
 });

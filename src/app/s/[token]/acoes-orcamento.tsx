@@ -93,7 +93,7 @@ export function AcoesOrcamento({
             >
               Cancelar
             </Button>
-            <Button type="button" disabled={pending} onClick={rejeitar}>
+            <Button type="button" variant="destructive" disabled={pending} onClick={rejeitar}>
               {pending ? "Enviando…" : "Confirmar recusa"}
             </Button>
           </DialogFooter>

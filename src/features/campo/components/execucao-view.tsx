@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { comprimirFoto } from "@/features/campo/comprimir-foto";
 import { getCampoDb, type MaterialConsumido } from "@/features/campo/db";
+import { obterLocalizacao } from "@/features/campo/geo";
 import {
   podeConcluir,
   podeIniciarExecucao,
@@ -33,20 +34,6 @@ const ESTADO_LABEL: Record<string, string> = {
   EM_EXECUCAO: "Em execução",
   CONCLUIDA: "Concluída",
 };
-
-/** Captura coordenadas sem travar o fluxo: falha silenciosa em até 5s. */
-function obterLocalizacao(): Promise<{ lat: number; lon: number } | undefined> {
-  if (typeof navigator === "undefined" || !navigator.geolocation) {
-    return Promise.resolve(undefined);
-  }
-  return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => resolve(undefined),
-      { timeout: 5000 },
-    );
-  });
-}
 
 export function ExecucaoView({ osId }: { osId: string }) {
   const [carregando, setCarregando] = useState(true);

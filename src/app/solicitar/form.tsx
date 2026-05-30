@@ -434,8 +434,7 @@ export function SolicitarForm({
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              className="w-full"
+              className="w-full h-10"
               onClick={preencherViaCep}
             >
               Buscar
@@ -537,7 +536,7 @@ export function SolicitarForm({
                   type="button"
                   variant={sel ? "default" : "outline"}
                   onClick={() => setDuracao(sel ? "" : d.value)}
-                  className="h-7 rounded-full px-3 text-xs"
+                  className="h-11 sm:h-7 rounded-full px-3.5 text-xs select-none"
                 >
                   {d.label}
                 </Button>
@@ -644,7 +643,7 @@ export function SolicitarForm({
                       variant="outline"
                       size="icon-xs"
                       onClick={() => removerFoto(k)}
-                      className="absolute top-1.5 right-1.5 z-10 size-6 rounded-full border-border bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-destructive hover:text-destructive-foreground hover:scale-105"
+                      className="absolute top-1.5 right-1.5 z-10 size-6 rounded-full border-border bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-destructive hover:text-destructive-foreground hover:scale-105 after:absolute after:-inset-3"
                       title="Remover foto"
                       aria-label="Remover foto"
                     >

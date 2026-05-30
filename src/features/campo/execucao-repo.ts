@@ -96,6 +96,22 @@ export function listarMateriais(
   return db.materiais.where("osId").equals(osId).sortBy("criadoEm");
 }
 
+/**
+ * Enfileira uma transição de estado feita offline (A Caminho/Cheguei), com geo,
+ * para o técnico não ficar bloqueado sem sinal. O sync efetivo é do slice 9.
+ */
+export async function enfileirarTransicao(
+  db: CampoDB,
+  transicao: { osId: string; alvo: string; lat?: number; lon?: number },
+): Promise<void> {
+  await db.fila_sync.add({
+    tipo: "TRANSICAO",
+    payload: transicao,
+    criadoEm: new Date().toISOString(),
+    tentativas: 0,
+  });
+}
+
 /** Total de ações pendentes de sincronização (fotos, notas, materiais). */
 export function contarPendentesSync(db: CampoDB): Promise<number> {
   return db.fila_sync.count();
