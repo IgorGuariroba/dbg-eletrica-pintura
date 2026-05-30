@@ -284,6 +284,29 @@ export const orcamentoItem = pgTable("orcamento_item", {
 });
 
 // ============================================================
+// Histórico de transições de estado da OS
+// ============================================================
+
+export const transicaoOs = pgTable(
+  "transicao_os",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    osId: uuid("os_id")
+      .notNull()
+      .references(() => ordemServico.id, { onDelete: "cascade" }),
+    estadoAnterior: estadoOsEnum("estado_anterior").notNull(),
+    estadoNovo: estadoOsEnum("estado_novo").notNull(),
+    atorEmail: varchar("ator_email", { length: 255 }).notNull(),
+    motivo: text("motivo"),
+    em: timestamp("em", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    // Acelera a leitura cronológica do histórico de uma OS.
+    osEmIdx: index("transicao_os_os_em_idx").on(t.osId, t.em),
+  }),
+);
+
+// ============================================================
 // Config do módulo Operação (linha única)
 // ============================================================
 
@@ -334,6 +357,14 @@ export const ordemServicoRelations = relations(ordemServico, ({ one, many }) => 
   }),
   osFilhas: many(ordemServico, { relationName: "os_hierarquia" }),
   orcamentos: many(orcamento),
+  transicoes: many(transicaoOs),
+}));
+
+export const transicaoOsRelations = relations(transicaoOs, ({ one }) => ({
+  os: one(ordemServico, {
+    fields: [transicaoOs.osId],
+    references: [ordemServico.id],
+  }),
 }));
 
 export const orcamentoRelations = relations(orcamento, ({ one, many }) => ({
