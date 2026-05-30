@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import type { Route } from "next";
+import { ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -95,15 +98,25 @@ export function OsAtribuidasList() {
 
   return (
     <ul className="space-y-4">
-      {itens.map((os) => (
-        <li key={os.id}>
-          <Card>
+      {itens.map((os) => {
+        const acionavel =
+          os.estado === "APROVADA" || os.estado === "EM_EXECUCAO";
+        const conteudo = (
+          <Card className={acionavel ? "transition-colors hover:bg-accent" : ""}>
             <CardContent className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-base font-semibold">{os.clienteNome}</span>
-                <Badge variant="secondary">
-                  {ESTADO_LABEL[os.estado] ?? os.estado}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <Badge variant="secondary">
+                    {ESTADO_LABEL[os.estado] ?? os.estado}
+                  </Badge>
+                  {acionavel && (
+                    <ChevronRight
+                      className="size-4 text-muted-foreground"
+                      aria-hidden
+                    />
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Badge variant="outline">
@@ -115,8 +128,22 @@ export function OsAtribuidasList() {
               </div>
             </CardContent>
           </Card>
-        </li>
-      ))}
+        );
+        return (
+          <li key={os.id}>
+            {acionavel ? (
+              <Link
+                href={`/campo/os/${os.id}/execucao` as Route}
+                className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                {conteudo}
+              </Link>
+            ) : (
+              conteudo
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

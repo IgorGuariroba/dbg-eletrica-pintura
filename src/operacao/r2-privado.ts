@@ -12,8 +12,22 @@ export interface AssinarOutput {
   key: string;
 }
 
+export type TipoFotoOs = "ANTES" | "DEPOIS";
+
+export interface AssinarFotoOsInput {
+  osId: string;
+  tipo: TipoFotoOs;
+}
+
 export interface UploadServicePrivado {
   assinarUploadFoto(input: AssinarInput): Promise<AssinarOutput>;
+  /** Assina o upload de uma foto de execução, chaveada por OS e tipo. */
+  assinarUploadFotoOs(input: AssinarFotoOsInput): Promise<AssinarOutput>;
+}
+
+/** Chave do objeto no R2: `os/{id}/{antes|depois}/{uuid}.jpg`. */
+export function montarChaveFotoOs(osId: string, tipo: TipoFotoOs): string {
+  return `os/${osId}/${tipo.toLowerCase()}/${randomUUID()}.jpg`;
 }
 
 const EXT_POR_TIPO: Record<string, string> = {
@@ -69,6 +83,20 @@ export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
           Bucket: bucket,
           Key: key,
           ContentType: tipo,
+        }),
+        { expiresIn: 300 },
+      );
+      return { uploadUrl, key };
+    },
+    async assinarUploadFotoOs({ osId, tipo }) {
+      const key = montarChaveFotoOs(osId, tipo);
+      const { client, bucket } = init();
+      const uploadUrl = await getSignedUrl(
+        client,
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          ContentType: "image/jpeg",
         }),
         { expiresIn: 300 },
       );
