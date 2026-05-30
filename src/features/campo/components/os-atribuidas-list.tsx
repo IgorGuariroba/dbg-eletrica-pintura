@@ -99,8 +99,13 @@ export function OsAtribuidasList() {
   return (
     <ul className="space-y-4">
       {itens.map((os) => {
-        const acionavel =
-          os.estado === "APROVADA" || os.estado === "EM_EXECUCAO";
+        const acionavel = [
+          "APROVADA",
+          "AGENDADA",
+          "A_CAMINHO",
+          "NO_LOCAL",
+          "EM_EXECUCAO",
+        ].includes(os.estado);
         const conteudo = (
           <Card className={acionavel ? "transition-colors hover:bg-accent" : ""}>
             <CardContent className="flex flex-col gap-2">
@@ -133,7 +138,7 @@ export function OsAtribuidasList() {
           <li key={os.id}>
             {acionavel ? (
               <Link
-                href={`/campo/os/${os.id}/execucao` as Route}
+                href={`/campo/os/${os.id}` as Route}
                 className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 {conteudo}

@@ -47,6 +47,8 @@ export function criarTransicaoRepoDrizzle(db: DB): TransicaoRepo {
           estadoNovo: registro.estadoNovo,
           atorEmail: registro.atorEmail,
           motivo: registro.motivo,
+          lat: registro.lat != null ? String(registro.lat) : null,
+          lon: registro.lon != null ? String(registro.lon) : null,
           em: new Date(registro.em),
         }),
         db

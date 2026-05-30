@@ -12,7 +12,14 @@ import {
 import { OsInexistenteError } from "@/operacao/transicao-repo";
 import { criarTransicaoRepoDrizzle } from "@/operacao/transicao-repo-drizzle";
 
-const ALVOS_PERMITIDOS = new Set(["EM_EXECUCAO", "CONCLUIDA"]);
+const ALVOS_PERMITIDOS = new Set([
+  "A_CAMINHO",
+  "NO_LOCAL",
+  "EM_EXECUCAO",
+  "CONCLUIDA",
+]);
+
+type AlvoPermitido = "A_CAMINHO" | "NO_LOCAL" | "EM_EXECUCAO" | "CONCLUIDA";
 
 /**
  * Avança o estado da OS pela máquina de transições (slice 2). O técnico só
@@ -29,10 +36,18 @@ export async function POST(
   }
 
   const { id } = await params;
-  const { alvo } = (await request.json()) as { alvo?: string };
+  const { alvo, lat, lon } = (await request.json()) as {
+    alvo?: string;
+    lat?: number;
+    lon?: number;
+  };
   if (!alvo || !ALVOS_PERMITIDOS.has(alvo)) {
     return NextResponse.json({ error: "alvo inválido" }, { status: 400 });
   }
+  const geo =
+    typeof lat === "number" && typeof lon === "number"
+      ? { lat, lon }
+      : undefined;
 
   const membro = await criarMembroRepoDrizzle(db).buscarPorEmail(user.email);
   const [os] = await db
@@ -51,10 +66,12 @@ export async function POST(
   try {
     const registro = await aplicarTransicao(
       id,
-      alvo as "EM_EXECUCAO" | "CONCLUIDA",
+      alvo as AlvoPermitido,
       user.email,
       null,
       criarTransicaoRepoDrizzle(db),
+      new Date(),
+      geo,
     );
     return NextResponse.json({ estado: registro.estadoNovo });
   } catch (erro) {

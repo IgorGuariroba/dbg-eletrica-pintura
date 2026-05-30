@@ -5,9 +5,11 @@ import { criarAprovacaoRepoDrizzle } from "@/operacao/aprovacao-repo-drizzle";
 import { TokenInvalidoError } from "@/operacao/aprovacao-repo";
 import { Badge } from "@/components/ui/badge";
 import { formatBRL } from "@/lib/utils";
+import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { SiteHeader } from "../../_landing/site-header";
 import { SiteFooter } from "../../_landing/site-footer";
 import { AcoesOrcamento } from "./acoes-orcamento";
+import { EstouAqui } from "./estou-aqui";
 
 export const metadata = {
   title: "Seu orçamento — DBG Elétrica e Pintura",
@@ -19,15 +21,14 @@ const LABEL_CATEGORIA: Record<string, string> = {
   DRYWALL: "Drywall",
 };
 
-const ESTADO: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "outline" | "destructive" }
-> = {
-  NOVA: { label: "Em análise", variant: "secondary" },
-  ORCADA: { label: "Aguardando sua aprovação", variant: "default" },
-  APROVADA: { label: "Aprovado", variant: "default" },
-  REJEITADA: { label: "Recusado", variant: "destructive" },
-  EXPIRADA: { label: "Expirado", variant: "outline" },
+type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
+
+/** Variante visual do badge por estado; rótulo vem de rotularEstadoCliente. */
+const VARIANTE_ESTADO: Record<string, BadgeVariant> = {
+  NOVA: "secondary",
+  REJEITADA: "destructive",
+  EXPIRADA: "outline",
+  CANCELADA: "outline",
 };
 
 export default async function AcompanhamentoPage({
@@ -61,18 +62,26 @@ export default async function AcompanhamentoPage({
 
         <div className="mt-8 space-y-6">
           {view.ordens.map((os) => {
-            const est = ESTADO[os.estado] ?? {
-              label: os.estado,
-              variant: "outline" as const,
-            };
             return (
               <section key={os.id} className="rounded-lg border bg-background p-5">
                 <div className="flex items-center justify-between">
                   <h2 className="font-semibold">
                     {LABEL_CATEGORIA[os.categoria] ?? os.categoria}
                   </h2>
-                  <Badge variant={est.variant}>{est.label}</Badge>
+                  <Badge variant={VARIANTE_ESTADO[os.estado] ?? "default"}>
+                    {rotularEstadoCliente(os.estado)}
+                  </Badge>
                 </div>
+
+                {os.estado === "A_CAMINHO" && (
+                  <div className="mt-4 space-y-3 rounded-md bg-muted/50 p-4">
+                    <p className="text-sm text-muted-foreground">
+                      O técnico está a caminho. Quando ele chegar, confirme
+                      abaixo.
+                    </p>
+                    <EstouAqui token={token} osId={os.id} />
+                  </div>
+                )}
 
                 {os.orcamento && (
                   <div className="mt-4 space-y-2 text-sm">

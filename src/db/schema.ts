@@ -298,6 +298,9 @@ export const transicaoOs = pgTable(
     estadoNovo: estadoOsEnum("estado_novo").notNull(),
     atorEmail: varchar("ator_email", { length: 255 }).notNull(),
     motivo: text("motivo"),
+    // Geolocalização do técnico no momento da transição (rastreamento manual).
+    lat: decimal("lat", { precision: 9, scale: 6 }),
+    lon: decimal("lon", { precision: 9, scale: 6 }),
     em: timestamp("em", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({
@@ -305,6 +308,21 @@ export const transicaoOs = pgTable(
     osEmIdx: index("transicao_os_os_em_idx").on(t.osId, t.em),
   }),
 );
+
+// ============================================================
+// Confirmação de presença do cliente (rastreamento)
+// ============================================================
+
+export const confirmacaoPresenca = pgTable("confirmacao_presenca", {
+  // Uma confirmação por OS — a unicidade garante idempotência.
+  osId: uuid("os_id")
+    .primaryKey()
+    .references(() => ordemServico.id, { onDelete: "cascade" }),
+  ip: varchar("ip", { length: 64 }).notNull(),
+  confirmadoEm: timestamp("confirmado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
 
 // ============================================================
 // Config do módulo Operação (linha única)

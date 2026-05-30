@@ -9,6 +9,7 @@ import {
   adicionarMaterial,
   listarMateriais,
   contarPendentesSync,
+  enfileirarTransicao,
 } from "@/features/campo/execucao-repo";
 
 function novoDb() {
@@ -60,6 +61,26 @@ describe("execucao-repo — fotos", () => {
       blob: blobFake(),
     });
     expect(await contarPendentesSync(db)).toBe(1);
+  });
+});
+
+describe("execucao-repo — transição offline", () => {
+  let db: CampoDB;
+  beforeEach(() => {
+    db = novoDb();
+  });
+
+  it("enfileira a transição com alvo e geo para sync posterior", async () => {
+    await enfileirarTransicao(db, {
+      osId: "os-1",
+      alvo: "A_CAMINHO",
+      lat: -23.5,
+      lon: -46.6,
+    });
+    expect(await contarPendentesSync(db)).toBe(1);
+    const [item] = await db.fila_sync.toArray();
+    expect(item.tipo).toBe("TRANSICAO");
+    expect(item.payload).toMatchObject({ osId: "os-1", alvo: "A_CAMINHO" });
   });
 });
 

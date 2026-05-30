@@ -15,19 +15,26 @@ export interface ContextoOs {
   presencial?: boolean;
 }
 
+export interface Geo {
+  lat: number;
+  lon: number;
+}
+
 export interface TransicaoRegistro {
   estadoAnterior: EstadoOs;
   estadoNovo: EstadoOs;
   atorEmail: string;
   em: string;
   motivo: string | null;
+  lat?: number;
+  lon?: number;
 }
 
 /** Transições incondicionais permitidas a partir de cada estado. */
 const TRANSICOES: Partial<Record<EstadoOs, EstadoOs[]>> = {
   NOVA: ["ORCADA"],
   ORCADA: ["APROVADA", "REJEITADA", "EXPIRADA"],
-  APROVADA: ["AGENDADA"],
+  APROVADA: ["AGENDADA", "A_CAMINHO"],
   AGENDADA: ["A_CAMINHO"],
   A_CAMINHO: ["NO_LOCAL"],
   NO_LOCAL: ["EM_EXECUCAO"],
@@ -41,6 +48,7 @@ export function transicionar(
   atorEmail: string,
   motivo: string | null = null,
   agora: Date = new Date(),
+  geo?: Geo,
 ): TransicaoRegistro {
   const permitidas = TRANSICOES[ctx.estado] ?? [];
   const ok =
@@ -56,6 +64,8 @@ export function transicionar(
     atorEmail,
     em: agora.toISOString(),
     motivo,
+    lat: geo?.lat,
+    lon: geo?.lon,
   };
 }
 
@@ -93,11 +103,12 @@ export async function aplicarTransicao(
   motivo: string | null,
   repo: TransicaoRepo,
   agora: Date = new Date(),
+  geo?: Geo,
 ): Promise<TransicaoRegistro> {
   const ctx = await repo.carregarContexto(osId);
   if (!ctx) throw new OsInexistenteError();
 
-  const registro = transicionar(ctx, alvo, atorEmail, motivo, agora);
+  const registro = transicionar(ctx, alvo, atorEmail, motivo, agora, geo);
   await repo.persistir(osId, registro);
   return registro;
 }
