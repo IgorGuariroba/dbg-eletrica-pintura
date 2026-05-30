@@ -17,6 +17,7 @@ const existente: Membro = {
   especialidades: [],
   disponibilidade: null,
   ativo: true,
+  slug: "bruna",
   criadoEm: new Date(),
 };
 
@@ -27,6 +28,7 @@ function repoFake(over: Partial<MembroRepo> = {}): MembroRepo {
     toggleAtivo: vi.fn(),
     buscarPorId: vi.fn(async () => existente),
     buscarPorEmail: vi.fn(async () => null),
+    buscarPorSlug: vi.fn(async () => null),
     listar: vi.fn(),
     ...over,
   };

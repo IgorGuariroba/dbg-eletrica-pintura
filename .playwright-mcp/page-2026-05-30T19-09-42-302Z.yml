@@ -1,0 +1,29 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]: DBG · Campo
+      - generic [ref=e6]:
+        - img
+        - text: Sincronizando...
+    - main [ref=e7]:
+      - generic [ref=e9]:
+        - heading "Minhas OS" [level=1] [ref=e10]
+        - link "Nova Express" [ref=e11] [cursor=pointer]:
+          - /url: /campo/express/nova
+          - img
+          - text: Nova Express
+    - navigation [ref=e15]:
+      - link "Minhas OS" [ref=e16] [cursor=pointer]:
+        - /url: /campo
+        - img [ref=e17]
+        - text: Minhas OS
+      - link "Fila" [ref=e20] [cursor=pointer]:
+        - /url: /campo/fila
+        - img [ref=e21]
+        - text: Fila
+      - link "Perfil" [ref=e24] [cursor=pointer]:
+        - /url: /campo/perfil
+        - img [ref=e25]
+        - text: Perfil
+  - region "Notifications alt+T"
+  - alert [ref=e28]

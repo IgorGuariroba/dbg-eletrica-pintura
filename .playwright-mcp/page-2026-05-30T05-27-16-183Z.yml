@@ -1,0 +1,40 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "DBG" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e5]:
+        - link "Entrar" [ref=e6] [cursor=pointer]:
+          - /url: /login
+        - link "Solicitar orçamento" [ref=e7] [cursor=pointer]:
+          - /url: /solicitar
+  - main [ref=e8]:
+    - 'heading "Solicitação #TOK-CAMI" [level=1] [ref=e9]'
+    - paragraph [ref=e10]: Olá, Cliente. Acompanhe abaixo o andamento e aprove os orçamentos. · São Paulo/SP
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - heading "Elétrica" [level=2] [ref=e14]
+        - generic [ref=e15]: Técnico a caminho
+      - generic [ref=e16]:
+        - paragraph [ref=e17]: O técnico está a caminho. Quando ele chegar, confirme abaixo.
+        - button "Estou aqui" [ref=e18]:
+          - img
+          - text: Estou aqui
+  - contentinfo [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: DBG Elétrica e Pintura
+        - paragraph [ref=e23]: Serviços residenciais com transparência, garantia e agendamento digital.
+      - generic [ref=e24]:
+        - generic [ref=e25]: Fale com a gente
+        - link "WhatsApp" [ref=e26] [cursor=pointer]:
+          - /url: https://wa.me/5511999999999?text=Ol%C3%A1!%20Quero%20falar%20com%20a%20DBG.
+          - img [ref=e27]
+          - text: WhatsApp
+      - generic [ref=e29]:
+        - generic [ref=e30]: Atendimento
+        - paragraph [ref=e31]: Segunda a Sábado · 8h às 18h
+    - generic [ref=e33]: © 2026 DBG Elétrica e Pintura
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e39] [cursor=pointer]:
+    - img [ref=e40]

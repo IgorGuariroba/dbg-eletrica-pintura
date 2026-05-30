@@ -10,6 +10,7 @@ import type {
   NovoMembro,
 } from "./membro-repo";
 import { EmailDuplicadoError } from "./membro-repo";
+import { gerarSlugUnico } from "@/equipe/slug";
 
 function ehViolacaoUnica(e: unknown): boolean {
   return (
@@ -46,6 +47,7 @@ function row(r: typeof membro.$inferSelect): Membro {
     especialidades: r.especialidades,
     disponibilidade: r.disponibilidade ?? null,
     ativo: r.ativo,
+    slug: r.slug,
     criadoEm: r.criadoEm,
   };
 }
@@ -54,7 +56,16 @@ export function criarMembroRepoDrizzle(db: DB): MembroRepo {
   return {
     async inserir(n: NovoMembro) {
       return executarPreservandoEmailUnico(async () => {
-        const [r] = await db.insert(membro).values(n).returning();
+        const slug = await gerarSlugUnico(n.nome, async (s) => {
+          const [exists] = await db
+            .select({ id: membro.id })
+            .from(membro)
+            .where(eq(membro.slug, s))
+            .limit(1);
+          return Boolean(exists);
+        });
+
+        const [r] = await db.insert(membro).values({ ...n, slug }).returning();
         return row(r);
       }, n.email);
     },
@@ -64,9 +75,23 @@ export function criarMembroRepoDrizzle(db: DB): MembroRepo {
         return r ? row(r) : null;
       }
       return executarPreservandoEmailUnico(async () => {
+        const finalMudancas = { ...mudancas } as any;
+
+        if (mudancas.nome) {
+          const slug = await gerarSlugUnico(mudancas.nome, async (s) => {
+            const [exists] = await db
+              .select({ id: membro.id })
+              .from(membro)
+              .where(and(eq(membro.slug, s), not(eq(membro.id, id))))
+              .limit(1);
+            return Boolean(exists);
+          });
+          finalMudancas.slug = slug;
+        }
+
         const [r] = await db
           .update(membro)
-          .set(mudancas)
+          .set(finalMudancas)
           .where(eq(membro.id, id))
           .returning();
         return r ? row(r) : null;
@@ -89,6 +114,13 @@ export function criarMembroRepoDrizzle(db: DB): MembroRepo {
         .select()
         .from(membro)
         .where(eq(membro.email, email.toLowerCase()));
+      return r ? row(r) : null;
+    },
+    async buscarPorSlug(slug) {
+      const [r] = await db
+        .select()
+        .from(membro)
+        .where(eq(membro.slug, slug));
       return r ? row(r) : null;
     },
     async listar({ papel, ativo, limit, offset }: ListarFiltro): Promise<ListarResultado> {

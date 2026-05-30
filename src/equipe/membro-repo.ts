@@ -28,6 +28,7 @@ export interface NovoMembro {
 
 export interface Membro extends NovoMembro {
   id: string;
+  slug: string | null;
   criadoEm: Date;
 }
 
@@ -70,5 +71,6 @@ export interface MembroRepo {
   toggleAtivo(id: string): Promise<Membro | null>;
   buscarPorId(id: string): Promise<Membro | null>;
   buscarPorEmail(email: string): Promise<Membro | null>;
+  buscarPorSlug(slug: string): Promise<Membro | null>;
   listar(filtro: ListarFiltro): Promise<ListarResultado>;
 }

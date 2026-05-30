@@ -93,4 +93,49 @@ describe.skipIf(!hasDb)("MembroRepo Drizzle", () => {
     const b = await repo.toggleAtivo(m.id);
     expect(b?.ativo).toBe(true);
   });
+
+  it("gera slug único ao inserir e resolve colisões incrementais", async () => {
+    const rand = Math.random().toString(36).slice(2, 6);
+    const baseNome = `Carlos Souza ${rand}`;
+    const slugBase = `carlos-souza-${rand}`;
+
+    const m1 = await novo({ nome: baseNome });
+    const m2 = await novo({ nome: baseNome });
+
+    expect(m1.slug).toBe(slugBase);
+    expect(m2.slug).toBe(`${slugBase}-1`);
+
+    const lido1 = await repo.buscarPorSlug(slugBase);
+    expect(lido1?.id).toBe(m1.id);
+
+    const lido2 = await repo.buscarPorSlug(`${slugBase}-1`);
+    expect(lido2?.id).toBe(m2.id);
+  });
+
+  it("atualiza o slug quando o nome muda, resolvendo colisões sem se auto-bloquear", async () => {
+    const rand = Math.random().toString(36).slice(2, 6);
+    const baseNeto = `Carlos Neto ${rand}`;
+    const slugNeto = `carlos-neto-${rand}`;
+    const baseFilho = `Carlos Filho ${rand}`;
+    const slugFilho = `carlos-filho-${rand}`;
+
+    const m1 = await novo({ nome: baseNeto });
+    expect(m1.slug).toBe(slugNeto);
+
+    // Renomeia m1 para "Carlos Filho" -> gera novo slug
+    const m1Atualizado = await repo.atualizar(m1.id, { nome: baseFilho });
+    expect(m1Atualizado?.slug).toBe(slugFilho);
+
+    // Cria m2 como "Carlos Filho" -> deve colidir e gerar carlos-filho-1
+    const m2 = await novo({ nome: baseFilho });
+    expect(m2.slug).toBe(`${slugFilho}-1`);
+
+    // Atualiza m2 mudando apenas a bio -> não deve alterar o slug nem colidir consigo mesmo
+    const m2Atualizado = await repo.atualizar(m2.id, { bio: "Nova bio" });
+    expect(m2Atualizado?.slug).toBe(`${slugFilho}-1`);
+
+    // Atualiza m2 mudando o nome para o mesmo valor -> não deve colidir consigo mesmo e deve manter carlos-filho-1
+    const m2RenomeadoMesmo = await repo.atualizar(m2.id, { nome: baseFilho });
+    expect(m2RenomeadoMesmo?.slug).toBe(`${slugFilho}-1`);
+  });
 });

@@ -2,6 +2,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import type { DB } from "@/db/client";
 import {
   cliente,
+  membro,
   orcamento,
   orcamentoItem,
   ordemServico,
@@ -58,8 +59,13 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
           id: ordemServico.id,
           categoria: ordemServico.categoria,
           estado: ordemServico.estado,
+          tecnicoId: membro.id,
+          tecnicoNome: membro.nome,
+          tecnicoFotoUrl: membro.fotoUrl,
+          tecnicoSlug: membro.slug,
         })
         .from(ordemServico)
+        .leftJoin(membro, eq(ordemServico.tecnicoId, membro.id))
         .where(eq(ordemServico.solicitacaoId, sol.id))
         .orderBy(asc(ordemServico.criadoEm));
 
@@ -122,6 +128,14 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
                 total: orc.total,
                 validoAte: orc.validoAte,
                 itens: itensPorOrc.get(orc.id) ?? [],
+              }
+            : null,
+          tecnico: o.tecnicoId && o.tecnicoNome
+            ? {
+                id: o.tecnicoId,
+                nome: o.tecnicoNome,
+                fotoUrl: o.tecnicoFotoUrl,
+                slug: o.tecnicoSlug,
               }
             : null,
         };

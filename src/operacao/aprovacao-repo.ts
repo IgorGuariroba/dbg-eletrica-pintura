@@ -15,11 +15,19 @@ export interface OrcamentoView {
   validoAte: Date;
 }
 
+export interface TecnicoView {
+  id: string;
+  nome: string;
+  fotoUrl: string | null;
+  slug: string | null;
+}
+
 export interface OsView {
   id: string;
   categoria: Categoria;
   estado: EstadoOs;
   orcamento: (OrcamentoView & { itens: ItemView[] }) | null;
+  tecnico: TecnicoView | null;
 }
 
 export interface SolicitacaoView {

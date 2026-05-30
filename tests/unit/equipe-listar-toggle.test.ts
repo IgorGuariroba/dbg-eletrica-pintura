@@ -10,6 +10,7 @@ function repo(over: Partial<MembroRepo> = {}): MembroRepo {
     toggleAtivo: vi.fn(),
     buscarPorId: vi.fn(),
     buscarPorEmail: vi.fn(),
+    buscarPorSlug: vi.fn(),
     listar: vi.fn(async () => ({ itens: [], total: 0 })),
     ...over,
   };
@@ -69,6 +70,7 @@ const base: Membro = {
   especialidades: [],
   disponibilidade: null,
   ativo: true,
+  slug: "x",
   criadoEm: new Date(),
 };
 

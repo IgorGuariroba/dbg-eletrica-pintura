@@ -126,12 +126,14 @@ export const membro = pgTable(
       sab?: { inicio: string; fim: string } | null;
     }>(),
     ativo: boolean("ativo").notNull().default(true),
+    slug: varchar("slug", { length: 255 }),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (t) => ({
     emailUq: uniqueIndex("membro_email_uq").on(t.email),
+    slugUq: uniqueIndex("membro_slug_uq").on(t.slug),
   }),
 );
 
