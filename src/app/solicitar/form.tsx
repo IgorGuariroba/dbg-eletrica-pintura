@@ -372,21 +372,22 @@ export function SolicitarForm({
           {CATEGORIAS.map((c) => {
             const sel = categorias.has(c.value);
             return (
-              <button
+              <Button
                 key={c.value}
                 type="button"
+                variant="outline"
                 onClick={() => toggleCategoria(c.value)}
-                className={`rounded-lg border-2 p-4 text-left transition-colors ${
+                className={`h-auto flex flex-col items-start rounded-lg border-2 p-4 text-left font-normal transition-colors select-none ${
                   sel
-                    ? "border-foreground bg-foreground/5"
+                    ? "border-primary bg-primary/5 hover:bg-primary/5 hover:text-foreground"
                     : "border-border hover:bg-muted"
                 }`}
               >
-                <div className="font-medium">{c.label}</div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <span className="font-medium">{c.label}</span>
+                <span className="text-xs text-muted-foreground mt-1 font-normal">
                   {c.descricao}
-                </div>
-              </button>
+                </span>
+              </Button>
             );
           })}
         </div>
@@ -528,20 +529,20 @@ export function SolicitarForm({
         <div>
           <Label>Duração estimada</Label>
           <div className="mt-2 flex flex-wrap gap-2">
-            {DURACOES.map((d) => (
-              <button
-                key={d.value}
-                type="button"
-                onClick={() => setDuracao(duracao === d.value ? "" : d.value)}
-                className={`rounded-full border px-3 py-1 text-xs ${
-                  duracao === d.value
-                    ? "bg-foreground text-background"
-                    : "border-border hover:bg-muted"
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
+            {DURACOES.map((d) => {
+              const sel = duracao === d.value;
+              return (
+                <Button
+                  key={d.value}
+                  type="button"
+                  variant={sel ? "default" : "outline"}
+                  onClick={() => setDuracao(sel ? "" : d.value)}
+                  className="h-7 rounded-full px-3 text-xs"
+                >
+                  {d.label}
+                </Button>
+              );
+            })}
           </div>
           <input type="hidden" name="duracaoEstimada" value={duracao} />
         </div>
@@ -638,15 +639,17 @@ export function SolicitarForm({
                         <Camera className="size-6 animate-pulse" />
                       </div>
                     )}
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="icon-xs"
                       onClick={() => removerFoto(k)}
-                      className="absolute top-1.5 right-1.5 z-10 flex size-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-destructive hover:text-destructive-foreground hover:scale-105"
+                      className="absolute top-1.5 right-1.5 z-10 size-6 rounded-full border-border bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-destructive hover:text-destructive-foreground hover:scale-105"
                       title="Remover foto"
                       aria-label="Remover foto"
                     >
                       <X className="size-3.5" />
-                    </button>
+                    </Button>
                     <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-[2px] p-1 text-[9px] text-muted-foreground border-t border-border opacity-0 transition-opacity duration-200 group-hover:opacity-100 truncate text-center">
                       {k.split("/").pop()}
                     </div>

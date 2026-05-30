@@ -199,9 +199,10 @@ export function OrcamentoForm({
             disabled={override == null}
             onChange={(e) => setOverride(e.target.value)}
           />
-          <button
+          <Button
             type="button"
-            className="mt-1 text-xs text-muted-foreground underline"
+            variant="link"
+            className="mt-1 h-auto p-0 text-xs text-muted-foreground underline"
             onClick={() =>
               setOverride((o) =>
                 o == null ? deslocamentoAuto.toFixed(2) : null,
@@ -209,7 +210,7 @@ export function OrcamentoForm({
             }
           >
             {override == null ? "Editar valor" : "Voltar ao cálculo automático"}
-          </button>
+          </Button>
         </div>
       </div>
 
