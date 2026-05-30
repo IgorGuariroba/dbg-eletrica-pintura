@@ -316,4 +316,35 @@ describe.skipIf(!hasDb || !hasR2)("Notificação E-mail & PDF Integration (Slice
     expect(resultado.pdfUrl).toContain("https://");
     expect(resultado.pdfUrl).toContain("conclusoes");
   });
+
+  it("deve incluir as fotos antes/depois (semeadas no R2) no PDF de conclusão", async () => {
+    const { uploadFotoOsR2 } = await import("@/operacao/r2-privado");
+    const tecnico = await seedTecnico();
+    const cliente = await seedCliente(true);
+    const { os } = await seedSolicitacaoEOs(cliente.id, tecnico.id, "EM_EXECUCAO");
+
+    // 4 PNGs 1x1 DISTINTOS — o React PDF deduplica imagens idênticas em um único
+    // XObject, então cores diferentes garantem 4 imagens embarcadas separadas.
+    const pngs = [
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGM4YaMBAAL8AS3/gzpXAAAAAElFTkSuQmCC",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGPQWHAHAAKYAaUEIMPZAAAAAElFTkSuQmCC",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGOw2VIBAAKYAWnbe4IKAAAAAElFTkSuQmCC",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGPYUqEBAAM4AVUprF78AAAAAElFTkSuQmCC",
+    ];
+    const up = uploadFotoOsR2();
+    await up.enviarFoto({ osId: os.id, tipo: "ANTES", dataUrl: pngs[0] });
+    await up.enviarFoto({ osId: os.id, tipo: "ANTES", dataUrl: pngs[1] });
+    await up.enviarFoto({ osId: os.id, tipo: "DEPOIS", dataUrl: pngs[2] });
+    await up.enviarFoto({ osId: os.id, tipo: "DEPOIS", dataUrl: pngs[3] });
+
+    const resultado = await notificarMudancaEstadoOs(os.id, "CONCLUIDA", { forceMock: true });
+    expect(resultado.status).toBe("sent");
+    expect(resultado.pdfUrl).toBeDefined();
+
+    // Baixa o PDF persistido no R2 e confere que as 4 fotos foram embarcadas
+    const resp = await fetch(resultado.pdfUrl!);
+    const pdfBuf = Buffer.from(await resp.arrayBuffer());
+    const imagens = (pdfBuf.toString("latin1").match(/\/Subtype\s*\/Image/g) || []).length;
+    expect(imagens).toBeGreaterThanOrEqual(4);
+  }, 30000); // render busca 4 imagens do R2 por rede + baixa o PDF
 });

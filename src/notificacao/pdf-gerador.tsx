@@ -361,14 +361,14 @@ const ConclusaoDocument: React.FC<{ dados: DadosConclusaoPdf }> = ({ dados }) =>
         <View style={[styles.section, styles.photosSection]}>
           <Text style={styles.sectionTitle}>Registro Fotográfico</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
-            {dados.fotosAntes?.slice(0, 2).map((url, i) => (
-              <View key={`antes-${i}`} style={styles.photoContainer}>
+            {dados.fotosAntes?.slice(0, 4).map((url, i) => (
+              <View key={`antes-${i}`} style={styles.photoContainer} wrap={false}>
                 <Text style={styles.photoLabel}>Antes (Foto {i + 1})</Text>
                 <Image src={url} style={styles.photoImage} />
               </View>
             ))}
-            {dados.fotosDepois?.slice(0, 2).map((url, i) => (
-              <View key={`depois-${i}`} style={styles.photoContainer}>
+            {dados.fotosDepois?.slice(0, 4).map((url, i) => (
+              <View key={`depois-${i}`} style={styles.photoContainer} wrap={false}>
                 <Text style={styles.photoLabel}>Depois (Foto {i + 1})</Text>
                 <Image src={url} style={styles.photoImage} />
               </View>

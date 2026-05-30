@@ -183,10 +183,10 @@ export async function notificarMudancaEstadoOs(
     const fotosDepoisChaves = await listarFotosOs(osId, "DEPOIS");
 
     const fotosAntes = await Promise.all(
-      fotosAntesChaves.slice(0, 2).map((k) => obterUrlLeituraAssinada(k, 3600))
+      fotosAntesChaves.slice(0, 4).map((k) => obterUrlLeituraAssinada(k, 3600))
     );
     const fotosDepois = await Promise.all(
-      fotosDepoisChaves.slice(0, 2).map((k) => obterUrlLeituraAssinada(k, 3600))
+      fotosDepoisChaves.slice(0, 4).map((k) => obterUrlLeituraAssinada(k, 3600))
     );
 
     const dadosPdf = {
