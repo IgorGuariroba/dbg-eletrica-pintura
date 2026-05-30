@@ -59,24 +59,26 @@ export function FiltrosCatalogo() {
               Categoria
             </div>
             <div className="space-y-1">
-              <button
+              <Button
+                variant="ghost"
                 type="button"
                 onClick={() => aplicar({ categoria: undefined })}
-                className="flex w-full items-center justify-between rounded px-2 py-1 text-sm hover:bg-muted"
+                className="h-auto w-full justify-between rounded px-2 py-1.5 text-sm font-normal"
               >
                 Todas
                 {!categoria && <Check className="size-4" />}
-              </button>
+              </Button>
               {CATEGORIAS.map((c) => (
-                <button
+                <Button
                   key={c}
+                  variant="ghost"
                   type="button"
                   onClick={() => aplicar({ categoria: c })}
-                  className="flex w-full items-center justify-between rounded px-2 py-1 text-sm hover:bg-muted"
+                  className="h-auto w-full justify-between rounded px-2 py-1.5 text-sm font-normal"
                 >
                   {c}
                   {categoria === c && <Check className="size-4" />}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -89,19 +91,20 @@ export function FiltrosCatalogo() {
                 const sel =
                   (s.value === "todos" && !ativo) || s.value === ativo;
                 return (
-                  <button
+                  <Button
                     key={s.value}
+                    variant="ghost"
                     type="button"
                     onClick={() =>
                       aplicar({
                         ativo: s.value === "todos" ? undefined : s.value,
                       })
                     }
-                    className="flex w-full items-center justify-between rounded px-2 py-1 text-sm hover:bg-muted"
+                    className="h-auto w-full justify-between rounded px-2 py-1.5 text-sm font-normal"
                   >
                     {s.label}
                     {sel && <Check className="size-4" />}
-                  </button>
+                  </Button>
                 );
               })}
             </div>

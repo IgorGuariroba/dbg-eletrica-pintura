@@ -67,17 +67,18 @@ export function FiltrosEquipe() {
             {PAPEIS.map((p) => {
               const sel = (p.value === "todos" && !papel) || p.value === papel;
               return (
-                <button
+                <Button
                   key={p.value}
+                  variant="ghost"
                   type="button"
                   onClick={() =>
                     aplicar({ papel: p.value === "todos" ? undefined : p.value })
                   }
-                  className="flex w-full items-center justify-between rounded px-2 py-1 text-sm hover:bg-muted"
+                  className="h-auto w-full justify-between rounded px-2 py-1.5 text-sm font-normal"
                 >
                   {p.label}
                   {sel && <Check className="size-4" />}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -90,19 +91,20 @@ export function FiltrosEquipe() {
             {STATUS.map((s) => {
               const sel = (s.value === "todos" && !ativo) || s.value === ativo;
               return (
-                <button
+                <Button
                   key={s.value}
+                  variant="ghost"
                   type="button"
                   onClick={() =>
                     aplicar({
                       ativo: s.value === "todos" ? undefined : s.value,
                     })
                   }
-                  className="flex w-full items-center justify-between rounded px-2 py-1 text-sm hover:bg-muted"
+                  className="h-auto w-full justify-between rounded px-2 py-1.5 text-sm font-normal"
                 >
                   {s.label}
                   {sel && <Check className="size-4" />}
-                </button>
+                </Button>
               );
             })}
           </div>

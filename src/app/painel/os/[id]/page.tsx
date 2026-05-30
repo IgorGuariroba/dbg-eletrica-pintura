@@ -8,6 +8,7 @@ import { cliente, ordemServico, solicitacao } from "@/db/schema";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { exigirFila } from "../../guard";
+import { ReativarButton } from "./reativar-button";
 
 const LABEL_CATEGORIA: Record<string, string> = {
   ELETRICA: "Elétrica",
@@ -79,6 +80,9 @@ export default async function OsDetalhePage({
       (Boolean(usuario.membroId) && os.tecnicoId === usuario.membroId));
   if (!os || !podeVer) redirect("/painel/fila");
 
+  const temOperacao =
+    usuario.role === "admin_raiz" || usuario.modulos.includes("OPERACAO");
+
   const link = `${await origem()}/s/${os.token}`;
   const protocolo = os.token.slice(0, 8).toUpperCase();
   const numero = os.clienteWhatsapp.replace(/\D/g, "");
@@ -125,6 +129,15 @@ export default async function OsDetalhePage({
             >
               Enviar ao cliente
             </a>
+          </div>
+        )}
+
+        {(os.estado === "REJEITADA" || os.estado === "EXPIRADA") && temOperacao && (
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Esta OS está {os.estado === "REJEITADA" ? "recusada" : "expirada"}. Você pode reativá-la para enviar uma nova proposta ou reenviar a mesma.
+            </p>
+            <ReativarButton osId={os.id} />
           </div>
         )}
       </div>
