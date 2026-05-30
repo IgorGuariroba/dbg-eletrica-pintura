@@ -59,7 +59,7 @@ declare global {
  * Utiliza watchPosition para rastrear a melhor precisão disponível por até 12 segundos,
  * interrompendo a busca assim que uma precisão de <= 20 metros é atingida.
  */
-function obterCoordenadasPrecisas(
+export function obterCoordenadasPrecisas(
   onUpdate?: (pos: GeolocationPosition) => void
 ): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {

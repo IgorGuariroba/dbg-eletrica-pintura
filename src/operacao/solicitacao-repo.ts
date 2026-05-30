@@ -36,7 +36,7 @@ export interface NovaSolicitacao {
   dataDesejada: Date | null;
   duracaoEstimada: string | null;
   lgpdAceito: boolean;
-  origem: "FORMULARIO" | "EXPRESS" | "MANUAL";
+  origem: "FORMULARIO" | "EXPRESS" | "MANUAL" | "EXPRESS_TECNICO";
 }
 
 export interface Solicitacao extends NovaSolicitacao {
@@ -62,6 +62,7 @@ export interface NovaOrdemServico {
     | "PAGA"
     | "CANCELADA"
     | "GARANTIA_ABERTA";
+  tecnicoId?: string | null;
 }
 
 export interface OrdemServico extends NovaOrdemServico {
@@ -84,6 +85,11 @@ export interface SolicitacaoRepo {
   criarComOrdens(input: {
     cliente: NovoCliente;
     solicitacao: Omit<NovaSolicitacao, "clienteId">;
+    ordensCustom?: {
+      tipo: NovaOrdemServico["tipo"];
+      estado: NovaOrdemServico["estado"];
+      tecnicoId?: string | null;
+    };
   }): Promise<ResultadoCriacao>;
   buscarPorToken(token: string): Promise<{
     solicitacao: Solicitacao;

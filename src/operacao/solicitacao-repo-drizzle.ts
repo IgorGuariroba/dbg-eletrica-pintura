@@ -44,13 +44,15 @@ function osRow(r: typeof ordemServico.$inferSelect): OrdemServico {
     categoria: r.categoria,
     tipo: r.tipo,
     estado: r.estado,
+    tecnicoId: r.tecnicoId,
     criadoEm: r.criadoEm,
   };
 }
 
 export function criarSolicitacaoRepoDrizzle(db: DB): SolicitacaoRepo {
   return {
-    async criarComOrdens({ cliente: novoCli, solicitacao: nova }) {
+    async criarComOrdens(input) {
+      const { cliente: novoCli, solicitacao: nova } = input;
       // Neon HTTP não suporta transação multi-statement; faz upsert + inserts
       // sequenciais. O upsert do cliente é atômico via UNIQUE(whatsapp).
       const [cli] = await db
@@ -94,8 +96,9 @@ export function criarSolicitacaoRepoDrizzle(db: DB): SolicitacaoRepo {
           nova.categorias.map((cat) => ({
             solicitacaoId: sol.id,
             categoria: cat,
-            tipo: "NORMAL" as const,
-            estado: "NOVA" as const,
+            tipo: input.ordensCustom?.tipo ?? ("NORMAL" as const),
+            estado: input.ordensCustom?.estado ?? ("NOVA" as const),
+            tecnicoId: input.ordensCustom?.tecnicoId ?? null,
           })),
         )
         .returning();
