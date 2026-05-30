@@ -8,8 +8,9 @@ import type {
 } from "./reagendamento";
 
 export function criarReagendamentoRepoDrizzle(db: DB): ReagendamentoRepo {
-  async function registrar(osId: string, r: RegistroTransicao) {
-    await db.insert(transicaoOs).values({
+  // Histórico da transição, montado para entrar no mesmo batch da atualização.
+  function registroTransicao(osId: string, r: RegistroTransicao) {
+    return db.insert(transicaoOs).values({
       osId,
       estadoAnterior: r.estadoAnterior,
       estadoNovo: r.estadoNovo,
@@ -34,20 +35,26 @@ export function criarReagendamentoRepoDrizzle(db: DB): ReagendamentoRepo {
     },
 
     async cancelar(osId, novoEstado, registro): Promise<void> {
-      // Devolve à fila: zera o técnico e regride o estado.
-      await db
-        .update(ordemServico)
-        .set({ estado: novoEstado, tecnicoId: null })
-        .where(eq(ordemServico.id, osId));
-      await registrar(osId, registro);
+      // Atomicidade via batch (neon-http não tem transação interativa):
+      // devolve à fila (zera técnico + regride estado) e registra o histórico
+      // no mesmo round-trip.
+      await db.batch([
+        db
+          .update(ordemServico)
+          .set({ estado: novoEstado, tecnicoId: null })
+          .where(eq(ordemServico.id, osId)),
+        registroTransicao(osId, registro),
+      ]);
     },
 
     async reagendar(osId, novoSlot, registro): Promise<void> {
-      await db
-        .update(ordemServico)
-        .set({ estado: "AGENDADA", agendadoPara: novoSlot })
-        .where(eq(ordemServico.id, osId));
-      await registrar(osId, registro);
+      await db.batch([
+        db
+          .update(ordemServico)
+          .set({ estado: "AGENDADA", agendadoPara: novoSlot })
+          .where(eq(ordemServico.id, osId)),
+        registroTransicao(osId, registro),
+      ]);
     },
   };
 }
