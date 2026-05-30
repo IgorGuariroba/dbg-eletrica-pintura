@@ -289,50 +289,50 @@ A densidade ideal varia conforme a categoria de tela e o dispositivo. Antes de r
 
 ## 11. Diretrizes de Organização e Arquitetura (Pastas e Componentes)
 
-Para garantir escalabilidade, legibilidade e manutenibilidade do código, a estrutura de pastas e componentes do projeto deve seguir estritamente o padrão abaixo:
+Para garantir escalabilidade, legibilidade e manutenibilidade do código, a estrutura de pastas e componentes do projeto deve seguir estritamente o padrão de organização e as regras abaixo:
 
 ### 11.1. Arquitetura de Diretórios (`src/`)
 
 ```txt
 src/
-├── app/          # Apenas composição de páginas, layouts e roteamento.
-├── components/   # Componentes globais e reutilizáveis (divididos em ui, layout e shared).
-│   ├── ui/       # Componentes primitivos do Design System (shadcn/ui e extensões diretas).
-│   ├── layout/   # Estruturas reutilizáveis globais de layout (sidebar, header, etc.).
-│   └── shared/   # Componentes de negócio reutilizáveis e independentes de domínio.
-├── features/     # Módulos específicos de negócio agrupados por domínio/entidade.
-│   └── <feature>/
-│       ├── components/
-│       ├── hooks/
-│       ├── services/
-│       └── types/
-├── lib/          # Configurações de clientes, utilitários globais e bibliotecas.
-├── hooks/        # Hooks globais não atrelados a uma feature.
-└── types/        # Tipos globais e compartilhados da aplicação.
+├── app/            # Apenas páginas, layouts e route handlers (composição de telas).
+├── components/     # Componentes globais e reutilizáveis (divididos em ui, layout e shared).
+│   ├── ui/         # Apenas componentes base do shadcn/ui ou pequenas extensões genéricas.
+│   ├── layout/     # Header, Sidebar, Footer, Breadcrumbs e estruturas globais de layout.
+│   └── shared/     # Componentes de negócio reutilizáveis e independentes de domínio.
+├── features/       # Componentes e lógica específicos agrupados por domínio de negócio (futuro).
+│   ├── catalogo/
+│   ├── equipe/
+│   └── operacao/
+├── catalogo/       # Legado/Atual: Domínio e lógica do Catálogo de Serviços.
+├── equipe/         # Legado/Atual: Domínio e lógica de Membros da Equipe.
+├── operacao/       # Legado/Atual: Domínio e lógica das Operações e Ordens de Serviço.
+├── db/             # Cliente do banco de dados (Drizzle ORM) e conexão.
+├── auth/           # Configurações de autenticação e permissões de acesso.
+├── lib/            # Utilitários compartilhados e integrações de APIs externas.
+└── hooks/          # React Hooks globais não atrelados a um domínio.
 ```
 
-### 11.2. Regras de Distribuição de Responsabilidades
+### 11.2. Responsabilidade das Pastas
 
 1. **`components/ui` (Design System):**
-   - Destinado **apenas** a componentes base de UI do shadcn/ui ou pequenas customizações/extensões diretas, desde que continuem sendo componentes genéricos de UI (ex: `button.tsx`, `input.tsx`, ou um `<StatusBadge status="..." />` genérico).
-   - **NÃO** colocar qualquer componente de negócio ou com lógica específica de domínio aqui.
+   - Apenas componentes base do shadcn/ui ou pequenas customizações/extensões desde que continuem sendo componentes genéricos (ex: `button.tsx`, `input.tsx`, `card.tsx`, `dialog.tsx`, `table.tsx` ou um `<StatusBadge status="..." />` genérico).
 
 2. **`components/layout` (Estruturas de Layout):**
-   - Estruturas de layout reaproveitáveis globais (ex: `app-sidebar.tsx`, `app-header.tsx`, `page-container.tsx`, `page-title.tsx`).
+   - Estruturas de layout reaproveitáveis globais (ex: `<AppSidebar />`, `<AppHeader />`, `<PageContainer />`, `<PageTitle />`).
 
 3. **`components/shared` (Componentes Compartilhados):**
-   - Componentes funcionais e de negócio reutilizáveis que **não pertencem a uma feature ou domínio específico** (ex: `<EmptyState />`, `<SearchBar />`, `<ConfirmDialog />`).
+   - Componentes reutilizáveis independentes de domínio (ex: `<EmptyState />`, `<SearchBar />`, `<ConfirmDialog />`). Eles não pertencem a uma feature específica.
 
-4. **`features/<dominio>` (Componentes e Lógica de Negócio):**
-   - Todo componente com acoplamento a regras de negócio, dados de entidades específicas (ex: cliente, técnico, orçamento, OS) deve ser armazenado dentro de sua respectiva feature (ex: `features/customers/components/customer-form.tsx`).
-   - Evita encher o diretório global `components/` com centenas de arquivos específicos de negócio.
+4. **`features/*` (Domínio de Negócio):**
+   - Componentes e lógicas específicas de negócio de um domínio específico (Forms, Tables, Filters, Row Actions, Dialogs de negócio). Exemplo: `features/customers/components/customer-form.tsx`.
 
-5. **`app/` (Composição de Páginas):**
-   - Páginas e rotas devem conter **apenas composição de componentes** e conexão com as features ou layouts. Lógica de negócio pesada ou formulários complexos devem ser encapsulados em suas respectivas features ou hooks e apenas importados no `app/`.
+5. **`app/` (Páginas e Rotas):**
+   - Apenas páginas, layouts e route handlers. Não deve conter lógicas de negócio pesadas ou declarações diretas de formulários extensos.
 
 ### 11.3. Fluxo de Dependências Recomendado
 
-A árvore de dependências deve fluir de componentes de baixo nível (genéricos) para alto nível (páginas/negócio).
+A árvore de dependências deve fluir de baixo nível (genérico) para alto nível (páginas/negócio):
 ```txt
 ui (design system)
    ↓
@@ -342,12 +342,21 @@ feature (domínio específico)
    ↓
 page (composição de rota)
 ```
-*Exemplo prático:* Um componente de domínio `<CustomerTable />` (de `features/customers`) importa `<Table />`, `<Button />` e `<Badge />` (de `components/ui`).
+*Exemplo real:* Um componente `<CustomerTable />` (de `features/customers/components/`) usa componentes de `<Table />`, `<Button />` e `<Badge />` vindos de `components/ui`.
 
-### 11.4. Armadilhas a Evitar
+### 11.4. Regras Operacionais para Agentes (Proibido)
 
-* **Wrappers Desnecessários:** Evite criar wrappers simples sem alteração de comportamento ou estilização estendida, como `<AppButton />` que apenas encapsula `<Button />`. Isso gera redundância e complexidade desnecessária.
-* **Poluição do Diretório `components/`:** Nunca solte arquivos de negócio diretamente em `components/`. Use sempre `components/shared/`, `components/layout/` ou o diretório de `features/` adequado.
+* **Proibido:**
+  - **Criar componentes de negócio dentro de `components/ui/`**.
+  - **Criar lógica de negócio complexa dentro de `app/`**.
+  - **Duplicar componentes existentes** (Sempre procurar, reutilizar e apenas criar se não existir).
+  - **Criar wrappers desnecessários** (ex: `<AppButton />` que apenas encapsula `<Button />` sem adicionar novos comportamentos ou lógica). Isso apenas aumenta a complexidade.
+
+### 11.5. Estratégia de Transição Gradual
+
+A arquitetura do projeto atual está saudável e não exige uma refatoração em massa imediata de todos os arquivos. A migração deve ocorrer de forma orgânica e gradual:
+1. Para quaisquer próximas funcionalidades ou novos componentes de negócio, começar a utilizar/criar as pastas `components/layout`, `components/shared` e `features/*`.
+2. À medida que os módulos legados (`src/catalogo`, `src/equipe` e `src/operacao`) forem modificados ou expandidos, migrar as lógicas e componentes de negócio de forma incremental para dentro do diretório correspondente em `features/*`. Em poucas semanas, o projeto migrará naturalmente para o padrão sem necessidade de refatoração destrutiva imediata.
 
 ---
 
