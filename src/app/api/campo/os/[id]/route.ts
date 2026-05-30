@@ -43,6 +43,16 @@ export async function GET(
 
   if (!row) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
+  // OS Complementares vinculadas a esta OS (histórico do pai).
+  const complementares = await db
+    .select({
+      id: ordemServico.id,
+      estado: ordemServico.estado,
+      categoria: ordemServico.categoria,
+    })
+    .from(ordemServico)
+    .where(eq(ordemServico.osPaiId, id));
+
   const e = row.endereco;
   const endereco = [
     e.logradouro,
@@ -60,5 +70,6 @@ export async function GET(
     endereco,
     tecnicoNome: row.tecnicoNome ?? "DBG",
     presencaConfirmada: row.presencaEm != null,
+    complementares,
   });
 }

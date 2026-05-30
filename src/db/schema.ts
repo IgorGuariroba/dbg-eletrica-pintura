@@ -219,6 +219,9 @@ export const ordemServico = pgTable("ordem_servico", {
         motivo: string;
         em: string;
       }[];
+      // OS pai aguardando aprovação de uma Complementar para prosseguir.
+      aguardandoComplementar?: boolean;
+      complementarId?: string;
     }>()
     .notNull()
     .default(sql`'{}'::jsonb`),

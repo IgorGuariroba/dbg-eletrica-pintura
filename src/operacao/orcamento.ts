@@ -2,6 +2,7 @@ import type {
   Categoria,
   ItemPersistir,
   OrcamentoRepo,
+  ServicoPreco,
 } from "./orcamento-repo";
 import {
   EstadoInvalidoError,
@@ -71,6 +72,52 @@ function validarOverride(valor: string): string {
   return n.toFixed(2);
 }
 
+export interface OrcamentoCalculado {
+  itens: ItemPersistir[];
+  totalMaoDeObra: string;
+  totalDeslocamento: string;
+  total: string;
+}
+
+/** Apenas o que o cálculo precisa do repositório (preços do Catálogo). */
+export interface PrecosRepo {
+  buscarPrecosServicos(ids: string[]): Promise<ServicoPreco[]>;
+}
+
+/**
+ * Núcleo de cálculo de um orçamento: valida itens/km, resolve preços do
+ * Catálogo, soma itens + deslocamento e valida o total. Puro quanto a estado da
+ * OS — reusado tanto pela montagem (slice 7) quanto pela Complementar (slice 7).
+ */
+export async function calcularOrcamento(
+  itensInput: ItemOrcamentoInput[],
+  categoria: Categoria,
+  km: number,
+  deslocamentoOverride: string | null | undefined,
+  config: ConfigDeslocamento,
+  repo: PrecosRepo,
+): Promise<OrcamentoCalculado> {
+  if (itensInput.length === 0) throw new ItensObrigatorioError();
+  if (km < 0) {
+    throw new OrcamentoInvalidoError("O km de deslocamento não pode ser negativo");
+  }
+
+  const itens = await montarItens(itensInput, categoria, repo);
+  const totalMaoDeObra = somar(itens.map((i) => i.subtotal));
+
+  const totalDeslocamento =
+    deslocamentoOverride != null
+      ? validarOverride(deslocamentoOverride)
+      : calcularDeslocamento(km, config.precoLitro, config.kmPorLitro);
+
+  const total = somar([totalMaoDeObra, totalDeslocamento]);
+  if (Number(total) <= 0) {
+    throw new OrcamentoInvalidoError("O total do orçamento deve ser maior que zero");
+  }
+
+  return { itens, totalMaoDeObra, totalDeslocamento, total };
+}
+
 /**
  * Técnico atribuído monta o orçamento de uma OS NOVA: valida posse e estado,
  * usa preços autoritativos do Catálogo, soma itens + deslocamento e persiste,
@@ -89,33 +136,24 @@ export async function montarOrcamento(
   if (os.tecnicoId !== usuario.membroId) throw new NaoAtribuidoError();
   if (os.estado !== "NOVA") throw new EstadoInvalidoError();
 
-  if (input.itens.length === 0) throw new ItensObrigatorioError();
-  if (input.km < 0) {
-    throw new OrcamentoInvalidoError("O km de deslocamento não pode ser negativo");
-  }
-
-  const itens = await montarItens(input.itens, os.categoria, repo);
-  const totalItens = somar(itens.map((i) => i.subtotal));
-
-  const deslocamento =
-    input.deslocamentoOverride != null
-      ? validarOverride(input.deslocamentoOverride)
-      : calcularDeslocamento(input.km, config.precoLitro, config.kmPorLitro);
-
-  const total = somar([totalItens, deslocamento]);
-  if (Number(total) <= 0) {
-    throw new OrcamentoInvalidoError("O total do orçamento deve ser maior que zero");
-  }
+  const calc = await calcularOrcamento(
+    input.itens,
+    os.categoria,
+    input.km,
+    input.deslocamentoOverride,
+    config,
+    repo,
+  );
 
   const validoAte = new Date(Date.now() + VALIDADE_DIAS * 24 * 60 * 60 * 1000);
 
   const criado = await repo.criarParaOs({
     osId: os.id,
     tecnicoId: usuario.membroId,
-    itens,
-    totalMaoDeObra: totalItens,
-    totalDeslocamento: deslocamento,
-    total,
+    itens: calc.itens,
+    totalMaoDeObra: calc.totalMaoDeObra,
+    totalDeslocamento: calc.totalDeslocamento,
+    total: calc.total,
     validoAte,
   });
   if (!criado) throw new OsIndisponivelError();
@@ -125,7 +163,7 @@ export async function montarOrcamento(
 async function montarItens(
   entradas: ItemOrcamentoInput[],
   categoriaOs: Categoria,
-  repo: OrcamentoRepo,
+  repo: PrecosRepo,
 ): Promise<ItemPersistir[]> {
   // Consolida quantidades por serviço — itens repetidos viram uma linha só.
   const quantidadePorServico = new Map<string, number>();

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
 import type { DB } from "@/db/client";
 import { cliente, ordemServico, solicitacao } from "@/db/schema";
 import type {
@@ -44,10 +44,11 @@ export function criarFilaRepoDrizzle(db: DB): FilaRepo {
     async listar(filtro: ListarFilaFiltro): Promise<ListarFilaResultado> {
       const conds = [];
       
-      // OS Express com técnico atribuído não aparece na fila de abertas
+      // OS Express/Complementar com técnico atribuído nascem fora da fila
+      // pública (criadas no local pelo próprio técnico).
       conds.push(
         or(
-          ne(ordemServico.tipo, "EXPRESS"),
+          notInArray(ordemServico.tipo, ["EXPRESS", "COMPLEMENTAR"]),
           isNull(ordemServico.tecnicoId),
         ),
       );
