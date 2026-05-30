@@ -180,6 +180,16 @@ export function RastreamentoView({ osId }: { osId: string }) {
         </CardContent>
       </Card>
 
+      {detalhe.estado === "ORCADA" ? (
+        <Link
+          href={`/campo/os/${osId}/aprovacao` as Route}
+          className={buttonVariants({ className: "w-full" })}
+        >
+          <Check className="size-4" aria-hidden />
+          Aprovar com o cliente
+        </Link>
+      ) : null}
+
       {detalhe.estado === "NO_LOCAL" || detalhe.estado === "EM_EXECUCAO" ? (
         <Link
           href={`/campo/os/${osId}/execucao` as Route}
