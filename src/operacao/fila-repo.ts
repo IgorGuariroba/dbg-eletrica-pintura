@@ -43,6 +43,11 @@ export interface FilaRepo {
   listar(filtro: ListarFilaFiltro): Promise<ListarFilaResultado>;
   buscarPorId(id: string): Promise<OsFila | null>;
   /**
+   * Todas as OS atribuídas a um técnico (qualquer estado), mais antigas
+   * primeiro. Base da lista "minhas OS" do app de campo.
+   */
+  listarPorTecnico(tecnicoId: string): Promise<OsFila[]>;
+  /**
    * Self-assign atômico. Atualiza tecnico_id apenas se a OS ainda está NOVA e
    * sem técnico — vence a corrida quem persiste primeiro. Retorna a OS
    * atualizada ou null se já não estava disponível.
