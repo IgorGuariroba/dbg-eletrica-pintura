@@ -88,7 +88,7 @@ describe("montarDashboard", () => {
 
   it("admin_raiz vê todos os cards de módulo, sem card Técnico", async () => {
     const dash = await montarDashboard(
-      usuario({ role: "admin_raiz", modulos: [] }),
+      usuario({ role: "admin_raiz", modulos: [], isTecnico: true, membroId: "" }),
       repoFake(),
     );
 
@@ -96,5 +96,16 @@ describe("montarDashboard", () => {
     expect(dash.catalogo).toBeDefined();
     expect(dash.equipe).toBeDefined();
     expect(dash.tecnico).toBeUndefined();
+  });
+
+  it("isTecnico sem membroId (ex: admin raiz) não gera card Técnico nem consulta repo", async () => {
+    const atribuidas = vi.fn(async () => 0);
+    const dash = await montarDashboard(
+      usuario({ isTecnico: true, membroId: "" }),
+      repoFake({ contarOsAtribuidasA: atribuidas }),
+    );
+
+    expect(dash.tecnico).toBeUndefined();
+    expect(atribuidas).not.toHaveBeenCalled();
   });
 });

@@ -73,7 +73,9 @@ export async function montarDashboard(
     };
   }
 
-  if (usuario.isTecnico) {
+  // Técnico precisa de membroId real: admin raiz é isTecnico mas não tem
+  // registro em `membro` (membroId vazio) — sem OS atribuíveis a ele.
+  if (usuario.isTecnico && usuario.membroId) {
     dash.tecnico = {
       atribuidasAMim: await repo.contarOsAtribuidasA(usuario.membroId),
       minhaFila: await repo.contarMinhaFila(usuario.especialidades),
