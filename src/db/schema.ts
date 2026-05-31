@@ -364,10 +364,34 @@ export const operacaoConfig = pgTable("operacao_config", {
   kmPorLitro: decimal("km_por_litro", { precision: 10, scale: 2 })
     .notNull()
     .default("10.00"),
+  // Horário comercial por dia da semana: janela aberta, ou ausente/null = fechado.
+  // Mesma shape de membro.disponibilidade — define a janela máxima de slots.
+  horarioComercial: jsonb("horario_comercial").$type<{
+    dom?: { inicio: string; fim: string } | null;
+    seg?: { inicio: string; fim: string } | null;
+    ter?: { inicio: string; fim: string } | null;
+    qua?: { inicio: string; fim: string } | null;
+    qui?: { inicio: string; fim: string } | null;
+    sex?: { inicio: string; fim: string } | null;
+    sab?: { inicio: string; fim: string } | null;
+  }>(),
   atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
     .defaultNow()
     .notNull()
     .$onUpdate(() => new Date()),
+});
+
+// ============================================================
+// Raio de Cobertura (bairros atendidos — módulo Operação)
+// ============================================================
+
+export const bairroCobertura = pgTable("bairro_cobertura", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  // Chave normalizada (trim + lowercase) — ver src/operacao/cobertura.ts.
+  nome: varchar("nome", { length: 120 }).notNull().unique(),
+  criadoEm: timestamp("criado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 // ============================================================

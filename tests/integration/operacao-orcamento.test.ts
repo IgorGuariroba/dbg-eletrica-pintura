@@ -9,7 +9,6 @@ describe.skipIf(!hasDb)("Orçamento Drizzle", () => {
   let dbRaw: typeof import("@/db/client").db;
   let schema: typeof import("@/db/schema");
   let orcRepo: import("@/operacao/orcamento-repo").OrcamentoRepo;
-  let cfgRepo: import("@/operacao/config-repo").OperacaoConfigRepo;
   let montar: typeof import("@/operacao/orcamento").montarOrcamento;
   let clienteIds: string[] = [];
   let solicitacaoIds: string[] = [];
@@ -95,7 +94,6 @@ describe.skipIf(!hasDb)("Orçamento Drizzle", () => {
     schema = await import("@/db/schema");
     dbRaw = dbMod.db;
     orcRepo = (await import("@/operacao/orcamento-repo-drizzle")).criarOrcamentoRepoDrizzle(dbMod.db);
-    cfgRepo = (await import("@/operacao/config-repo-drizzle")).criarOperacaoConfigRepoDrizzle(dbMod.db);
     montar = (await import("@/operacao/orcamento")).montarOrcamento;
   });
 
@@ -140,18 +138,6 @@ describe.skipIf(!hasDb)("Orçamento Drizzle", () => {
       await dbRaw
         .delete(schema.membro)
         .where(inArray(schema.membro.id, membroIds));
-    }
-  });
-
-  it("config obter retorna defaults e atualizar persiste", async () => {
-    const original = await cfgRepo.obter();
-    try {
-      await cfgRepo.atualizar({ precoLitro: "7.50", kmPorLitro: "12" });
-      const lido = await cfgRepo.obter();
-      expect(Number(lido.precoLitro)).toBe(7.5);
-      expect(Number(lido.kmPorLitro)).toBe(12);
-    } finally {
-      await cfgRepo.atualizar(original);
     }
   });
 

@@ -99,6 +99,13 @@
       "when": 1780184523870,
       "tag": "0013_cultured_wolverine",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1780248737801,
+      "tag": "0014_sticky_norman_osborn",
+      "breakpoints": true
     }
   ]
 }
