@@ -141,6 +141,23 @@ describe.skipIf(!hasDb)("Slot reservation and concurrency Integration", () => {
     expect(transicoes[0].atorEmail).toBe("admin@dbg.com");
   });
 
+  it("impede agendamento direto se a OS estiver em estado de execução ativo (ex: EM_EXECUCAO)", async () => {
+    const { osId, tecnicoId } = await seedOs("EM_EXECUCAO");
+    const agendadoPara = new Date("2026-06-10T10:00:00Z");
+
+    await expect(
+      mod.reservarSlot(
+        {
+          osId,
+          tecnicoId,
+          agendadoPara,
+          atorEmail: "admin@dbg.com",
+        },
+        { reservaRepo: repo }
+      )
+    ).rejects.toThrow(mod.ReservaInvalidaError);
+  });
+
   it("impede reserva concorrente para o mesmo técnico e mesmo horário", async () => {
     const { osId: os1, tecnicoId } = await seedOs("APROVADA");
     
@@ -242,8 +259,8 @@ describe.skipIf(!hasDb)("Slot reservation and concurrency Integration", () => {
       membroIds.push(tec.id);
 
       // 2026-06-01 é uma segunda-feira
-      const inicio = new Date("2026-06-01T00:00:00");
-      const fim = new Date("2026-06-01T23:59:59");
+      const inicio = new Date("2026-06-01T00:00:00Z");
+      const fim = new Date("2026-06-01T23:59:59Z");
 
       const slots = await loader.listarSlotsDisponiveis(
         dbRaw,
@@ -258,8 +275,8 @@ describe.skipIf(!hasDb)("Slot reservation and concurrency Integration", () => {
       // Deve listar os slots do técnico criado
       const slotsDoTecnico = slots.filter(s => s.tecnicoId === tec.id);
       expect(slotsDoTecnico).toHaveLength(4);
-      expect(slotsDoTecnico[0].inicio.getHours()).toBe(8);
-      expect(slotsDoTecnico[3].inicio.getHours()).toBe(11);
+      expect(slotsDoTecnico[0].inicio.getUTCHours()).toBe(8);
+      expect(slotsDoTecnico[3].inicio.getUTCHours()).toBe(11);
     });
 
     it("não retorna slots ocupados por ordens de serviço ativas", async () => {
@@ -308,15 +325,15 @@ describe.skipIf(!hasDb)("Slot reservation and concurrency Integration", () => {
           tipo: "NORMAL",
           estado: "AGENDADA", // Estado ativo
           tecnicoId: tec.id,
-          agendadoPara: new Date("2026-06-01T10:00:00"),
+          agendadoPara: new Date("2026-06-01T10:00:00Z"),
         })
         .returning();
 
       clienteIds.push(cli.id);
       solicitacaoIds.push(sol.id);
 
-      const inicio = new Date("2026-06-01T00:00:00");
-      const fim = new Date("2026-06-01T23:59:59");
+      const inicio = new Date("2026-06-01T00:00:00Z");
+      const fim = new Date("2026-06-01T23:59:59Z");
 
       const slots = await loader.listarSlotsDisponiveis(
         dbRaw,
@@ -332,7 +349,7 @@ describe.skipIf(!hasDb)("Slot reservation and concurrency Integration", () => {
       
       // O slot das 10h deve sumir, restando apenas 3 slots (8h, 9h, 11h)
       expect(slotsDoTecnico).toHaveLength(3);
-      const contemSlot10h = slotsDoTecnico.some(s => s.inicio.getHours() === 10);
+      const contemSlot10h = slotsDoTecnico.some(s => s.inicio.getUTCHours() === 10);
       expect(contemSlot10h).toBe(false);
     });
   });

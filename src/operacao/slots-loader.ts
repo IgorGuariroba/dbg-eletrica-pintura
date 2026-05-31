@@ -1,6 +1,6 @@
 import type { DB } from "@/db/client";
 import { membro, ordemServico } from "@/db/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Categoria } from "@/equipe/membro-repo";
 import type { SlotDisponivel } from "./slots";
 import { calcularSlotsDisponiveis } from "./slots";
@@ -24,16 +24,17 @@ export async function listarSlotsDisponiveis(
 ): Promise<SlotDisponivel[]> {
   const { inicio, fim, categoria, duracaoMin } = input;
 
-  // 1. Carrega todos os membros ativos que são técnicos
-  const tecnicosDb = await db
+  // 1. Carrega todos os membros ativos que são técnicos com a especialidade desejada no banco
+  const matchingTecnicos = await db
     .select()
     .from(membro)
-    .where(and(eq(membro.isTecnico, true), eq(membro.ativo, true)));
-
-  // Filtrar em memória por especialidade
-  const matchingTecnicos = tecnicosDb.filter((t) =>
-    (t.especialidades as Categoria[]).includes(categoria)
-  );
+    .where(
+      and(
+        eq(membro.isTecnico, true),
+        eq(membro.ativo, true),
+        sql`${categoria} = ANY(${membro.especialidades})`
+      )
+    );
 
   if (matchingTecnicos.length === 0) {
     return [];

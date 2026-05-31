@@ -38,15 +38,17 @@ export function calcularSlotsDisponiveis(input: {
 
   // Iterar dia por dia no range [inicio, fim]
   // Começamos normalizando o início para o começo daquele dia local
-  const dataAtual = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
-  const dataLimite = new Date(fim.getFullYear(), fim.getMonth(), fim.getDate());
+  // Iterar dia por dia no range [inicio, fim]
+  // Começamos normalizando o início para o começo daquele dia em UTC
+  const dataAtual = new Date(Date.UTC(inicio.getUTCFullYear(), inicio.getUTCMonth(), inicio.getUTCDate()));
+  const dataLimite = new Date(Date.UTC(fim.getUTCFullYear(), fim.getUTCMonth(), fim.getUTCDate()));
 
   for (
     let d = new Date(dataAtual.getTime());
     d <= dataLimite;
-    d.setDate(d.getDate() + 1)
+    d.setUTCDate(d.getUTCDate() + 1)
   ) {
-    const diaSemana = DIAS[d.getDay()];
+    const diaSemana = DIAS[d.getUTCDay()];
 
     const comercialJanela = horarioComercial[diaSemana];
     if (!comercialJanela) continue;
@@ -75,10 +77,10 @@ export function calcularSlotsDisponiveis(input: {
       const [endH, endM] = fimJanela.split(":").map(Number);
 
       const slotStart = new Date(d.getTime());
-      slotStart.setHours(startH, startM, 0, 0);
+      slotStart.setUTCHours(startH, startM, 0, 0);
 
       const slotEndLimit = new Date(d.getTime());
-      slotEndLimit.setHours(endH, endM, 0, 0);
+      slotEndLimit.setUTCHours(endH, endM, 0, 0);
 
       let slotTime = new Date(slotStart.getTime());
 
@@ -106,7 +108,7 @@ export function calcularSlotsDisponiveis(input: {
           }
         }
 
-        slotTime.setMinutes(slotTime.getMinutes() + duracaoMin);
+        slotTime.setUTCMinutes(slotTime.getUTCMinutes() + duracaoMin);
       }
     }
   }

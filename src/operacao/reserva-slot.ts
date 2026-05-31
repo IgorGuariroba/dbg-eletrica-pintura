@@ -56,8 +56,9 @@ export async function reservarSlot(
   // Wait, let's look at the maquina-estado.ts or context.md. Let's see what is typical.
   // Actually, we can check if it is CANCELADA, CONCLUIDA, PAGA, which are final states.
   // Let's allow transitions from non-final states, or simply let the repo update it.
-  // Let's write standard validation:
-  if (["CONCLUIDA", "PAGA", "CANCELADA"].includes(os.estado)) {
+  // Apenas OS que não foram agendadas ou executadas podem ter um slot reservado inicialmente.
+  const estadosPermitidos = ["NOVA", "ORCADA", "APROVADA"];
+  if (!estadosPermitidos.includes(os.estado)) {
     throw new ReservaInvalidaError(
       `Não é possível agendar uma OS no estado ${os.estado}`
     );
