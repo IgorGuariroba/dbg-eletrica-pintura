@@ -2,7 +2,7 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import Google from "next-auth/providers/google";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { membro } from "@/db/schema";
+import { membro, cliente } from "@/db/schema";
 import {
   detectRole,
   type MembroLookup,
@@ -10,6 +10,7 @@ import {
   type Role,
 } from "@/auth/role-detection";
 import { sessaoDevBypass } from "@/auth/dev-bypass";
+import { enriquecerSessaoCliente } from "@/cliente/vinculacao";
 
 declare module "next-auth" {
   interface Session {
@@ -17,6 +18,7 @@ declare module "next-auth" {
       role: Role;
       modulos: Modulo[];
       isTecnico: boolean;
+      whatsapp?: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -38,6 +40,18 @@ const lookupMembro: MembroLookup = async (email) => {
     isTecnico: row.isTecnico,
     ativo: row.ativo,
   };
+};
+
+const lookupClienteVinculo = async (googleEmail: string) => {
+  const [row] = await db
+    .select({
+      whatsapp: cliente.whatsapp,
+    })
+    .from(cliente)
+    .where(eq(cliente.googleEmail, googleEmail))
+    .limit(1);
+
+  return row ? { whatsapp: row.whatsapp } : null;
 };
 
 export const {
@@ -65,12 +79,17 @@ export const {
         token.modulos = detected.modulos;
         token.isTecnico = detected.isTecnico;
       }
+      if (token.role === "cliente" && !token.whatsapp && email) {
+        const vinculo = await lookupClienteVinculo(email);
+        enriquecerSessaoCliente(token, vinculo);
+      }
       return token;
     },
     async session({ session, token }) {
       session.user.role = (token.role as Role) ?? "cliente";
       session.user.modulos = (token.modulos as Modulo[]) ?? [];
       session.user.isTecnico = Boolean(token.isTecnico);
+      session.user.whatsapp = (token.whatsapp as string | null) ?? null;
       return session;
     },
   },

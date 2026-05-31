@@ -1,4 +1,7 @@
 import type { Session } from "next-auth";
+import { eq } from "drizzle-orm";
+import { db } from "@/db/client";
+import { cliente } from "@/db/schema";
 import { detectRole, type MembroLookup } from "./role-detection";
 
 /**
@@ -42,6 +45,17 @@ export async function sessaoDevBypass(
   }
 
   const detected = await detectRole(email, adminEmail, lookup);
+  let whatsapp: string | null = null;
+
+  if (detected.role === "cliente") {
+    const [row] = await db
+      .select({ whatsapp: cliente.whatsapp })
+      .from(cliente)
+      .where(eq(cliente.googleEmail, email))
+      .limit(1);
+    whatsapp = row?.whatsapp ?? null;
+  }
+
   return {
     user: {
       email,
@@ -49,6 +63,7 @@ export async function sessaoDevBypass(
       role: detected.role,
       modulos: detected.modulos,
       isTecnico: detected.isTecnico,
+      whatsapp,
     },
     expires: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
   } as Session;
