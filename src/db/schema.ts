@@ -95,6 +95,7 @@ export const cliente = pgTable(
       lng?: number;
     }>(),
     googleId: varchar("google_id", { length: 100 }),
+    googleEmail: varchar("google_email", { length: 255 }),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -102,6 +103,7 @@ export const cliente = pgTable(
   (t) => ({
     emailUq: uniqueIndex("cliente_email_uq").on(t.email),
     googleIdUq: uniqueIndex("cliente_google_id_uq").on(t.googleId),
+    googleEmailUq: uniqueIndex("cliente_google_email_uq").on(t.googleEmail),
     whatsappUq: uniqueIndex("cliente_whatsapp_uq").on(t.whatsapp),
   }),
 );
@@ -559,6 +561,33 @@ export const fotoPortfolioRelations = relations(fotoPortfolio, ({ one }) => ({
   tecnico: one(membro, {
     fields: [fotoPortfolio.tecnicoId],
     references: [membro.id],
+  }),
+}));
+
+export const eventoVinculacaoEnum = pgEnum("evento_vinculacao", ["VINCULADO", "DESVINCULADO"]);
+
+export const vinculacaoGooglePendente = pgTable("vinculacao_google_pendente", {
+  googleEmail: varchar("google_email", { length: 255 }).primaryKey(),
+  whatsapp: varchar("whatsapp", { length: 20 }).notNull(),
+  codigo: varchar("codigo", { length: 6 }).notNull(),
+  expiraEm: timestamp("expira_em", { withTimezone: true }).notNull(),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const vinculacaoGoogleLog = pgTable("vinculacao_google_log", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clienteId: uuid("cliente_id").notNull().references(() => cliente.id, { onDelete: "cascade" }),
+  googleEmail: varchar("google_email", { length: 255 }).notNull(),
+  whatsapp: varchar("whatsapp", { length: 20 }).notNull(),
+  evento: eventoVinculacaoEnum("evento").notNull(),
+  atorEmail: varchar("ator_email", { length: 255 }).notNull(),
+  em: timestamp("em", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const vinculacaoGoogleLogRelations = relations(vinculacaoGoogleLog, ({ one }) => ({
+  cliente: one(cliente, {
+    fields: [vinculacaoGoogleLog.clienteId],
+    references: [cliente.id],
   }),
 }));
 
