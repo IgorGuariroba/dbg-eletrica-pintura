@@ -1,5 +1,5 @@
 import { and, asc, count, eq, not, sql, type SQL } from "drizzle-orm";
-import type { DB } from "@/db/client";
+import { type DB, ehViolacaoUnica } from "@/db/client";
 import { membro } from "@/db/schema";
 import type {
   AtualizacaoMembro,
@@ -11,15 +11,6 @@ import type {
 } from "./membro-repo";
 import { EmailDuplicadoError } from "./membro-repo";
 import { gerarSlugUnico } from "@/equipe/slug";
-
-function ehViolacaoUnica(e: unknown): boolean {
-  return (
-    typeof e === "object" &&
-    e !== null &&
-    "code" in e &&
-    (e as { code?: string }).code === "23505"
-  );
-}
 
 async function executarPreservandoEmailUnico<T>(
   fn: () => Promise<T>,
