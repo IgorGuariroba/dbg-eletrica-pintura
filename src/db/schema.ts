@@ -249,7 +249,11 @@ export const ordemServico = pgTable("ordem_servico", {
     .defaultNow()
     .notNull()
     .$onUpdate(() => new Date()),
-});
+}, (t) => ({
+  tecnicoAgendadoUq: uniqueIndex("ordem_servico_tecnico_agendado_uq")
+    .on(t.tecnicoId, t.agendadoPara)
+    .where(sql`estado IN ('AGENDADA', 'A_CAMINHO', 'NO_LOCAL', 'EM_EXECUCAO')`),
+}));
 
 // ============================================================
 // Orçamento

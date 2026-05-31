@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "ordem_servico_tecnico_agendado_uq" ON "ordem_servico" USING btree ("tecnico_id","agendado_para") WHERE estado IN ('AGENDADA', 'A_CAMINHO', 'NO_LOCAL', 'EM_EXECUCAO');
