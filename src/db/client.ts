@@ -23,3 +23,12 @@ export const db = new Proxy({} as NeonHttpDatabase<typeof schema>, {
 });
 
 export type DB = NeonHttpDatabase<typeof schema>;
+
+export function ehViolacaoUnica(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "code" in e &&
+    (e as { code?: string }).code === "23505"
+  );
+}

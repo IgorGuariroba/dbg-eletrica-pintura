@@ -1,17 +1,8 @@
 import { eq } from "drizzle-orm";
-import type { DB } from "@/db/client";
+import { type DB, ehViolacaoUnica } from "@/db/client";
 import { ordemServico, transicaoOs } from "@/db/schema";
 import type { ReservaSlotRepo, ReservarSlotInput } from "./reserva-slot";
 import { SlotIndisponivelError } from "./reserva-slot";
-
-function ehViolacaoUnica(e: unknown): boolean {
-  return (
-    typeof e === "object" &&
-    e !== null &&
-    "code" in e &&
-    (e as { code?: string }).code === "23505"
-  );
-}
 
 export function criarReservaSlotRepoDrizzle(db: DB): ReservaSlotRepo {
   return {
