@@ -112,6 +112,18 @@ A tarefa de UI somente poderá ser dada como concluída quando atingir as seguin
 * **Consistência Visual:** `≥ 8/10`
 * **Design System:** `100% aderente`
 
+### 2.5. Validação Visual Obrigatória (Playwright MCP)
+
+Nenhuma tarefa de UI é considerada concluída só com `lint`/`typecheck`/`test`/`build` verdes. O Reviewer **deve abrir a tela no navegador** via **Playwright MCP** e validar de verdade (não presumir pelo código).
+
+* **Ferramenta:** usar o **Playwright MCP** (`mcp__playwright__*`). Caso a sessão só tenha o `chrome-devtools` MCP carregado, ele é equivalente e pode substituir — registrar no relatório qual foi usado.
+* **Subir o app:** `pnpm dev` em background; aguardar o servidor responder `200` antes de navegar.
+* **Resoluções:** validar nas 4 da §2.2 (`390`, `768`, `1366`, `1920`). Em cada uma, confirmar via script: `document.documentElement.scrollWidth === clientWidth` (sem scroll horizontal) e que as imagens carregam (HTTP 200).
+* **Fluxos, não só layout:** exercitar as ações reais (aprovar/rejeitar, toggles, diálogos, submits) e confirmar o efeito (estado no banco, `revalidatePath`, objeto no R2), não apenas o render estático.
+* **Rotas privadas (admin/PWA):** exigem sessão autenticada (Google OAuth), não acessíveis headless. Usar o **dev bypass de auth** (`@/auth/dev-bypass`) — blindado por duplo gate (`NODE_ENV !== production` **E** `DEV_BYPASS_EMAIL`), inerte em produção. Definir `DEV_BYPASS_EMAIL` no `.env.local` (NUNCA no `.env` versionado): e-mail admin para módulos administrativos, e-mail de técnico cadastrado para o PWA de campo.
+* **Dados de teste:** quando a tela precisar de dados (fila de portfólio, galeria, etc.), semear o mínimo necessário (banco + R2) e **remover tudo ao final** (linhas, objetos R2, `DEV_BYPASS_EMAIL`, processo `pnpm dev`), deixando o working tree limpo.
+* **Evidência:** anexar screenshots das resoluções no relatório de review e descrever os fluxos exercitados.
+
 ---
 
 ## 3. Comandos Operacionais
@@ -124,6 +136,7 @@ Use estes comandos exatos do `pnpm` para validar e gerenciar o projeto:
 * **Checagem de Tipos (TypeScript):** `pnpm typecheck`
 * **Testes de Unidade / Integração:** `pnpm test` (ou `pnpm test:watch` em desenvolvimento)
 * **Testes E2E (Playwright):** `pnpm test:e2e`
+* **Validação Visual Interativa:** abrir o app via **Playwright MCP** e validar a tela conforme a §2.5 (obrigatório para qualquer alteração de UI; rotas privadas usam o dev bypass de `@/auth/dev-bypass`).
 * **Criar/Adicionar Componentes (Shadcn CLI):** `npx shadcn add <componente>` (a CLI está configurada localmente no projeto através do arquivo [components.json](file:///home/movida/projetos/dbg/components.json)).
 
 ---
