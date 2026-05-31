@@ -277,8 +277,8 @@ export function CampoDashboard({ tecnicosIniciais }: Props) {
         </div>
       ) : (
         <>
-          {/* Tabela — desktop */}
-          <div className="hidden md:block">
+          {/* Tabela — desktop (≥lg: 7 colunas só cabem a partir de 1024px) */}
+          <div className="hidden lg:block">
             <div className="rounded-lg border border-border overflow-hidden">
               <Table>
                 <TableHeader>
@@ -351,8 +351,8 @@ export function CampoDashboard({ tecnicosIniciais }: Props) {
             </div>
           </div>
 
-          {/* Cards — mobile */}
-          <div className="md:hidden space-y-3">
+          {/* Cards — mobile/tablet (<lg: tabela complexa vira cards, §10.3) */}
+          <div className="lg:hidden space-y-3">
             {tecnicos.map((linha) => (
               <CardMobile key={linha.osId} linha={linha} />
             ))}
