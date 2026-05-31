@@ -9,6 +9,10 @@ export const metadata = {
     "Conte seu serviço, selecione fotos e receba uma proposta com preço fixo e garantia.",
 };
 
+// Lê o raio de cobertura do banco a cada acesso (lista muda quando o admin
+// edita). Sem isso, o Next tenta prerender estático e o build falha sem DB.
+export const dynamic = "force-dynamic";
+
 export default async function SolicitarPage() {
   const bairrosAtendidos = await listarBairrosAtendidos();
 
