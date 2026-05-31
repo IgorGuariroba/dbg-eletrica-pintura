@@ -17,6 +17,7 @@ export interface OsFila {
   clienteNome: string;
   cidade: string;
   uf: string;
+  foraCobertura: boolean;
   criadoEm: Date;
 }
 

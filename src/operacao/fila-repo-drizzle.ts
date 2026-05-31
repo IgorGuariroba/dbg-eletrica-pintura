@@ -14,6 +14,7 @@ function osFila(row: {
   os: typeof ordemServico.$inferSelect;
   clienteNome: string;
   endereco: Endereco;
+  foraCobertura: boolean;
 }): OsFila {
   return {
     id: row.os.id,
@@ -24,6 +25,7 @@ function osFila(row: {
     clienteNome: row.clienteNome,
     cidade: row.endereco.cidade,
     uf: row.endereco.uf,
+    foraCobertura: row.foraCobertura,
     criadoEm: row.os.criadoEm,
   };
 }
@@ -35,6 +37,7 @@ export function criarFilaRepoDrizzle(db: DB): FilaRepo {
         os: ordemServico,
         clienteNome: cliente.nome,
         endereco: solicitacao.endereco,
+        foraCobertura: solicitacao.foraCobertura,
       })
       .from(ordemServico)
       .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
@@ -86,7 +89,12 @@ export function criarFilaRepoDrizzle(db: DB): FilaRepo {
 
       return {
         itens: linhas.map((l) =>
-          osFila({ os: l.os, clienteNome: l.clienteNome, endereco: l.endereco! }),
+          osFila({
+            os: l.os,
+            clienteNome: l.clienteNome,
+            endereco: l.endereco!,
+            foraCobertura: l.foraCobertura,
+          }),
         ),
         total,
       };
@@ -97,7 +105,12 @@ export function criarFilaRepoDrizzle(db: DB): FilaRepo {
         .where(eq(ordemServico.tecnicoId, tecnicoId))
         .orderBy(asc(ordemServico.criadoEm));
       return linhas.map((l) =>
-        osFila({ os: l.os, clienteNome: l.clienteNome, endereco: l.endereco! }),
+        osFila({
+          os: l.os,
+          clienteNome: l.clienteNome,
+          endereco: l.endereco!,
+          foraCobertura: l.foraCobertura,
+        }),
       );
     },
 
@@ -108,6 +121,7 @@ export function criarFilaRepoDrizzle(db: DB): FilaRepo {
         os: l.os,
         clienteNome: l.clienteNome,
         endereco: l.endereco!,
+        foraCobertura: l.foraCobertura,
       });
     },
 

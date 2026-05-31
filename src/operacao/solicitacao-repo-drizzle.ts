@@ -33,6 +33,7 @@ function solicitacaoRow(r: typeof solicitacao.$inferSelect): Solicitacao {
     duracaoEstimada: r.duracaoEstimada,
     lgpdAceito: r.lgpdAceito,
     origem: r.origem as Solicitacao["origem"],
+    foraCobertura: r.foraCobertura,
     criadoEm: r.criadoEm,
   };
 }
@@ -87,6 +88,7 @@ export function criarSolicitacaoRepoDrizzle(db: DB): SolicitacaoRepo {
           duracaoEstimada: nova.duracaoEstimada,
           lgpdAceito: nova.lgpdAceito,
           origem: nova.origem,
+          foraCobertura: nova.foraCobertura ?? false,
         })
         .returning();
 

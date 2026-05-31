@@ -48,6 +48,7 @@ export const criarSolicitacaoSchema = z.object({
       .boolean()
       .refine((v) => v === true, "é necessário aceitar a LGPD"),
     origem: z.enum(["FORMULARIO", "EXPRESS", "MANUAL"]).default("FORMULARIO"),
+    foraCobertura: z.boolean().default(false),
   }),
 });
 

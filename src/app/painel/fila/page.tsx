@@ -81,7 +81,14 @@ export default async function FilaPage() {
                 return (
                   <TableRow key={os.id}>
                     <TableCell className="font-medium">
-                      {os.clienteNome}
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                        <span>{os.clienteNome}</span>
+                        {os.foraCobertura && (
+                          <Badge variant="warning" className="w-fit text-[10px] h-4.5 px-1.5">
+                            Fora de cobertura
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{os.categoria}</Badge>

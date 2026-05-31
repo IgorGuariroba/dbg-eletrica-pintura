@@ -24,6 +24,7 @@ function os(over: Partial<OsFila> = {}): OsFila {
     clienteNome: "Maria",
     cidade: "São Paulo",
     uf: "SP",
+    foraCobertura: false,
     criadoEm: new Date("2026-01-01"),
     ...over,
   };
