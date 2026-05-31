@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Boxes,
   ClipboardList,
+  ImageIcon,
   LayoutDashboard,
   Settings,
   Users,
@@ -34,6 +35,12 @@ const ITENS: Item[] = [
   { label: "Fila de OS", href: "/painel/fila", icon: ClipboardList, modulo: "OPERACAO" },
   { label: "Catálogo", href: "/admin/catalogo", icon: Boxes, modulo: "CATALOGO" },
   { label: "Equipe", href: "/admin/equipe", icon: Users, modulo: "EQUIPE" },
+  {
+    label: "Portfólio",
+    href: "/admin/marketing/portfolio" as Route,
+    icon: ImageIcon,
+    modulo: "MARKETING",
+  },
   {
     label: "Config Operação",
     href: "/admin/operacao/config" as Route,

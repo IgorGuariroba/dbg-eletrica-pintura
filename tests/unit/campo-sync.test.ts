@@ -131,6 +131,100 @@ describe("processarItemSync — Detecção de Conflitos", () => {
     });
   });
 
+  it("FOTO marcada para portfólio registra candidata PENDENTE com a chave do R2", async () => {
+    const queryResult = {
+      limit: vi.fn().mockImplementation(async () => [
+        {
+          tecnicoEmail: "original@dbg.com",
+          tecnicoId: "tec-1",
+          estado: "EM_EXECUCAO",
+          tipo: "NORMAL",
+          categoria: "ELETRICA",
+        },
+      ]),
+    };
+    const dbMock = {
+      select: vi.fn().mockReturnThis(),
+      from: vi.fn().mockReturnThis(),
+      leftJoin: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnValue(queryResult),
+    } as any;
+
+    const mockUpload = {
+      enviarFoto: vi
+        .fn()
+        .mockResolvedValue({ url: "os/os-abc/depois/foto999.jpg" }),
+    };
+    const mockPortfolio = { marcar: vi.fn().mockResolvedValue({ id: "fp-1" }) };
+
+    const item = {
+      id: 9,
+      tipo: "FOTO",
+      payload: {
+        osId: "os-abc",
+        tipo: "DEPOIS",
+        dataUrl: "data:image/jpeg;base64,YWJj",
+        portfolio: true,
+      },
+      criadoEm: new Date().toISOString(),
+    };
+
+    const res = await processarItemSync(dbMock, item, "original@dbg.com", {
+      uploadFoto: mockUpload,
+      portfolioRepo: mockPortfolio as any,
+    });
+
+    expect(res.conflito).toBe(false);
+    expect(mockPortfolio.marcar).toHaveBeenCalledWith({
+      osId: "os-abc",
+      tecnicoId: "tec-1",
+      categoria: "ELETRICA",
+      tipo: "DEPOIS",
+      chavePrivada: "os/os-abc/depois/foto999.jpg",
+    });
+  });
+
+  it("FOTO sem flag de portfólio NÃO registra candidata", async () => {
+    const queryResult = {
+      limit: vi.fn().mockImplementation(async () => [
+        {
+          tecnicoEmail: "original@dbg.com",
+          tecnicoId: "tec-1",
+          estado: "EM_EXECUCAO",
+          tipo: "NORMAL",
+          categoria: "ELETRICA",
+        },
+      ]),
+    };
+    const dbMock = {
+      select: vi.fn().mockReturnThis(),
+      from: vi.fn().mockReturnThis(),
+      leftJoin: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnValue(queryResult),
+    } as any;
+    const mockUpload = {
+      enviarFoto: vi.fn().mockResolvedValue({ url: "os/os-abc/antes/x.jpg" }),
+    };
+    const mockPortfolio = { marcar: vi.fn() };
+
+    const item = {
+      id: 10,
+      tipo: "FOTO",
+      payload: {
+        osId: "os-abc",
+        tipo: "ANTES",
+        dataUrl: "data:image/jpeg;base64,YWJj",
+      },
+      criadoEm: new Date().toISOString(),
+    };
+
+    await processarItemSync(dbMock, item, "original@dbg.com", {
+      uploadFoto: mockUpload,
+      portfolioRepo: mockPortfolio as any,
+    });
+    expect(mockPortfolio.marcar).not.toHaveBeenCalled();
+  });
+
   it("sem conflito, processa NOTA com sucesso atualizando os metadados da OS", async () => {
     const queryResult = {
       limit: vi.fn().mockImplementation(async () => [

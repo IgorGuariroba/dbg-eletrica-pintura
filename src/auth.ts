@@ -9,6 +9,7 @@ import {
   type Modulo,
   type Role,
 } from "@/auth/role-detection";
+import { sessaoDevBypass } from "@/auth/dev-bypass";
 
 declare module "next-auth" {
   interface Session {
@@ -39,7 +40,12 @@ const lookupMembro: MembroLookup = async (email) => {
   };
 };
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const {
+  handlers,
+  auth: baseAuth,
+  signIn,
+  signOut,
+} = NextAuth({
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
@@ -69,3 +75,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+/**
+ * Sessão real do NextAuth; em DEV/TESTE, cai para a sessão sintética do
+ * dev-bypass quando não há login (ver `@/auth/dev-bypass`). Inerte em produção.
+ */
+export async function auth() {
+  const real = await baseAuth();
+  if (real?.user) return real;
+  return sessaoDevBypass(process.env.ADMIN_EMAIL, lookupMembro);
+}

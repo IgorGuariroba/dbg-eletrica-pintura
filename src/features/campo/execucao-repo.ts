@@ -1,6 +1,14 @@
-import type { CampoDB, MaterialConsumido } from "./db";
+import type { CampoDB, FotoPendente, MaterialConsumido } from "./db";
 
 type TipoFoto = "ANTES" | "DEPOIS";
+
+/** Foto local com id garantido, para renderizar miniaturas com toggle. */
+export interface FotoLocal {
+  id: number;
+  tipo: TipoFoto;
+  blob: Blob;
+  portfolio: boolean;
+}
 
 export interface NovaFoto {
   osId: string;
@@ -44,6 +52,35 @@ export function contarFotos(
   tipo: TipoFoto,
 ): Promise<number> {
   return db.fotos_pendentes.where({ osId, tipo }).count();
+}
+
+/** Lista as fotos de uma OS por tipo, na ordem de captura. */
+export async function listarFotos(
+  db: CampoDB,
+  osId: string,
+  tipo: TipoFoto,
+): Promise<FotoLocal[]> {
+  const fotos = await db.fotos_pendentes
+    .where({ osId, tipo })
+    .sortBy("criadoEm");
+  return fotos.map((f: FotoPendente) => ({
+    id: f.id!,
+    tipo: f.tipo,
+    blob: f.blob,
+    portfolio: f.portfolio ?? false,
+  }));
+}
+
+/** Alterna a marcação "boa pra portfólio" de uma foto. */
+export async function togglePortfolio(
+  db: CampoDB,
+  fotoId: number,
+): Promise<boolean> {
+  const foto = await db.fotos_pendentes.get(fotoId);
+  if (!foto) return false;
+  const novo = !(foto.portfolio ?? false);
+  await db.fotos_pendentes.update(fotoId, { portfolio: novo });
+  return novo;
 }
 
 /** Salva (ou substitui) a nota de serviço da OS e a enfileira para sync. */

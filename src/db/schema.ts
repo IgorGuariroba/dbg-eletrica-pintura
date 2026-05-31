@@ -55,6 +55,14 @@ export const estadoOsEnum = pgEnum("estado_os", [
   "GARANTIA_ABERTA",
 ]);
 
+export const statusFotoPortfolioEnum = pgEnum("status_foto_portfolio", [
+  "PENDENTE",
+  "APROVADA",
+  "REJEITADA",
+]);
+
+export const tipoFotoEnum = pgEnum("tipo_foto", ["ANTES", "DEPOIS"]);
+
 export const moduloEnum = pgEnum("modulo", [
   "OPERACAO",
   "FINANCEIRO",
@@ -396,6 +404,56 @@ export const notificacaoInApp = pgTable("notificacao_in_app", {
 });
 
 // ============================================================
+// Foto candidata a Portfólio (Marketing)
+// ============================================================
+// Só fotos que o técnico marcou "boa pra portfólio" ganham linha aqui.
+// As demais fotos da OS seguem apenas no R2 privado (listadas por prefixo).
+
+export const fotoPortfolio = pgTable(
+  "foto_portfolio",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    osId: uuid("os_id")
+      .notNull()
+      .references(() => ordemServico.id, { onDelete: "cascade" }),
+    tecnicoId: uuid("tecnico_id").references(() => membro.id, {
+      onDelete: "set null",
+    }),
+    categoria: categoriaServicoEnum("categoria").notNull(),
+    tipo: tipoFotoEnum("tipo").notNull(),
+    // Chave do objeto no R2 privado (origem).
+    chavePrivada: text("chave_privada").notNull(),
+    // Chave no R2 público — preenchida só na aprovação (cópia separada).
+    chavePublica: text("chave_publica"),
+    status: statusFotoPortfolioEnum("status").notNull().default("PENDENTE"),
+    motivoRejeicao: text("motivo_rejeicao"),
+    // Sinalização do admin: foto exibe rosto/endereço (apenas registra).
+    temDadoSensivel: boolean("tem_dado_sensivel").notNull().default(false),
+    decididoPor: varchar("decidido_por", { length: 255 }),
+    decididoEm: timestamp("decidido_em", { withTimezone: true }),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    // Acelera a fila de aprovação (pendentes mais antigas primeiro).
+    statusCriadoIdx: index("foto_portfolio_status_criado_idx").on(
+      t.status,
+      t.criadoEm,
+    ),
+    // Acelera "Trabalhos recentes" no perfil público do técnico.
+    tecnicoStatusIdx: index("foto_portfolio_tecnico_status_idx").on(
+      t.tecnicoId,
+      t.status,
+    ),
+    // Idempotência: a mesma foto (chave R2) só pode virar candidata uma vez.
+    chavePrivadaUq: uniqueIndex("foto_portfolio_chave_privada_uq").on(
+      t.chavePrivada,
+    ),
+  }),
+);
+
+// ============================================================
 // Relations
 // ============================================================
 
@@ -461,6 +519,17 @@ export const osHistoricoConflitoRelations = relations(osHistoricoConflito, ({ on
   os: one(ordemServico, {
     fields: [osHistoricoConflito.osId],
     references: [ordemServico.id],
+  }),
+}));
+
+export const fotoPortfolioRelations = relations(fotoPortfolio, ({ one }) => ({
+  os: one(ordemServico, {
+    fields: [fotoPortfolio.osId],
+    references: [ordemServico.id],
+  }),
+  tecnico: one(membro, {
+    fields: [fotoPortfolio.tecnicoId],
+    references: [membro.id],
   }),
 }));
 

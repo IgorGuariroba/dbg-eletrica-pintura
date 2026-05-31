@@ -36,6 +36,7 @@ export async function sincronizarFilaOffline(): Promise<void> {
         if (fotoRecord && fotoRecord.blob) {
           try {
             payload.dataUrl = await blobToDataUrl(fotoRecord.blob);
+            payload.portfolio = fotoRecord.portfolio ?? false;
           } catch (e) {
             console.error("Erro ao converter blob de foto para dataURL:", e);
             await db.fila_sync.update(item.id!, {
