@@ -15,3 +15,15 @@ export function normalizarBairro(nome: string): string {
   if (!limpo) throw new BairroInvalidoError();
   return limpo;
 }
+
+export function bairroForaDaCobertura(
+  bairro: string | undefined | null,
+  listaBairrosAtendidos: string[]
+): boolean {
+  if (listaBairrosAtendidos.length === 0) return false;
+  if (!bairro) return false;
+  const limpo = bairro.trim();
+  if (!limpo) return false;
+  const normalizado = normalizarBairro(limpo);
+  return !listaBairrosAtendidos.includes(normalizado);
+}

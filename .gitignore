@@ -32,3 +32,6 @@ public/workbox-*.js.map
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Artefatos de validação visual (Playwright MCP) — nunca versionar
+.playwright-mcp/

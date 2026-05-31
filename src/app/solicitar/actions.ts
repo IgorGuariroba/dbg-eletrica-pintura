@@ -9,6 +9,8 @@ import { uploadServiceSolicitacaoR2 } from "@/operacao/r2-privado";
 import { db } from "@/db/client";
 import { categoriaServicoEnum } from "@/db/schema";
 import type { Categoria } from "@/operacao/solicitacao-repo";
+import { bairroForaDaCobertura } from "@/operacao/cobertura";
+import { listarBairrosAtendidos } from "@/operacao/cobertura-query";
 
 export interface SolicitarState {
   erro?: string;
@@ -69,6 +71,10 @@ export async function criarSolicitacaoAction(
 
   let resultado;
   try {
+    const endereco = lerEndereco(form);
+    const bairrosAtendidos = await listarBairrosAtendidos();
+    const foraCobertura = bairroForaDaCobertura(endereco.bairro, bairrosAtendidos);
+
     resultado = await criarSolicitacao(
       {
         cliente: {
@@ -79,12 +85,13 @@ export async function criarSolicitacaoAction(
           categorias,
           descricao: String(form.get("descricao") ?? "").trim() || null,
           fotosUrls: fotosKeys,
-          endereco: lerEndereco(form),
+          endereco,
           dataDesejada,
           duracaoEstimada:
             String(form.get("duracaoEstimada") ?? "").trim() || null,
           lgpdAceito: form.get("lgpdAceito") === "true",
           origem: "FORMULARIO",
+          foraCobertura,
         },
       },
       criarSolicitacaoRepoDrizzle(db),

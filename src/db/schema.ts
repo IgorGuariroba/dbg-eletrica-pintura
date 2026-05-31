@@ -193,6 +193,7 @@ export const solicitacao = pgTable(
     duracaoEstimada: varchar("duracao_estimada", { length: 20 }),
     lgpdAceito: boolean("lgpd_aceito").notNull().default(false),
     origem: varchar("origem", { length: 20 }).notNull().default("FORMULARIO"), // FORMULARIO | EXPRESS | MANUAL
+    foraCobertura: boolean("fora_cobertura").notNull().default(false),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),

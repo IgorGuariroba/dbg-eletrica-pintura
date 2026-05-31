@@ -1,0 +1,1 @@
+ALTER TABLE "solicitacao" ADD COLUMN "fora_cobertura" boolean DEFAULT false NOT NULL;

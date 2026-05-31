@@ -28,7 +28,7 @@ describe.skipIf(!hasDb)("FilaRepo Drizzle", () => {
     return m.id;
   }
 
-  async function seedOs(categoria: "ELETRICA" | "PINTURA") {
+  async function seedOs(categoria: "ELETRICA" | "PINTURA", foraCobertura = false) {
     const r = Math.random().toString(36).slice(2, 10);
     const [cli] = await dbRaw
       .insert(schema.cliente)
@@ -50,6 +50,7 @@ describe.skipIf(!hasDb)("FilaRepo Drizzle", () => {
         duracaoEstimada: null,
         lgpdAceito: true,
         origem: "FORMULARIO",
+        foraCobertura,
       })
       .returning();
     const [os] = await dbRaw
@@ -197,5 +198,17 @@ describe.skipIf(!hasDb)("FilaRepo Drizzle", () => {
     await repo.autoatribuir(osId, dono);
     const r = await repo.devolver(osId, intruso, "tentativa");
     expect(r).toBeNull();
+  });
+
+  it("carrega a flag foraCobertura da solicitacao correspondente", async () => {
+    const osId = await seedOs("ELETRICA", true);
+    const r = await repo.listar({
+      apenasDisponiveis: true,
+      categorias: ["ELETRICA"],
+      limit: 50,
+      offset: 0,
+    });
+    const minha = r.itens.find((o) => o.id === osId);
+    expect(minha?.foraCobertura).toBe(true);
   });
 });

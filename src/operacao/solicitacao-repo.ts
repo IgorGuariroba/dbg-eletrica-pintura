@@ -37,10 +37,12 @@ export interface NovaSolicitacao {
   duracaoEstimada: string | null;
   lgpdAceito: boolean;
   origem: "FORMULARIO" | "EXPRESS" | "MANUAL" | "EXPRESS_TECNICO";
+  foraCobertura?: boolean;
 }
 
 export interface Solicitacao extends NovaSolicitacao {
   id: string;
+  foraCobertura: boolean;
   criadoEm: Date;
 }
 

@@ -20,6 +20,7 @@ import {
   geocodeReversoAction,
   type SolicitarState,
 } from "./actions";
+import { bairroForaDaCobertura } from "@/operacao/cobertura";
 
 type Categoria = "ELETRICA" | "PINTURA" | "DRYWALL";
 
@@ -116,6 +117,8 @@ export interface SolicitarFormProps {
   consentLabel?: React.ReactNode;
   /** Rótulo do botão de envio. */
   submitLabel?: string;
+  /** Lista de bairros atendidos. */
+  bairrosAtendidos?: string[];
 }
 
 const CONSENT_LABEL_PUBLICO =
@@ -125,6 +128,7 @@ export function SolicitarForm({
   onSubmitAction = criarSolicitacaoAction,
   consentLabel = CONSENT_LABEL_PUBLICO,
   submitLabel = "Enviar solicitação",
+  bairrosAtendidos = [],
 }: SolicitarFormProps = {}) {
   const [state, action, pending] = useActionState<SolicitarState, FormData>(
     onSubmitAction,
@@ -176,6 +180,8 @@ export function SolicitarForm({
   const [erroLocal, setErroLocal] = useState<string | null>(null);
   const [buscandoLocal, setBuscandoLocal] = useState(false);
   const [gravando, setGravando] = useState(false);
+
+  const foraCobertura = bairroForaDaCobertura(bairro, bairrosAtendidos);
 
   const speechSuportado = useSyncExternalStore(
     () => () => {},
@@ -487,6 +493,15 @@ export function SolicitarForm({
             value={bairro}
             onChange={(e) => setBairro(e.target.value)}
           />
+          {foraCobertura && (
+            <div id="aviso-fora-cobertura" className="mt-2 rounded-lg border border-warning bg-warning/10 p-3 text-xs text-warning-foreground dark:text-warning flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              <span className="font-medium">⚠️ Atenção:</span>
+              <span>
+                Este bairro parece estar fora da nossa área de atendimento padrão. 
+                Você ainda pode enviar a solicitação, mas o atendimento poderá demorar mais ou ter taxas adicionais.
+              </span>
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="col-span-2">

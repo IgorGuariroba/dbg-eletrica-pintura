@@ -126,4 +126,66 @@ describe.skipIf(!hasDb)("SolicitacaoRepo Drizzle", () => {
     // Nome do primeiro cadastro é preservado (coalesce protege contra defacement)
     expect(b.cliente.nome).toBe(`A ${r}`);
   });
+
+  it("persiste foraCobertura = true quando a solicitação é criada fora da cobertura", async () => {
+    const r = await rand();
+    const out = await repo.criarComOrdens({
+      cliente: {
+        nome: `Teste ${r}`,
+        whatsapp: `11${Math.floor(Math.random() * 1e9)
+          .toString()
+          .padStart(9, "0")}`,
+      },
+      solicitacao: {
+        token: `tok-${r}`,
+        categorias: ["ELETRICA"],
+        descricao: "test",
+        fotosUrls: [],
+        endereco: { logradouro: "Rua X", cidade: "SP", uf: "SP" },
+        dataDesejada: null,
+        duracaoEstimada: null,
+        lgpdAceito: true,
+        origem: "FORMULARIO",
+        foraCobertura: true,
+      },
+    });
+    clienteIds.push(out.cliente.id);
+    solicitacaoIds.push(out.solicitacao.id);
+
+    expect(out.solicitacao.foraCobertura).toBe(true);
+
+    const lido = await repo.buscarPorToken(out.solicitacao.token);
+    expect(lido?.solicitacao.foraCobertura).toBe(true);
+  });
+
+  it("persiste foraCobertura = false quando a solicitação é criada dentro da cobertura (ou não informada)", async () => {
+    const r = await rand();
+    const out = await repo.criarComOrdens({
+      cliente: {
+        nome: `Teste ${r}`,
+        whatsapp: `11${Math.floor(Math.random() * 1e9)
+          .toString()
+          .padStart(9, "0")}`,
+      },
+      solicitacao: {
+        token: `tok-${r}`,
+        categorias: ["ELETRICA"],
+        descricao: "test",
+        fotosUrls: [],
+        endereco: { logradouro: "Rua X", cidade: "SP", uf: "SP" },
+        dataDesejada: null,
+        duracaoEstimada: null,
+        lgpdAceito: true,
+        origem: "FORMULARIO",
+        foraCobertura: false,
+      },
+    });
+    clienteIds.push(out.cliente.id);
+    solicitacaoIds.push(out.solicitacao.id);
+
+    expect(out.solicitacao.foraCobertura).toBe(false);
+
+    const lido = await repo.buscarPorToken(out.solicitacao.token);
+    expect(lido?.solicitacao.foraCobertura).toBe(false);
+  });
 });
