@@ -1,9 +1,0 @@
-- generic [active] [ref=e1]:
-  - main [ref=e2]:
-    - generic [ref=e3]:
-      - heading "Entrar" [level=1] [ref=e4]
-      - paragraph [ref=e5]: Acesso restrito a clientes e equipe.
-    - button "Entrar com Google" [ref=e7]
-    - link "Voltar para a página inicial" [ref=e8] [cursor=pointer]:
-      - /url: /
-  - region "Notifications alt+T"
