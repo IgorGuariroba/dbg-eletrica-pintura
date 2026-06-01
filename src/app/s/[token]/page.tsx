@@ -13,8 +13,9 @@ import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { SiteHeader } from "../../_landing/site-header";
 import { SiteFooter } from "../../_landing/site-footer";
 import { AcoesOrcamento } from "./acoes-orcamento";
+import { AgendarOs } from "./agendar-os";
 import { EstouAqui } from "./estou-aqui";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarCheck } from "lucide-react";
 
 export const metadata = {
   title: "Seu orçamento — DBG Elétrica e Pintura",
@@ -102,6 +103,41 @@ export default async function AcompanhamentoPage({
                         Ver perfil <ArrowRight className="size-3" />
                       </Link>
                     )}
+                  </div>
+                )}
+
+                {os.estado === "APROVADA" && (
+                  <div className="mt-4 flex flex-col gap-3 rounded-md bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Orçamento aprovado. Escolha o melhor horário para o
+                      serviço.
+                    </p>
+                    <AgendarOs token={token} osId={os.id} />
+                  </div>
+                )}
+
+                {os.estado === "AGENDADA" && os.agendadoPara && (
+                  <div className="mt-4 flex items-center gap-3 rounded-md border border-primary/20 bg-primary/5 p-4 text-sm">
+                    <CalendarCheck className="size-5 shrink-0 text-primary" />
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        Serviço agendado
+                      </p>
+                      <p className="text-muted-foreground capitalize">
+                        {os.agendadoPara.toLocaleDateString("pt-BR", {
+                          weekday: "long",
+                          day: "2-digit",
+                          month: "long",
+                          timeZone: "America/Sao_Paulo",
+                        })}
+                        {" às "}
+                        {os.agendadoPara.toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          timeZone: "America/Sao_Paulo",
+                        })}
+                      </p>
+                    </div>
                   </div>
                 )}
 

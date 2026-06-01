@@ -272,11 +272,11 @@ describe.skipIf(!hasDb)("Slot reservation and concurrency Integration", () => {
         { configRepo: configRepoFixo() }
       );
 
-      // Deve listar os slots do técnico criado
+      // Deve listar os slots do técnico criado (08–11 SP == 11–14Z).
       const slotsDoTecnico = slots.filter(s => s.tecnicoId === tec.id);
       expect(slotsDoTecnico).toHaveLength(4);
-      expect(slotsDoTecnico[0].inicio.getUTCHours()).toBe(8);
-      expect(slotsDoTecnico[3].inicio.getUTCHours()).toBe(11);
+      expect(slotsDoTecnico[0].inicio.getUTCHours()).toBe(11);
+      expect(slotsDoTecnico[3].inicio.getUTCHours()).toBe(14);
     });
 
     it("não retorna slots ocupados por ordens de serviço ativas", async () => {
@@ -316,7 +316,7 @@ describe.skipIf(!hasDb)("Slot reservation and concurrency Integration", () => {
         })
         .returning();
       
-      // 3. Seed uma OS ocupando o slot das 10:00 na segunda-feira 2026-06-01
+      // 3. Seed uma OS ocupando o slot das 10:00 SP (== 13:00Z) na seg 2026-06-01
       const [os] = await dbRaw
         .insert(schema.ordemServico)
         .values({
@@ -325,7 +325,7 @@ describe.skipIf(!hasDb)("Slot reservation and concurrency Integration", () => {
           tipo: "NORMAL",
           estado: "AGENDADA", // Estado ativo
           tecnicoId: tec.id,
-          agendadoPara: new Date("2026-06-01T10:00:00Z"),
+          agendadoPara: new Date("2026-06-01T13:00:00Z"),
         })
         .returning();
 
@@ -346,10 +346,10 @@ describe.skipIf(!hasDb)("Slot reservation and concurrency Integration", () => {
       );
 
       const slotsDoTecnico = slots.filter(s => s.tecnicoId === tec.id);
-      
-      // O slot das 10h deve sumir, restando apenas 3 slots (8h, 9h, 11h)
+
+      // O slot das 10h SP (== 13:00Z) some, restando 3 (08, 09, 11 SP).
       expect(slotsDoTecnico).toHaveLength(3);
-      const contemSlot10h = slotsDoTecnico.some(s => s.inicio.getUTCHours() === 10);
+      const contemSlot10h = slotsDoTecnico.some(s => s.inicio.getUTCHours() === 13);
       expect(contemSlot10h).toBe(false);
     });
   });

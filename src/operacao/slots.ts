@@ -16,6 +16,14 @@ export interface SlotDisponivel {
 
 const DIAS: DiaSemana[] = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
 
+/**
+ * Offset de America/Sao_Paulo: UTC = horário local + 3h. O Brasil é fixo em
+ * UTC-3 desde o fim do horário de verão (2019), então os horários comerciais
+ * e de disponibilidade ("08:00", "18:00") são interpretados como hora local de
+ * SP e convertidos para o instante UTC correspondente.
+ */
+const OFFSET_SP_HORAS = 3;
+
 export function calcularSlotsDisponiveis(input: {
   inicio: Date;
   fim: Date;
@@ -76,11 +84,13 @@ export function calcularSlotsDisponiveis(input: {
       const [startH, startM] = inicioJanela.split(":").map(Number);
       const [endH, endM] = fimJanela.split(":").map(Number);
 
+      // Horários vêm como hora local de SP; somamos o offset para obter o
+      // instante UTC real do slot (ex.: 08:00 SP -> 11:00Z).
       const slotStart = new Date(d.getTime());
-      slotStart.setUTCHours(startH, startM, 0, 0);
+      slotStart.setUTCHours(startH + OFFSET_SP_HORAS, startM, 0, 0);
 
       const slotEndLimit = new Date(d.getTime());
-      slotEndLimit.setUTCHours(endH, endM, 0, 0);
+      slotEndLimit.setUTCHours(endH + OFFSET_SP_HORAS, endM, 0, 0);
 
       let slotTime = new Date(slotStart.getTime());
 

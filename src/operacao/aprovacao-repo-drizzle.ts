@@ -59,6 +59,7 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
           id: ordemServico.id,
           categoria: ordemServico.categoria,
           estado: ordemServico.estado,
+          agendadoPara: ordemServico.agendadoPara,
           tecnicoId: membro.id,
           tecnicoNome: membro.nome,
           tecnicoFotoUrl: membro.fotoUrl,
@@ -121,6 +122,7 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
           id: o.id,
           categoria: o.categoria,
           estado: o.estado,
+          agendadoPara: o.agendadoPara ? new Date(o.agendadoPara) : null,
           orcamento: orc
             ? {
                 totalMaoDeObra: orc.totalMaoDeObra,

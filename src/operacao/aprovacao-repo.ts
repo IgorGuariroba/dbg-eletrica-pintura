@@ -26,6 +26,7 @@ export interface OsView {
   id: string;
   categoria: Categoria;
   estado: EstadoOs;
+  agendadoPara: Date | null;
   orcamento: (OrcamentoView & { itens: ItemView[] }) | null;
   tecnico: TecnicoView | null;
 }
