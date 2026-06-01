@@ -8,6 +8,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -417,6 +418,33 @@ export const osHistoricoConflito = pgTable("os_historico_conflito", {
     .defaultNow()
     .notNull(),
 });
+
+// ============================================================
+// Pagamento (Mercado Pago)
+// ============================================================
+// Âncora de idempotência do webhook: a PK composta (payment_id, os_id)
+// garante que o mesmo pagamento — mesmo cobrindo N OS no checkout
+// consolidado — seja persistido uma única vez por OS.
+
+export const pagamento = pgTable(
+  "pagamento",
+  {
+    // payment_id do Mercado Pago.
+    paymentId: varchar("payment_id", { length: 64 }).notNull(),
+    osId: uuid("os_id")
+      .notNull()
+      .references(() => ordemServico.id, { onDelete: "restrict" }),
+    valor: decimal("valor", { precision: 10, scale: 2 }).notNull(),
+    metodo: varchar("metodo", { length: 20 }).notNull(), // pix | credit_card | ...
+    status: varchar("status", { length: 20 }).notNull(), // approved | rejected | cancelled
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.paymentId, t.osId] }),
+  }),
+);
 
 // ============================================================
 // Notificação In-App

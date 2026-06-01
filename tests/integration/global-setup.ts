@@ -15,8 +15,15 @@ export default async function setup() {
   if (!process.env.DATABASE_URL) return;
 
   const { db } = await import("@/db/client");
-  const { cliente, membro, ordemServico, orcamento, servico, solicitacao } =
-    await import("@/db/schema");
+  const {
+    cliente,
+    membro,
+    ordemServico,
+    orcamento,
+    pagamento,
+    servico,
+    solicitacao,
+  } = await import("@/db/schema");
   const { like, or, inArray } = await import("drizzle-orm");
 
   // Solicitações de teste (tokens "tok-...") + suas OS e orçamentos.
@@ -33,6 +40,8 @@ export default async function setup() {
       .where(inArray(ordemServico.solicitacaoId, solIds));
     const osIds = oss.map((o) => o.id);
     if (osIds.length) {
+      // pagamento tem FK `restrict` para a OS — apagar antes da OS.
+      await db.delete(pagamento).where(inArray(pagamento.osId, osIds));
       // orcamentoItem cai por cascade ao apagar o orçamento.
       await db.delete(orcamento).where(inArray(orcamento.osId, osIds));
     }
