@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": [
+    "src/app/sw.ts",
+    "scripts/*.ts",
+    "configure-r2-cors.js",
+    "src/db/migrate-slugs.ts"
+  ],
+  "ignoreDependencies": ["shadcn"],
+  "ignoreExportsUsedInFile": true,
+  "ignoreExports": [{ "file": "src/components/ui/**", "exports": ["*"] }]
+}
