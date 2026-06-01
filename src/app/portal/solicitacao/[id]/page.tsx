@@ -96,18 +96,6 @@ export default async function PortalSolicitacaoPage({
                       <Badge variant={VARIANTE_ESTADO[os.estado] ?? "default"} className="w-fit">
                         {rotularEstadoCliente(os.estado)}
                       </Badge>
-                      {os.estado === "CONCLUIDA" && (
-                        <Link
-                          href={`/s/${solicitacao.token}/pagar` as Route}
-                          className={buttonVariants({
-                            variant: "outline",
-                            size: "sm",
-                            className: "h-8 px-3 font-semibold text-xs gap-1.5 cursor-pointer",
-                          })}
-                        >
-                          Ir para Pagamento
-                        </Link>
-                      )}
                     </div>
                   </div>
                 </CardHeader>
