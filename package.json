@@ -31,6 +31,7 @@
     "dexie": "^4.4.3",
     "drizzle-orm": "0.36.4",
     "lucide-react": "^1.17.0",
+    "mercadopago": "^3.0.0",
     "next": "16.2.6",
     "next-auth": "5.0.0-beta.25",
     "next-themes": "^0.4.6",
