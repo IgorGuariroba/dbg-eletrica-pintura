@@ -138,7 +138,21 @@ Use estes comandos exatos do `pnpm` para validar e gerenciar o projeto:
 * **Testes de Unidade / Integração:** `pnpm test` (ou `pnpm test:watch` em desenvolvimento)
 * **Testes E2E (Playwright):** `pnpm test:e2e`
 * **Validação Visual Interativa:** abrir o app via **Playwright MCP** e validar a tela conforme a §2.5 (obrigatório para qualquer alteração de UI; rotas privadas usam o dev bypass de `@/auth/dev-bypass`).
+* **Detecção de Duplicação de Código:** `npx fallow dupes` (identifica lógica repetida entre arquivos — clone groups e clone families. Rodar antes/depois de refatorações para medir o impacto na taxa de duplicação).
 * **Criar/Adicionar Componentes (Shadcn CLI):** `npx shadcn add <componente>` (a CLI está configurada localmente no projeto através do arquivo [components.json](./components.json)).
+
+### 3.1. Análise Obrigatória Pós-Implementação (Fallow)
+
+**Sempre** rodar estes comandos ao concluir uma implementação, antes de abrir PR. Servem para encontrar problemas introduzidos pela mudança (código morto, lógica duplicada, complexidade). Falsos positivos conhecidos já estão tratados em [`.fallowrc.json`](./.fallowrc.json).
+
+```bash
+npx fallow dead-code          # Candidatos a limpeza (arquivos/exports/deps não usados)
+npx fallow dupes              # Lógica repetida (clone groups e clone families)
+npx fallow health             # Complexidade e alvos de refatoração
+npx fallow fix --dry-run      # Preview da limpeza automática (não aplica nada)
+```
+
+Avaliar cada finding antes de agir: confirmar que é problema real (não falso positivo) e, quando for, corrigir ou registrar a exceção no [`.fallowrc.json`](./.fallowrc.json). `fix --dry-run` apenas previsualiza — nunca aplicar automático sem revisar o diff proposto.
 
 ---
 
@@ -388,5 +402,6 @@ Toda alteração de código deve seguir estritamente estes passos:
 1. **Preparar branch:** `git checkout main && git pull` → `git switch -c <tipo>/<nome-descritivo>` (tipos permitidos: `feat/`, `fix/`, `docs/`, `refactor/`, `chore/`).
 2. **Desenvolver:** commits incrementais organizados.
 3. **Validar localmente:** rodar lint, typecheck e testes (`pnpm lint && pnpm typecheck && pnpm test`).
-4. **Revisar:** executar `/code-review` se aplicável e corrigir inconformidades.
-5. **Finalizar:** Fazer push da branch e abrir PR para a `main`. Nunca commitar diretamente na branch `main`.
+4. **Analisar (Fallow):** rodar a análise pós-implementação da §3.1 (`dead-code`, `dupes`, `health`, `fix --dry-run`) e tratar os findings reais.
+5. **Revisar:** executar `/code-review` se aplicável e corrigir inconformidades.
+6. **Finalizar:** Fazer push da branch e abrir PR para a `main`. Nunca commitar diretamente na branch `main`.

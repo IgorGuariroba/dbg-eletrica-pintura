@@ -11,7 +11,3 @@ export function obrigatorioAdminEmail(): string {
   cached = v;
   return cached;
 }
-
-export function resetEnvCache() {
-  cached = null;
-}
