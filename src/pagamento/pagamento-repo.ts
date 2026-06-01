@@ -4,6 +4,7 @@ export interface RegistroPagamento {
   valor: string;
   metodo: string;
   status: string;
+  observacao?: string;
 }
 
 export interface PagamentoRepo {

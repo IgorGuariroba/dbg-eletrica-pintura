@@ -207,6 +207,31 @@ export async function processarItemSync(
         { precoLitro: config.precoLitro, kmPorLitro: config.kmPorLitro },
         criarComplementarRepoDrizzle(db)
       );
+    } else if (item.tipo === "PAGAMENTO_MANUAL") {
+      const { registrarPagamentoManual } = await import("@/pagamento/registrar-manual");
+      const { criarPagamentoRepoDrizzle } = await import("@/pagamento/pagamento-repo-drizzle");
+      const { criarTransicaoRepoDrizzle } = await import("@/operacao/transicao-repo-drizzle");
+
+      const deps = {
+        pagamentoRepo: criarPagamentoRepoDrizzle(db),
+        transicaoRepo: criarTransicaoRepoDrizzle(db),
+      };
+
+      const res = await registrarPagamentoManual(
+        osId,
+        {
+          valor: payload.valor,
+          metodo: payload.metodo,
+          observacao: payload.observacao,
+          atorEmail: sessionEmail,
+        },
+        deps,
+        new Date(item.criadoEm)
+      );
+
+      if (!res.ok) {
+        return { conflito: false, erro: res.erro };
+      }
     }
   } else if (item.tipo === "SOLICITACAO_EXPRESS") {
     const [tec] = await db

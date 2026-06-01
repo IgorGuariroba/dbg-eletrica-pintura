@@ -55,6 +55,9 @@ export interface DadosPagamento {
   valor: string;
   metodo: string;
   osIds: string[];
+  observacao?: string;
+  ator?: string;
+  motivo?: string;
 }
 
 /**

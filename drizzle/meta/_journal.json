@@ -134,6 +134,13 @@
       "when": 1780280024548,
       "tag": "0018_lucky_unicorn",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1780281936071,
+      "tag": "0019_curved_runaways",
+      "breakpoints": true
     }
   ]
 }

@@ -50,6 +50,9 @@ describe.skipIf(!hasDb)("processarItemSync Integration Tests", () => {
       
       if (osIds.length) {
         await dbRaw
+          .delete(schema.pagamento)
+          .where(inArray(schema.pagamento.osId, osIds));
+        await dbRaw
           .delete(schema.transicaoOs)
           .where(inArray(schema.transicaoOs.osId, osIds));
         await dbRaw
@@ -275,5 +278,42 @@ describe.skipIf(!hasDb)("processarItemSync Integration Tests", () => {
     expect(meta.materiais[0].item).toBe("Cabo Flexível 2.5mm");
     expect(meta.materiais[0].quantidade).toBe(10);
     expect(meta.materiais[0].observacao).toBe("ligações");
+  });
+
+  it("processa item sync PAGAMENTO_MANUAL e transita OS para PAGA", async () => {
+    const email = "tecnico-sync-pg@dbg.test";
+    const tecId = await seedMembro("Técnico Sync PG", email);
+    const osId = await seedOs("CONCLUIDA" as any, tecId);
+
+    const itemPg = {
+      tipo: "PAGAMENTO_MANUAL",
+      payload: {
+        osId,
+        valor: "150.00",
+        metodo: "DINHEIRO",
+        observacao: "Offline obs",
+      },
+      criadoEm: new Date().toISOString(),
+    };
+
+    const res = await processarItemSync(dbRaw, itemPg, email);
+    expect(res.conflito).toBe(false);
+
+    // Verifica que OS virou PAGA
+    const { eq } = await import("drizzle-orm");
+    const [os] = await dbRaw
+      .select({ estado: schema.ordemServico.estado })
+      .from(schema.ordemServico)
+      .where(eq(schema.ordemServico.id, osId));
+    expect(os.estado).toBe("PAGA");
+
+    // Verifica que o pagamento foi gravado
+    const [pag] = await dbRaw
+      .select()
+      .from(schema.pagamento)
+      .where(eq(schema.pagamento.osId, osId));
+    expect(pag).toBeDefined();
+    expect(pag.metodo).toBe("DINHEIRO");
+    expect(pag.observacao).toBe("Offline obs");
   });
 });
