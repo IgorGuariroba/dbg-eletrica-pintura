@@ -193,4 +193,73 @@ describe.skipIf(!hasDb)("processarPagamento (Drizzle)", () => {
     expect(out.transitadas).toEqual([]);
     expect(await estadoDe(osId)).toBe("CONCLUIDA");
   });
+
+  function dadosMulti(osIds: string[], status = "approved", paymentId?: string): DadosPagamento {
+    const id = paymentId ?? `pay-${Math.random().toString(36).slice(2, 10)}`;
+    paymentIds.push(id);
+    return {
+      paymentId: id,
+      status,
+      valor: "450.00",
+      metodo: "pix",
+      osIds,
+    };
+  }
+
+  it("comportamento 9: webhook consolidado transita N OS", async () => {
+    const { osId: osId1 } = await seedOs("CONCLUIDA");
+    const { osId: osId2 } = await seedOs("CONCLUIDA");
+    const d = dadosMulti([osId1, osId2]);
+
+    const out = await processarPagamento(d, deps);
+
+    expect(out.transitadas).toEqual(expect.arrayContaining([osId1, osId2]));
+    expect(await estadoDe(osId1)).toBe("PAGA");
+    expect(await estadoDe(osId2)).toBe("PAGA");
+    expect(await linhasPagamento(d.paymentId)).toBe(2);
+  });
+
+  it("comportamento 10: pagamento parcial não interfere", async () => {
+    const { osId: osId1 } = await seedOs("CONCLUIDA");
+    const { osId: osId2 } = await seedOs("CONCLUIDA");
+    const d = dados(osId1);
+
+    const out = await processarPagamento(d, deps);
+
+    expect(out.transitadas).toEqual([osId1]);
+    expect(await estadoDe(osId1)).toBe("PAGA");
+    expect(await estadoDe(osId2)).toBe("CONCLUIDA");
+    expect(await linhasPagamento(d.paymentId)).toBe(1);
+  });
+
+  it("comportamento 11: duas individuais em sequência", async () => {
+    const { osId: osId1 } = await seedOs("CONCLUIDA");
+    const { osId: osId2 } = await seedOs("CONCLUIDA");
+
+    const d1 = dados(osId1);
+    const out1 = await processarPagamento(d1, deps);
+    expect(out1.transitadas).toEqual([osId1]);
+
+    const d2 = dados(osId2);
+    const out2 = await processarPagamento(d2, deps);
+    expect(out2.transitadas).toEqual([osId2]);
+
+    expect(await estadoDe(osId1)).toBe("PAGA");
+    expect(await estadoDe(osId2)).toBe("PAGA");
+    expect(await linhasPagamento(d1.paymentId)).toBe(1);
+    expect(await linhasPagamento(d2.paymentId)).toBe(1);
+  });
+
+  it("comportamento 12: idempotência consolidada", async () => {
+    const { osId: osId1 } = await seedOs("CONCLUIDA");
+    const { osId: osId2 } = await seedOs("CONCLUIDA");
+    const d = dadosMulti([osId1, osId2]);
+
+    const primeira = await processarPagamento(d, deps);
+    const segunda = await processarPagamento(d, deps);
+
+    expect(primeira.transitadas).toEqual(expect.arrayContaining([osId1, osId2]));
+    expect(segunda.transitadas).toEqual([]);
+    expect(await linhasPagamento(d.paymentId)).toBe(2);
+  });
 });

@@ -20,3 +20,17 @@ const ROTULOS: Record<string, string> = {
 export function rotularEstadoCliente(estado: string): string {
   return ROTULOS[estado] ?? estado;
 }
+
+/**
+ * Rótulo amigável da categoria de serviço, exibido nas telas voltadas ao
+ * cliente (acompanhamento, portal, checkout). Fallback: a própria categoria.
+ */
+export const LABEL_CATEGORIA: Record<string, string> = {
+  ELETRICA: "Elétrica",
+  PINTURA: "Pintura",
+  DRYWALL: "Drywall",
+};
+
+export function rotularCategoria(categoria: string): string {
+  return LABEL_CATEGORIA[categoria] ?? categoria;
+}

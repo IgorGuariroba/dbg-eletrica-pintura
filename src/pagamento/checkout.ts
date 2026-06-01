@@ -75,3 +75,49 @@ export async function criarCobrancaPix(
     transacaoId: String(resp.id),
   };
 }
+
+export interface OrdemCheckout {
+  osId: string;
+  categoria: string;
+  estado: string;
+  total: string;
+  pago: boolean;
+}
+
+export interface CheckoutConsolidado {
+  pagaveis: { osId: string; total: string; categoria: string }[];
+  pagas: { osId: string; total: string; categoria: string }[];
+  somaPagavel: string;
+  osIds: string[];
+  podePagarTudo: boolean;
+}
+
+export function montarCheckoutConsolidado(
+  ordens: OrdemCheckout[],
+): CheckoutConsolidado {
+  const pagaveis: { osId: string; total: string; categoria: string }[] = [];
+  const pagas: { osId: string; total: string; categoria: string }[] = [];
+  let somaCents = 0;
+
+  for (const o of ordens) {
+    if (o.estado === "CONCLUIDA" && !o.pago) {
+      pagaveis.push({ osId: o.osId, total: o.total, categoria: o.categoria });
+      somaCents += Math.round(parseFloat(o.total) * 100);
+    } else if (o.estado === "PAGA" || o.pago) {
+      pagas.push({ osId: o.osId, total: o.total, categoria: o.categoria });
+    }
+  }
+
+  const somaPagavel = (somaCents / 100).toFixed(2);
+  const osIds = pagaveis.map((p) => p.osId);
+  const podePagarTudo = pagaveis.length > 0;
+
+  return {
+    pagaveis,
+    pagas,
+    somaPagavel,
+    osIds,
+    podePagarTudo,
+  };
+}
+

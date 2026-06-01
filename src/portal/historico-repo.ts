@@ -25,6 +25,7 @@ export interface OsHistorico {
 
 export interface SolicitacaoHistorico {
   id: string;
+  token: string;
   protocolo: string;
   criadoEm: Date;
   cidade: string | null;
