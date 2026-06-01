@@ -3,7 +3,7 @@
 import { db } from "@/db/client";
 import { exigirOperacao } from "../guard";
 import { auth } from "@/auth";
-import { cancelarLoteAdmin } from "@/operacao/reagendamento-lote";
+import { cancelarLoteAdmin, PRE_EXECUCAO } from "@/operacao/reagendamento-lote";
 import { criarReagendamentoRepoDrizzle } from "@/operacao/reagendamento-repo-drizzle";
 import { revalidatePath } from "next/cache";
 import { listarSlotsDisponiveis } from "@/operacao/slots-loader";
@@ -12,13 +12,20 @@ import { slotsPorHorario, DIAS_AGENDAMENTO, escolherSlot } from "@/operacao/agen
 import { eq } from "drizzle-orm";
 import { ordemServico } from "@/db/schema";
 
+/** E-mail real do operador autenticado — usado como ator no histórico. */
+async function emailOperador(): Promise<string> {
+  const session = await auth();
+  const email = session?.user?.email;
+  if (!email) throw new Error("Sessão de operador sem e-mail.");
+  return email;
+}
+
 export async function cancelarLoteAction(
   osIds: string[],
   motivo: string,
 ): Promise<{ osId: string; ok: boolean; erro?: string }[]> {
   await exigirOperacao();
-  const session = await auth();
-  const email = session?.user?.email ?? "admin@dbg.com";
+  const email = await emailOperador();
 
   const repo = criarReagendamentoRepoDrizzle(db);
   const result = await cancelarLoteAdmin(osIds, { email }, motivo, repo);
@@ -58,8 +65,7 @@ export async function reagendarLinhaAction(
 ): Promise<{ erro?: string }> {
   try {
     await exigirOperacao();
-    const session = await auth();
-    const email = session?.user?.email ?? "admin@dbg.com";
+    const email = await emailOperador();
     const repo = criarReagendamentoRepoDrizzle(db);
 
     const [os] = await db
@@ -69,6 +75,9 @@ export async function reagendarLinhaAction(
       .limit(1);
 
     if (!os) throw new Error("OS não encontrada");
+    if (!PRE_EXECUCAO.includes(os.estado)) {
+      throw new Error("OS não está em estado reagendável (pré-execução).");
+    }
 
     const inicio = new Date();
     const fim = new Date(inicio.getTime() + DIAS_AGENDAMENTO * 24 * 60 * 60 * 1000);
@@ -92,7 +101,7 @@ export async function reagendarLinhaAction(
 
     revalidatePath("/admin/operacao/agenda");
     return { erro: undefined };
-  } catch (err: any) {
-    return { erro: err.message ?? "Erro ao reagendar OS" };
+  } catch (err) {
+    return { erro: err instanceof Error ? err.message : "Erro ao reagendar OS" };
   }
 }

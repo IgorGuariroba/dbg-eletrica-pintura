@@ -3,7 +3,7 @@ import { MotivoObrigatorioError } from "./reagendamento";
 import type { EstadoOs } from "./orcamento-repo";
 
 /** Estados pré-execução em que o admin pode agir. */
-const PRE_EXECUCAO: EstadoOs[] = ["APROVADA", "AGENDADA", "A_CAMINHO", "NO_LOCAL"];
+export const PRE_EXECUCAO: EstadoOs[] = ["APROVADA", "AGENDADA", "A_CAMINHO", "NO_LOCAL"];
 
 export async function cancelarLoteAdmin(
   osIds: string[],

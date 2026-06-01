@@ -29,6 +29,9 @@ export default async function AdminAgendaPage() {
     .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
     .innerJoin(cliente, eq(solicitacao.clienteId, cliente.id))
     .leftJoin(membro, eq(ordemServico.tecnicoId, membro.id))
+    // Agenda é date-only: lista apenas OS com horário marcado (>= hoje). OS
+    // APROVADA (sem `agendadoPara`) é tratada na fila/painel, não aqui — por
+    // isso `agendadoPara` nunca é null nas linhas e o `!` abaixo é seguro.
     .where(gte(ordemServico.agendadoPara, dataInicio))
     .orderBy(asc(ordemServico.agendadoPara));
 

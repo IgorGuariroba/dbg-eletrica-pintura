@@ -30,7 +30,7 @@ export default async function CancelarOsPage({
   const session = await auth();
   if (!session?.user) {
     const link = urlWhatsApp(`Olá! Gostaria de solicitar o cancelamento da Ordem de Serviço #${id.slice(0, 8)}.`);
-    redirect(link as any);
+    redirect(link as Route);
   }
 
   // 2. Se logado, exige portal
