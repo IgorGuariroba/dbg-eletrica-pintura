@@ -57,6 +57,7 @@ export async function processarPagamento(
       valor: dados.valor,
       metodo: dados.metodo,
       status: dados.status,
+      observacao: dados.observacao,
     });
     if (!inserido) {
       log("webhook_duplicado", { ...base(dados), osId });
@@ -67,8 +68,8 @@ export async function processarPagamento(
       await aplicarTransicao(
         osId,
         "PAGA",
-        ATOR_WEBHOOK,
-        `Pagamento ${dados.paymentId} (${dados.metodo})`,
+        dados.ator ?? ATOR_WEBHOOK,
+        dados.motivo ?? `Pagamento ${dados.paymentId} (${dados.metodo})`,
         deps.transicaoRepo,
         agora,
       );

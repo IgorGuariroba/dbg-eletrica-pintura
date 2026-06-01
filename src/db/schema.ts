@@ -437,6 +437,7 @@ export const pagamento = pgTable(
     valor: decimal("valor", { precision: 10, scale: 2 }).notNull(),
     metodo: varchar("metodo", { length: 20 }).notNull(), // pix | credit_card | ...
     status: varchar("status", { length: 20 }).notNull(), // approved | rejected | cancelled
+    observacao: text("observacao"),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),

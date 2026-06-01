@@ -15,6 +15,7 @@ export function criarPagamentoRepoDrizzle(db: DB): PagamentoRepo {
           valor: p.valor,
           metodo: p.metodo,
           status: p.status,
+          observacao: p.observacao,
         })
         .onConflictDoNothing()
         .returning({ paymentId: pagamento.paymentId });
