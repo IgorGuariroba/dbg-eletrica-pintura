@@ -3,12 +3,8 @@ import type { Badge } from "@/components/ui/badge";
 
 type BadgeVariant = NonNullable<ComponentProps<typeof Badge>["variant"]>;
 
-/** Rótulo amigável da categoria de serviço, exibido no portal do cliente. */
-export const LABEL_CATEGORIA: Record<string, string> = {
-  ELETRICA: "Elétrica",
-  PINTURA: "Pintura",
-  DRYWALL: "Drywall",
-};
+// Fonte única do rótulo de categoria vive no domínio Operação.
+export { LABEL_CATEGORIA } from "@/operacao/rotulo-estado";
 
 /** Variante visual do badge por estado da OS (rótulo vem de rotularEstadoCliente). */
 export const VARIANTE_ESTADO: Record<string, BadgeVariant> = {

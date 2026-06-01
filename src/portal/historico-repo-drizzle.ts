@@ -32,6 +32,7 @@ function montarSolicitacao(
 ): SolicitacaoHistorico {
   return {
     id: row.id,
+    token: row.token,
     protocolo: row.token.slice(0, 8).toUpperCase(),
     criadoEm: row.criadoEm,
     cidade: row.endereco?.cidade ?? null,

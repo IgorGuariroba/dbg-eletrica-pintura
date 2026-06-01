@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   criarCobrancaPix,
   criarPreferenciaCheckoutPro,
+  montarCheckoutConsolidado,
 } from "@/pagamento/checkout";
 import type { GatewayPagamento } from "@/pagamento/gateway";
 
@@ -80,3 +81,65 @@ describe("criarCobrancaPix", () => {
     expect(req.metadata).toEqual({ os_id: "os-uuid-1" });
   });
 });
+
+describe("montarCheckoutConsolidado", () => {
+  it("tracer bullet: partição básica com 1 OS CONCLUIDA", () => {
+    const out = montarCheckoutConsolidado([
+      { osId: "os-1", categoria: "ELETRICA", estado: "CONCLUIDA", total: "250.00", pago: false },
+    ]);
+
+    expect(out.pagaveis).toEqual([
+      { osId: "os-1", total: "250.00", categoria: "ELETRICA" },
+    ]);
+    expect(out.pagas).toEqual([]);
+    expect(out.somaPagavel).toBe("250.00");
+    expect(out.osIds).toEqual(["os-1"]);
+    expect(out.podePagarTudo).toBe(true);
+  });
+
+  it("comportamento 2: OS PAGA não entra no pagável", () => {
+    const out = montarCheckoutConsolidado([
+      { osId: "os-1", categoria: "ELETRICA", estado: "CONCLUIDA", total: "250.00", pago: false },
+      { osId: "os-2", categoria: "PINTURA", estado: "PAGA", total: "100.00", pago: true },
+    ]);
+
+    expect(out.pagaveis).toEqual([
+      { osId: "os-1", total: "250.00", categoria: "ELETRICA" },
+    ]);
+    expect(out.pagas).toEqual([
+      { osId: "os-2", total: "100.00", categoria: "PINTURA" },
+    ]);
+    expect(out.somaPagavel).toBe("250.00");
+    expect(out.podePagarTudo).toBe(true);
+  });
+
+  it("comportamento 3: nada pagável", () => {
+    const out = montarCheckoutConsolidado([
+      { osId: "os-1", categoria: "ELETRICA", estado: "PAGA", total: "250.00", pago: true },
+    ]);
+
+    expect(out.pagaveis).toEqual([]);
+    expect(out.pagas).toEqual([
+      { osId: "os-1", total: "250.00", categoria: "ELETRICA" },
+    ]);
+    expect(out.somaPagavel).toBe("0.00");
+    expect(out.osIds).toEqual([]);
+    expect(out.podePagarTudo).toBe(false);
+  });
+
+  it("comportamento 4: soma de múltiplas OSs com precisão decimal", () => {
+    const out = montarCheckoutConsolidado([
+      { osId: "os-1", categoria: "ELETRICA", estado: "CONCLUIDA", total: "250.00", pago: false },
+      { osId: "os-2", categoria: "PINTURA", estado: "CONCLUIDA", total: "199.90", pago: false },
+    ]);
+
+    expect(out.pagaveis).toEqual([
+      { osId: "os-1", total: "250.00", categoria: "ELETRICA" },
+      { osId: "os-2", total: "199.90", categoria: "PINTURA" },
+    ]);
+    expect(out.somaPagavel).toBe("449.90");
+    expect(out.osIds).toEqual(["os-1", "os-2"]);
+    expect(out.podePagarTudo).toBe(true);
+  });
+});
+

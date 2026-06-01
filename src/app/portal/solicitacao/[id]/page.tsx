@@ -52,14 +52,30 @@ export default async function PortalSolicitacaoPage({
             <ArrowLeft className="size-4" />
             Voltar ao histórico
           </Link>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Solicitação #{solicitacao.protocolo}
-            </h1>
-            <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
-              Criada em {dataCurta(solicitacao.criadoEm)}
-              {solicitacao.cidade ? ` · ${solicitacao.cidade}/${solicitacao.uf}` : ""}
-            </p>
+          
+          {/* Exibe o cabeçalho com botão de pagamento se houver OS concluída (pagável) */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+                Solicitação #{solicitacao.protocolo}
+              </h1>
+              <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
+                Criada em {dataCurta(solicitacao.criadoEm)}
+                {solicitacao.cidade ? ` · ${solicitacao.cidade}/${solicitacao.uf}` : ""}
+              </p>
+            </div>
+            {solicitacao.ordens.some((o) => o.estado === "CONCLUIDA") && (
+              <Link
+                href={`/s/${solicitacao.token}/pagar` as Route}
+                className={buttonVariants({
+                  variant: "default",
+                  size: "lg",
+                  className: "w-full sm:w-auto font-bold shadow-md cursor-pointer min-h-[44px]",
+                })}
+              >
+                Pagar Serviços
+              </Link>
+            )}
           </div>
         </div>
 
@@ -76,9 +92,11 @@ export default async function PortalSolicitacaoPage({
                         {os.agendadoPara ? `Agendada para ${dataCurta(os.agendadoPara)}` : "Agenda em definição"}
                       </CardDescription>
                     </div>
-                    <Badge variant={VARIANTE_ESTADO[os.estado] ?? "default"} className="w-fit">
-                      {rotularEstadoCliente(os.estado)}
-                    </Badge>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={VARIANTE_ESTADO[os.estado] ?? "default"} className="w-fit">
+                        {rotularEstadoCliente(os.estado)}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
