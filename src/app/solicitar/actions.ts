@@ -7,32 +7,17 @@ import { criarSolicitacao } from "@/operacao/criar-solicitacao";
 import { criarSolicitacaoRepoDrizzle } from "@/operacao/solicitacao-repo-drizzle";
 import { uploadServiceSolicitacaoR2 } from "@/operacao/r2-privado";
 import { db } from "@/db/client";
-import { categoriaServicoEnum } from "@/db/schema";
-import type { Categoria } from "@/operacao/solicitacao-repo";
+import {
+  lerCategoriasForm,
+  lerDataDesejadaForm,
+  lerEnderecoForm,
+  lerFotosKeysForm,
+} from "@/operacao/solicitacao-form";
 import { bairroForaDaCobertura } from "@/operacao/cobertura";
 import { listarBairrosAtendidos } from "@/operacao/cobertura-query";
 
 export interface SolicitarState {
   erro?: string;
-}
-
-function lerEndereco(form: FormData) {
-  const get = (k: string) => String(form.get(k) ?? "").trim();
-  const num = (k: string) => {
-    const v = form.get(k);
-    return v ? Number(v) : undefined;
-  };
-  return {
-    logradouro: get("end_logradouro"),
-    numero: get("end_numero") || undefined,
-    complemento: get("end_complemento") || undefined,
-    bairro: get("end_bairro") || undefined,
-    cidade: get("end_cidade"),
-    uf: get("end_uf").toUpperCase(),
-    cep: get("end_cep") || undefined,
-    lat: num("end_lat"),
-    lng: num("end_lng"),
-  };
 }
 
 export async function buscarCepAction(cep: string) {
@@ -54,24 +39,13 @@ export async function criarSolicitacaoAction(
   _prev: SolicitarState,
   form: FormData,
 ): Promise<SolicitarState> {
-  const categorias = form
-    .getAll("categorias")
-    .map((v) => String(v))
-    .filter((v): v is Categoria =>
-      categoriaServicoEnum.enumValues.includes(v as Categoria),
-    );
-
-  const fotosKeys = form
-    .getAll("fotosKeys")
-    .map((v) => String(v).trim())
-    .filter(Boolean);
-
-  const dataRaw = String(form.get("dataDesejada") ?? "").trim();
-  const dataDesejada = dataRaw ? new Date(dataRaw) : null;
+  const categorias = lerCategoriasForm(form);
+  const fotosKeys = lerFotosKeysForm(form);
+  const dataDesejada = lerDataDesejadaForm(form);
 
   let resultado;
   try {
-    const endereco = lerEndereco(form);
+    const endereco = lerEnderecoForm(form);
     const bairrosAtendidos = await listarBairrosAtendidos();
     const foraCobertura = bairroForaDaCobertura(endereco.bairro, bairrosAtendidos);
 

@@ -4,30 +4,13 @@ import { redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { criarSolicitacaoRepoDrizzle } from "@/operacao/solicitacao-repo-drizzle";
 import { exigirTecnico } from "../guard";
-import { categoriaServicoEnum } from "@/db/schema";
-import type { Categoria } from "@/operacao/solicitacao-repo";
+import {
+  lerCategoriasForm,
+  lerEnderecoForm,
+} from "@/operacao/solicitacao-form";
 
 export interface ExpressState {
   erro?: string;
-}
-
-function lerEndereco(form: FormData) {
-  const get = (k: string) => String(form.get(k) ?? "").trim();
-  const num = (k: string) => {
-    const v = form.get(k);
-    return v ? Number(v) : undefined;
-  };
-  return {
-    logradouro: get("end_logradouro"),
-    numero: get("end_numero") || undefined,
-    complemento: get("end_complemento") || undefined,
-    bairro: get("end_bairro") || undefined,
-    cidade: get("end_cidade"),
-    uf: get("end_uf").toUpperCase(),
-    cep: get("end_cep") || undefined,
-    lat: num("end_lat"),
-    lng: num("end_lng"),
-  };
 }
 
 export async function criarSolicitacaoExpressAction(
@@ -54,18 +37,13 @@ export async function criarSolicitacaoExpressAction(
     return { erro: "WhatsApp válido do cliente é obrigatório (10 ou 11 dígitos)" };
   }
 
-  const categorias = form
-    .getAll("categorias")
-    .map((v) => String(v))
-    .filter((v): v is Categoria =>
-      categoriaServicoEnum.enumValues.includes(v as Categoria),
-    );
+  const categorias = lerCategoriasForm(form);
 
   if (categorias.length === 0) {
     return { erro: "Selecione pelo menos uma categoria de serviço" };
   }
 
-  const endereco = lerEndereco(form);
+  const endereco = lerEnderecoForm(form);
   if (!endereco.logradouro) return { erro: "Rua do endereço é obrigatória" };
   if (!endereco.cidade) return { erro: "Cidade do endereço é obrigatória" };
   if (!endereco.uf || endereco.uf.length !== 2) {
