@@ -34,3 +34,52 @@ export const LABEL_CATEGORIA: Record<string, string> = {
 export function rotularCategoria(categoria: string): string {
   return LABEL_CATEGORIA[categoria] ?? categoria;
 }
+
+/**
+ * Rótulos de estado em linguagem operacional (curta), exibidos nas telas
+ * internas de operação e na agenda do técnico. Fallback: o próprio estado.
+ */
+const ROTULOS_OPERACAO: Record<string, string> = {
+  NOVA: "Nova",
+  ORCADA: "Orçada",
+  APROVADA: "Aprovada",
+  REJEITADA: "Rejeitada",
+  EXPIRADA: "Expirada",
+  AGENDADA: "Agendada",
+  A_CAMINHO: "A caminho",
+  NO_LOCAL: "No local",
+  EM_EXECUCAO: "Em execução",
+  CONCLUIDA: "Concluída",
+  PAGA: "Paga",
+  CANCELADA: "Cancelada",
+};
+
+export function rotularEstadoOperacao(estado: string): string {
+  return ROTULOS_OPERACAO[estado] ?? estado;
+}
+
+/**
+ * Variante semântica de `Badge` por estado da OS — única fonte de cor de estado.
+ * Usa exclusivamente tokens do Design System (sem cores brutas do Tailwind).
+ */
+export type VarianteEstado =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "warning"
+  | "outline";
+
+const VARIANTE_ESTADO: Record<string, VarianteEstado> = {
+  APROVADA: "secondary",
+  AGENDADA: "default",
+  A_CAMINHO: "warning",
+  NO_LOCAL: "warning",
+  EM_EXECUCAO: "default",
+  CONCLUIDA: "secondary",
+  PAGA: "secondary",
+  CANCELADA: "destructive",
+};
+
+export function varianteEstado(estado: string): VarianteEstado {
+  return VARIANTE_ESTADO[estado] ?? "outline";
+}

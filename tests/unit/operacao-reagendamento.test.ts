@@ -19,6 +19,7 @@ function repoFake(over: Partial<ReagendamentoRepo> = {}): ReagendamentoRepo {
     })),
     cancelar: vi.fn(async () => {}),
     reagendar: vi.fn(async () => {}),
+    cancelarParaAprovada: vi.fn(async () => {}),
     ...over,
   };
 }

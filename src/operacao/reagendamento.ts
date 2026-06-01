@@ -31,6 +31,12 @@ export interface ReagendamentoRepo {
     osId: string,
     novoSlot: Date,
     registro: RegistroTransicao,
+    tecnicoId?: string | null,
+  ): Promise<void>;
+  /** Cancela para APROVADA: técnico null + data null + estado APROVADA + histórico. */
+  cancelarParaAprovada(
+    osId: string,
+    registro: RegistroTransicao,
   ): Promise<void>;
 }
 
@@ -130,3 +136,73 @@ export class CancelamentoEmExecucaoError extends Error {
     this.name = "CancelamentoEmExecucaoError";
   }
 }
+
+/** > 24h até o horário agendado: cliente pode mexer sozinho. */
+export function dentroDaJanelaCliente(agendadoPara: Date, agora: Date): boolean {
+  const VINTE_QUATRO_HORAS_MS = 24 * 60 * 60 * 1000;
+  return agendadoPara.getTime() - agora.getTime() <= VINTE_QUATRO_HORAS_MS;
+}
+
+export class ForaDaJanelaError extends Error {
+  readonly status = 409;
+  constructor() {
+    super("Fora da janela de reagendamento/cancelamento (menos de 24h restantes)");
+    this.name = "ForaDaJanelaError";
+  }
+}
+
+export async function cancelarOsCliente(
+  osId: string,
+  cliente: { whatsapp: string },
+  repo: ReagendamentoRepo,
+  agora: Date = new Date(),
+): Promise<void> {
+  const os = await repo.carregar(osId);
+  if (!os) throw new OsInexistenteError();
+
+  if (os.estado !== "AGENDADA") {
+    throw new EstadoInvalidoError();
+  }
+
+  if (os.agendadoPara && dentroDaJanelaCliente(os.agendadoPara, agora)) {
+    throw new ForaDaJanelaError();
+  }
+
+  await repo.cancelarParaAprovada(osId, {
+    estadoAnterior: os.estado,
+    estadoNovo: "APROVADA",
+    atorEmail: `cliente:${cliente.whatsapp}`,
+    motivo: null,
+    em: agora,
+  });
+}
+
+export async function reagendarOsCliente(
+  osId: string,
+  cliente: { whatsapp: string },
+  novoSlot: Date,
+  tecnicoId: string | null,
+  repo: ReagendamentoRepo,
+  agora: Date = new Date(),
+): Promise<void> {
+  const os = await repo.carregar(osId);
+  if (!os) throw new OsInexistenteError();
+
+  if (os.estado !== "AGENDADA") {
+    throw new EstadoInvalidoError();
+  }
+
+  if (os.agendadoPara && dentroDaJanelaCliente(os.agendadoPara, agora)) {
+    throw new ForaDaJanelaError();
+  }
+
+  await repo.reagendar(osId, novoSlot, {
+    estadoAnterior: os.estado,
+    estadoNovo: "AGENDADA",
+    atorEmail: `cliente:${cliente.whatsapp}`,
+    motivo: null,
+    em: agora,
+  }, tecnicoId);
+}
+
+

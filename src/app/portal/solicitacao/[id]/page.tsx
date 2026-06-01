@@ -16,6 +16,7 @@ import { carregarSolicitacaoDoCliente, fotosOsR2Port, montarDocumentosPortal, mo
 import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { formatBRL } from "@/lib/utils";
 import { LABEL_CATEGORIA, VARIANTE_ESTADO, dataCurta } from "@/portal/ui-helpers";
+import { dentroDaJanelaCliente } from "@/operacao/reagendamento";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -93,7 +94,23 @@ export default async function PortalSolicitacaoPage({
                       </CardDescription>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={VARIANTE_ESTADO[os.estado] ?? "default"} className="w-fit">
+                      {os.estado === "AGENDADA" && os.agendadoPara && !dentroDaJanelaCliente(new Date(os.agendadoPara), new Date()) && (
+                        <div className="flex items-center gap-2 mr-2">
+                          <Link
+                            href={`/portal/os/${os.id}/reagendar` as Route}
+                            className={buttonVariants({ variant: "outline", size: "sm", className: "h-8 font-medium cursor-pointer shadow-sm hover:bg-accent" })}
+                          >
+                            Reagendar
+                          </Link>
+                          <Link
+                            href={`/portal/os/${os.id}/cancelar` as Route}
+                            className={buttonVariants({ variant: "ghost", size: "sm", className: "h-8 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer" })}
+                          >
+                            Cancelar
+                          </Link>
+                        </div>
+                      )}
+                      <Badge variant={VARIANTE_ESTADO[os.estado] ?? "default"} className="w-fit font-semibold">
                         {rotularEstadoCliente(os.estado)}
                       </Badge>
                     </div>
