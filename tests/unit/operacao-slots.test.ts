@@ -34,17 +34,17 @@ describe("calcularSlotsDisponiveis - Ciclo 1 (Tracer Bullet)", () => {
     });
 
     expect(slots).toHaveLength(10);
-    
-    // O primeiro slot deve começar às 08:00 UTC
+
+    // 08:00 SP == 11:00Z (UTC-3).
     expect(slots[0]).toEqual({
-      inicio: new Date("2026-06-01T08:00:00Z"),
+      inicio: new Date("2026-06-01T11:00:00Z"),
       duracaoMin: 60,
       tecnicoId: "tec-1",
     });
 
-    // O último slot deve começar às 17:00 UTC e terminar às 18:00 UTC
+    // Último slot 17:00 SP (== 20:00Z), terminando 18:00 SP (== 21:00Z).
     expect(slots[9]).toEqual({
-      inicio: new Date("2026-06-01T17:00:00Z"),
+      inicio: new Date("2026-06-01T20:00:00Z"),
       duracaoMin: 60,
       tecnicoId: "tec-1",
     });
@@ -117,10 +117,10 @@ describe("calcularSlotsDisponiveis - Ciclo 1 (Tracer Bullet)", () => {
       tecnicos,
     });
 
-    // Deve gerar slots das 9h às 16h UTC (8 slots de 60min)
+    // 09:00–17:00 SP == 12:00–20:00Z (8 slots de 60min; último início 16:00 SP).
     expect(slots).toHaveLength(8);
-    expect(slots[0].inicio).toEqual(new Date("2026-06-01T09:00:00Z"));
-    expect(slots[7].inicio).toEqual(new Date("2026-06-01T16:00:00Z"));
+    expect(slots[0].inicio).toEqual(new Date("2026-06-01T12:00:00Z"));
+    expect(slots[7].inicio).toEqual(new Date("2026-06-01T19:00:00Z"));
   });
 
   it("não gera slots para dias fechados no horário comercial ou indisponibilidade do técnico", () => {
@@ -171,8 +171,8 @@ describe("calcularSlotsDisponiveis - Ciclo 1 (Tracer Bullet)", () => {
         disponibilidade: {
           seg: { inicio: "08:00", fim: "18:00" },
         },
-        // Ocupado das 10:00 às 11:00 UTC
-        ocupacoes: [new Date("2026-06-01T10:00:00Z")],
+        // Ocupado das 10:00 às 11:00 SP (== 13:00Z).
+        ocupacoes: [new Date("2026-06-01T13:00:00Z")],
       },
     ];
 
@@ -184,9 +184,9 @@ describe("calcularSlotsDisponiveis - Ciclo 1 (Tracer Bullet)", () => {
       tecnicos,
     });
 
-    // Em vez de 10 slots, deve retornar 9, e não deve conter o slot das 10:00 UTC
+    // Em vez de 10 slots, deve retornar 9, sem o slot das 10:00 SP (== 13:00Z).
     expect(slots).toHaveLength(9);
-    const contemSlot10h = slots.some(s => s.inicio.getTime() === new Date("2026-06-01T10:00:00Z").getTime());
+    const contemSlot10h = slots.some(s => s.inicio.getTime() === new Date("2026-06-01T13:00:00Z").getTime());
     expect(contemSlot10h).toBe(false);
   });
 
@@ -226,11 +226,12 @@ describe("calcularSlotsDisponiveis - Ciclo 1 (Tracer Bullet)", () => {
     });
 
     expect(slots).toHaveLength(4);
-    
+
     // A ordenação deve ser estritamente cronológica por início.
-    expect(slots[0].inicio).toEqual(new Date("2026-06-01T08:00:00Z"));
-    expect(slots[1].inicio).toEqual(new Date("2026-06-01T08:00:00Z"));
-    expect(slots[2].inicio).toEqual(new Date("2026-06-01T09:00:00Z"));
-    expect(slots[3].inicio).toEqual(new Date("2026-06-01T09:00:00Z"));
+    // 08:00–10:00 SP == 11:00–13:00Z (2 slots por técnico).
+    expect(slots[0].inicio).toEqual(new Date("2026-06-01T11:00:00Z"));
+    expect(slots[1].inicio).toEqual(new Date("2026-06-01T11:00:00Z"));
+    expect(slots[2].inicio).toEqual(new Date("2026-06-01T12:00:00Z"));
+    expect(slots[3].inicio).toEqual(new Date("2026-06-01T12:00:00Z"));
   });
 });
