@@ -15,23 +15,7 @@ import { exigirPortal } from "@/portal/guard";
 import { carregarSolicitacaoDoCliente, fotosOsR2Port, montarDocumentosPortal, montarFotosOs } from "@/portal/historico";
 import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { formatBRL } from "@/lib/utils";
-
-const LABEL_CATEGORIA: Record<string, string> = {
-  ELETRICA: "Elétrica",
-  PINTURA: "Pintura",
-  DRYWALL: "Drywall",
-};
-
-const VARIANTE_ESTADO: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-  NOVA: "secondary",
-  REJEITADA: "destructive",
-  EXPIRADA: "outline",
-  CANCELADA: "outline",
-};
-
-function dataCurta(data: Date) {
-  return data.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
-}
+import { LABEL_CATEGORIA, VARIANTE_ESTADO, dataCurta } from "@/portal/ui-helpers";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

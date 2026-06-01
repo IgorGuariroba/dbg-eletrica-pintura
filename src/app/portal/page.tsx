@@ -12,27 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { LABEL_CATEGORIA, VARIANTE_ESTADO, dataCurta } from "@/portal/ui-helpers";
 
 export const metadata = {
   title: "Portal do cliente — DBG Elétrica e Pintura",
 };
-
-const LABEL_CATEGORIA: Record<string, string> = {
-  ELETRICA: "Elétrica",
-  PINTURA: "Pintura",
-  DRYWALL: "Drywall",
-};
-
-const VARIANTE_ESTADO: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-  NOVA: "secondary",
-  REJEITADA: "destructive",
-  EXPIRADA: "outline",
-  CANCELADA: "outline",
-};
-
-function dataCurta(data: Date) {
-  return data.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
-}
 
 function paginaAtual(valor: string | string[] | undefined) {
   const raw = Array.isArray(valor) ? valor[0] : valor;
