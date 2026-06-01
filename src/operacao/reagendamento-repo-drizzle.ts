@@ -47,14 +47,29 @@ export function criarReagendamentoRepoDrizzle(db: DB): ReagendamentoRepo {
       ]);
     },
 
-    async reagendar(osId, novoSlot, registro): Promise<void> {
+    async reagendar(osId, novoSlot, registro, tecnicoId): Promise<void> {
+      const updateData: any = { estado: "AGENDADA", agendadoPara: novoSlot };
+      if (tecnicoId !== undefined) {
+        updateData.tecnicoId = tecnicoId;
+      }
       await db.batch([
         db
           .update(ordemServico)
-          .set({ estado: "AGENDADA", agendadoPara: novoSlot })
+          .set(updateData)
+          .where(eq(ordemServico.id, osId)),
+        registroTransicao(osId, registro),
+      ]);
+    },
+
+    async cancelarParaAprovada(osId, registro): Promise<void> {
+      await db.batch([
+        db
+          .update(ordemServico)
+          .set({ estado: "APROVADA", tecnicoId: null, agendadoPara: null })
           .where(eq(ordemServico.id, osId)),
         registroTransicao(osId, registro),
       ]);
     },
   };
 }
+
