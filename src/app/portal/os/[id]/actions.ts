@@ -22,11 +22,12 @@ export async function cancelarOsClienteAction(osId: string): Promise<{ erro?: st
     await cancelarOsCliente(osId, { whatsapp: user.whatsapp! }, repo);
     revalidatePath("/portal");
     return { erro: undefined };
-  } catch (err: any) {
+  } catch (err) {
     if (err instanceof ForaDaJanelaError) {
       return { erro: "Fora da janela permitida (menos de 24h restantes)" };
     }
-    return { erro: err.message ?? "Erro ao cancelar OS" };
+    console.error(`Erro ao cancelar OS ${osId} (cliente):`, err);
+    return { erro: err instanceof Error ? err.message : "Erro ao cancelar OS" };
   }
 }
 
@@ -55,8 +56,9 @@ export async function listarSlotsOsPortalAction(osId: string) {
     return oferecidos.map((s) => ({
       inicioISO: s.inicio.toISOString(),
     }));
-  } catch (err: any) {
-    throw new Error(err.message ?? "Erro ao carregar slots");
+  } catch (err) {
+    console.error(`Erro ao listar slots da OS ${osId} (portal):`, err);
+    throw new Error(err instanceof Error ? err.message : "Erro ao carregar slots");
   }
 }
 
@@ -92,10 +94,11 @@ export async function reagendarOsClienteAction(
 
     revalidatePath("/portal");
     return { erro: undefined };
-  } catch (err: any) {
+  } catch (err) {
     if (err instanceof ForaDaJanelaError) {
       return { erro: "Fora da janela permitida (menos de 24h restantes)" };
     }
-    return { erro: err.message ?? "Erro ao reagendar OS" };
+    console.error(`Erro ao reagendar OS ${osId} (cliente):`, err);
+    return { erro: err instanceof Error ? err.message : "Erro ao reagendar OS" };
   }
 }

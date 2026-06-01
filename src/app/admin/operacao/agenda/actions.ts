@@ -102,6 +102,7 @@ export async function reagendarLinhaAction(
     revalidatePath("/admin/operacao/agenda");
     return { erro: undefined };
   } catch (err) {
+    console.error(`Erro ao reagendar OS ${osId} (admin):`, err);
     return { erro: err instanceof Error ? err.message : "Erro ao reagendar OS" };
   }
 }
