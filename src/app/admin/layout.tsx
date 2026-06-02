@@ -25,7 +25,7 @@ export default async function AdminLayout({
         modulos={session.user.modulos}
         isAdminRaiz={session.user.role === "admin_raiz"}
       />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mr-2 h-4" />
@@ -38,7 +38,7 @@ export default async function AdminLayout({
             />
           </div>
         </header>
-        <main className="p-6">{children}</main>
+        <main className="p-6 min-w-0 overflow-hidden">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

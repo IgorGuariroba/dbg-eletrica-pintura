@@ -16,11 +16,21 @@ export function mensagemACaminho(input: {
   return `Olá ${input.clienteNome}, sou ${input.tecnicoNome} da DBG, estou a caminho do endereço ${input.endereco}`;
 }
 
-/** Mensagem pedindo aprovação remota de um Orçamento Complementar. */
+/** Para aprovação remota de um Orçamento Complementar. */
 export function mensagemAprovacaoComplementar(input: {
   clienteNome: string;
   tecnicoNome: string;
   link: string;
 }): string {
   return `Olá ${input.clienteNome}, sou ${input.tecnicoNome} da DBG. Identifiquei um serviço adicional necessário. Veja o orçamento complementar e aprove por aqui: ${input.link}`;
+}
+
+/** Mensagem de lembrete de pagamento para uma OS concluída. */
+export function mensagemLembretePagamento(input: {
+  clienteNome: string;
+  protocolo: string;
+  valor: string;
+  link: string;
+}): string {
+  return `Olá ${input.clienteNome}, identificamos que a ordem de serviço ${input.protocolo} está concluída com o valor de R$ ${input.valor}, mas ainda não consta pagamento. Você pode efetuar o pagamento diretamente por este link: ${input.link}`;
 }
