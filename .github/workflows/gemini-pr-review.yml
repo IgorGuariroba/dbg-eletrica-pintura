@@ -110,6 +110,27 @@ jobs:
             const review = fs.readFileSync(process.env.RUNNER_TEMP + '/review.txt', 'utf8');
             const approved = process.env.REVIEW_APPROVED === 'true';
 
+            // Dispensa reviews REQUEST_CHANGES anteriores do próprio bot. Sem isso,
+            // um "MUDANÇAS NECESSÁRIAS" de um push antigo continua bloqueando o
+            // merge mesmo após o bot reaprovar num push seguinte (reviewDecision
+            // fica CHANGES_REQUESTED até o review velho ser dispensado).
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            for (const r of reviews) {
+              if (r.user?.login === 'github-actions[bot]' && r.state === 'CHANGES_REQUESTED') {
+                await github.rest.pulls.dismissReview({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.issue.number,
+                  review_id: r.id,
+                  message: 'Substituído por review mais recente do Gemini.',
+                });
+              }
+            }
+
             await github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
