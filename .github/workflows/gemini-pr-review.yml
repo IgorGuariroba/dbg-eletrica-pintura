@@ -12,6 +12,10 @@ jobs:
   review:
     name: gemini-review
     runs-on: ubuntu-latest
+    # Pula bumps do Dependabot: são gated apenas pelo CI (lint/typecheck/test/build),
+    # não pela review de IA. Sem isso, o gate Gemini reprovaria todo bump e travaria
+    # o auto-merge de .github/workflows/dependabot-automerge.yml para sempre.
+    if: github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
