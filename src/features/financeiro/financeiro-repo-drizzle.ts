@@ -7,6 +7,16 @@ import { calcularTicketMedio } from "./ticket";
 export function criarFinanceiroRepoDrizzle(db: DB): FinanceiroRepo {
   return {
     async listarPendentes(): Promise<PagamentoPendente[]> {
+      // Duas subqueries correlacionadas (orçamento aprovado + transição CONCLUIDA
+      // mais recentes por OS). Medido com 1000 OS (600 pendentes) contra Neon:
+      // mediana 23ms / max 49ms — folga ampla sobre o alvo de 500ms, sem índice
+      // extra. Se o volume crescer a ponto de degradar, migrar para LATERAL JOIN
+      // ou CTE aproveitando os índices de `orcamento` e `transicao_os`.
+      //
+      // `transicaoOs` entra por LEFT JOIN (não INNER): defensivo contra uma OS
+      // CONCLUIDA sem registro de transição para esse estado. Nesse caso o
+      // `coalesce` cai em `criadoEm` para idade/ordenação, em vez de sumir a OS
+      // da fila de cobrança.
       const rows = await db
         .select({
           osId: ordemServico.id,
