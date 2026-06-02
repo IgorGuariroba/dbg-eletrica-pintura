@@ -1,9 +1,13 @@
 name: Dependabot auto-merge
 
-# Habilita auto-merge nos PRs abertos pelo Dependabot.
+# Habilita auto-merge nos PRs do Dependabot (apenas patch/minor).
 # O GitHub aguarda TODOS os checks (CI: lint/typecheck/unit, e2e, build) ficarem
-# verdes e só então faz o merge automaticamente. Se algum check falhar, o PR
-# fica aberto aguardando intervenção manual.
+# verdes e só então faz o merge automaticamente. Check vermelho = PR fica aberto.
+#
+# SEGURANÇA: usa `pull_request_target`, que roda no contexto da branch base (main)
+# com acesso a secrets e token de escrita. A guarda `if: github.actor == 'dependabot[bot]'`
+# é ESSENCIAL — sem ela, um PR de fork malicioso executaria este job com
+# contents:write / pull-requests:write. NÃO remover nem enfraquecer essa condição.
 
 on: pull_request_target
 
@@ -17,7 +21,16 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
-      - name: Habilitar auto-merge (squash)
+      - name: Metadata do bump
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Auto-merge só para patch/minor. Major fica manual: breaking changes
+      # frequentes não são totalmente cobertas pela suíte de testes (ex: vitest 2→4).
+      - name: Habilitar auto-merge (squash) — só patch/minor
+        if: steps.meta.outputs.update-type != 'version-update:semver-major'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
