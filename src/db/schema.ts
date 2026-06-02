@@ -464,6 +464,51 @@ export const notificacaoInApp = pgTable("notificacao_in_app", {
 });
 
 // ============================================================
+// Notificação WhatsApp (Cloud API — módulo Notificação)
+// ============================================================
+// Registro de cada template proativo enviado pela Cloud API. `message_id` é o
+// id devolvido pela Meta — usado para idempotência do webhook de status e para
+// correlacionar eventos delivered/read/failed ao registro original.
+
+export const filaWhatsapp = pgTable("fila_whatsapp", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  destinatario: varchar("destinatario", { length: 32 }).notNull(),
+  template: varchar("template", { length: 64 }).notNull(),
+  variaveis: jsonb("variaveis").$type<Record<string, string>>().notNull(),
+  status: varchar("status", { length: 16 }).notNull().default("pendente"), // pendente | enviado
+  criadoEm: timestamp("criado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  processadoEm: timestamp("processado_em", { withTimezone: true }),
+});
+
+export const notificacaoWhatsapp = pgTable(
+  "notificacao_whatsapp",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    destinatario: varchar("destinatario", { length: 32 }).notNull(),
+    template: varchar("template", { length: 64 }).notNull(),
+    variaveis: jsonb("variaveis").$type<Record<string, string>>().notNull(),
+    status: varchar("status", { length: 16 }).notNull(), // enviado | entregue | lido | falhou
+    // id da mensagem na Meta (nulo só em registros transitórios). UNIQUE para
+    // idempotência: webhook de status duplicado não cria/atualiza duas vezes.
+    messageId: varchar("message_id", { length: 128 }),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => ({
+    messageIdUnico: uniqueIndex("notificacao_whatsapp_message_id_uq").on(
+      t.messageId,
+    ),
+  }),
+);
+
+// ============================================================
 // Foto candidata a Portfólio (Marketing)
 // ============================================================
 // Só fotos que o técnico marcou "boa pra portfólio" ganham linha aqui.
