@@ -57,7 +57,7 @@ jobs:
               }],
               generationConfig: {
                 temperature: 0.3,
-                maxOutputTokens: 8192
+                maxOutputTokens: 2048
               }
             }' > "$RUNNER_TEMP/payload.json"
 
