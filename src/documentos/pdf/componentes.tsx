@@ -23,6 +23,14 @@ function carregarLogo(): Buffer | null {
 }
 const LOGO = carregarLogo();
 
+/**
+ * Paleta do PDF em hex literal — intencional, não é violação da §5.
+ * `@react-pdf/renderer` renderiza server-side para PDF: sem Tailwind, sem
+ * cascade CSS, sem `var(--token)` e sem dark mode. O `StyleSheet.create`
+ * dele só aceita valores literais; os tokens semânticos de `globals.css`
+ * são resolvidos no browser e não existem neste contexto. Mantidas
+ * centralizadas aqui (fonte única) em vez de espalhadas pelos estilos.
+ */
 const cores = {
   texto: "#1a1a1a",
   suave: "#6b7280",
