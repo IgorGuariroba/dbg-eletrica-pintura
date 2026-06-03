@@ -1,6 +1,6 @@
 import type { db } from "@/db/client";
 import { ordemServico, pagamento, orcamento, garantiaChamado } from "@/db/schema";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import type { GarantiaRepo } from "./garantia-repo";
 import { avaliarAcionamentoGarantia } from "./avaliar-acionamento";
 
@@ -14,7 +14,7 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
       })
       .from(pagamento)
       .where(and(eq(pagamento.osId, osId), eq(pagamento.status, "approved")))
-      .orderBy(desc(pagamento.criadoEm))
+      .orderBy(asc(pagamento.criadoEm))
       .limit(1);
     return pag ?? null;
   }
@@ -155,12 +155,12 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
         })
         .from(pagamento)
         .where(and(inArray(pagamento.osId, uniqueAnchorIds), eq(pagamento.status, "approved")))
-        .orderBy(desc(pagamento.criadoEm));
+        .orderBy(asc(pagamento.criadoEm));
 
-      const pagamentosMaisRecenteMap = new Map<string, Date>();
+      const pagamentosPrimeiroMap = new Map<string, Date>();
       for (const pag of pagamentos) {
-        if (!pagamentosMaisRecenteMap.has(pag.osId)) {
-          pagamentosMaisRecenteMap.set(pag.osId, pag.criadoEm);
+        if (!pagamentosPrimeiroMap.has(pag.osId)) {
+          pagamentosPrimeiroMap.set(pag.osId, pag.criadoEm);
         }
       }
 
@@ -231,7 +231,7 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
           continue;
         }
 
-        const pagamentoEm = pagamentosMaisRecenteMap.get(ancoraId);
+        const pagamentoEm = pagamentosPrimeiroMap.get(ancoraId);
         if (!pagamentoEm) {
           result.set(osId, { podeAcionar: false });
           continue;

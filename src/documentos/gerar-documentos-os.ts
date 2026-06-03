@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
   cliente,
@@ -255,7 +255,7 @@ async function carregarPagamento(osId: string) {
     })
     .from(pagamento)
     .where(and(eq(pagamento.osId, osId), eq(pagamento.status, "approved")))
-    .orderBy(desc(pagamento.criadoEm))
+    .orderBy(asc(pagamento.criadoEm))
     .limit(1);
   return pag ?? null;
 }
