@@ -243,6 +243,59 @@ export async function renderizarEmailLembretePagamento(props: LembretePagamentoE
   return await render(comp);
 }
 
+export interface GarantiaAcionadaEmailProps {
+  clienteNome: string;
+  numeroOS: string;
+  urlPortal: string;
+}
+
+export const GarantiaAcionadaEmail: React.FC<GarantiaAcionadaEmailProps> = ({
+  clienteNome,
+  numeroOS,
+  urlPortal,
+}) => (
+  <Html>
+    <Head />
+    <Body style={{ fontFamily: "sans-serif", backgroundColor: CORES.mutedBg, color: CORES.texto, padding: "20px" }}>
+      <Container style={{ backgroundColor: CORES.fundo, padding: "20px", borderRadius: "8px", border: `1px solid ${CORES.borda}` }}>
+        <Heading style={{ color: CORES.primaria, fontSize: "20px", marginBottom: "15px" }}>Olá, {clienteNome}!</Heading>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5" }}>
+          Confirmamos que o seu chamado de garantia foi aprovado. A sua Ordem de Serviço de Garantia <strong>{numeroOS}</strong> foi gerada e está agendada.
+        </Text>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5", marginTop: "10px" }}>
+          Nenhum custo será cobrado por este atendimento, em conformidade com o nosso termo de garantia de mão de obra.
+        </Text>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5", marginTop: "20px" }}>
+          Você pode acompanhar o andamento da Ordem de Serviço em tempo real pelo portal do cliente:
+        </Text>
+        <Link 
+          href={urlPortal} 
+          style={{ 
+            display: "inline-block", 
+            backgroundColor: CORES.primaria, 
+            color: CORES.primariaTexto, 
+            padding: "10px 20px", 
+            borderRadius: "6px", 
+            textDecoration: "none", 
+            fontWeight: "bold",
+            marginTop: "10px" 
+          }}
+        >
+          Acessar Portal DBG
+        </Link>
+        <Text style={{ fontSize: "11px", color: CORES.mutedTexto, marginTop: "30px", borderTop: `1px solid ${CORES.borda}`, paddingTop: "10px" }}>
+          Este é um e-mail automático enviado por DBG Elétrica e Pintura. Por favor, não responda a este e-mail.
+        </Text>
+      </Container>
+    </Body>
+  </Html>
+);
+
+export async function renderizarEmailGarantiaAcionada(props: GarantiaAcionadaEmailProps): Promise<string> {
+  const comp = React.createElement(GarantiaAcionadaEmail, props);
+  return await render(comp);
+}
+
 // ============================================================
 // 3. Fábrica do EmailService (Resend / Mock)
 // ============================================================

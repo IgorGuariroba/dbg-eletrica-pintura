@@ -718,6 +718,8 @@ export const vinculacaoGoogleLogRelations = relations(vinculacaoGoogleLog, ({ on
 export const canalGarantiaEnum = pgEnum("canal_garantia", ["PORTAL", "WHATSAPP"]);
 export const statusGarantiaChamadoEnum = pgEnum("status_garantia_chamado", [
   "pendente",
+  "aplicada",
+  "rejeitada",
 ]);
 
 export const garantiaChamado = pgTable("garantia_chamado", {
@@ -732,12 +734,24 @@ export const garantiaChamado = pgTable("garantia_chamado", {
   status: statusGarantiaChamadoEnum("status").notNull().default("pendente"),
   temComplementarRejeitado: boolean("tem_complementar_rejeitado").notNull().default(false),
   acionamentoInvalido: boolean("acionamento_invalido").notNull().default(false),
+  osGarantiaId: uuid("os_garantia_id").references((): AnyPgColumn => ordemServico.id, {
+    onDelete: "set null",
+  }),
+  motivoRejeicao: text("motivo_rejeicao"),
+  overridePrazo: boolean("override_prazo").notNull().default(false),
+  justificativaOverride: text("justificativa_override"),
+  decididoPor: varchar("decidido_por", { length: 255 }),
+  decididoEm: timestamp("decidido_em", { withTimezone: true }),
   criadoEm: timestamp("criado_em", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const garantiaChamadoRelations = relations(garantiaChamado, ({ one }) => ({
   osOrigem: one(ordemServico, {
     fields: [garantiaChamado.osOrigemId],
+    references: [ordemServico.id],
+  }),
+  osGarantia: one(ordemServico, {
+    fields: [garantiaChamado.osGarantiaId],
     references: [ordemServico.id],
   }),
 }));

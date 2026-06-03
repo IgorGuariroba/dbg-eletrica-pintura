@@ -187,4 +187,63 @@ describe("transicionar", () => {
     expect(registro.lat).toBe(-23.5);
     expect(registro.lon).toBe(-46.6);
   });
+
+  describe("GARANTIA_ABERTA transitions", () => {
+    it.each(["NORMAL", "EXPRESS", "COMPLEMENTAR"] as const)(
+      "permite PAGA → GARANTIA_ABERTA para tipo pago %s",
+      (tipo) => {
+        const registro = transicionar(
+          { tipo, estado: "PAGA", historico: ["PAGA"] },
+          "GARANTIA_ABERTA",
+          "admin@dbg.com",
+        );
+        expect(registro.estadoAnterior).toBe("PAGA");
+        expect(registro.estadoNovo).toBe("GARANTIA_ABERTA");
+      },
+    );
+
+    it("permite CONCLUIDA → GARANTIA_ABERTA para tipo GARANTIA", () => {
+      const registro = transicionar(
+        { tipo: "GARANTIA", estado: "CONCLUIDA", historico: ["CONCLUIDA"] },
+        "GARANTIA_ABERTA",
+        "admin@dbg.com",
+      );
+      expect(registro.estadoAnterior).toBe("CONCLUIDA");
+      expect(registro.estadoNovo).toBe("GARANTIA_ABERTA");
+    });
+
+    it("rejeita CONCLUIDA → GARANTIA_ABERTA para tipo NORMAL (pago deve ir para PAGA primeiro)", () => {
+      expect(() =>
+        transicionar(
+          { tipo: "NORMAL", estado: "CONCLUIDA", historico: ["CONCLUIDA"] },
+          "GARANTIA_ABERTA",
+          "admin@dbg.com",
+        ),
+      ).toThrow(TransicaoInvalidaError);
+    });
+
+    it.each(["PREVENTIVA", "GARANTIA"] as const)(
+      "rejeita PAGA → GARANTIA_ABERTA para tipo sem pagamento %s",
+      (tipo) => {
+        expect(() =>
+          transicionar(
+            { tipo, estado: "PAGA", historico: ["PAGA"] },
+            "GARANTIA_ABERTA",
+            "admin@dbg.com",
+          ),
+        ).toThrow(TransicaoInvalidaError);
+      },
+    );
+
+    it("rejeita qualquer transição a partir de GARANTIA_ABERTA (terminal)", () => {
+      expect(() =>
+        transicionar(
+          { tipo: "NORMAL", estado: "GARANTIA_ABERTA", historico: ["GARANTIA_ABERTA"] },
+          "NOVA",
+          "admin@dbg.com",
+        ),
+      ).toThrow(TransicaoInvalidaError);
+    });
+  });
 });
+

@@ -8,6 +8,9 @@ import { uploadFotoGarantia } from "@/operacao/r2-privado";
 import { exigirGarantias } from "./guard";
 import { eq } from "drizzle-orm";
 import { cliente, ordemServico, solicitacao } from "@/db/schema";
+import { aplicarGarantia, rejeitarGarantia } from "@/operacao/garantia/aplicar-garantia";
+import { criarGarantiaDecisaoRepoDrizzle } from "@/operacao/garantia/garantia-decisao-repo-drizzle";
+import { notificarGarantiaAcionada } from "@/operacao/garantia/notificar-garantia-acionada";
 
 export async function registrarAcionamentoGarantiaAction(
   osId: string,
@@ -60,3 +63,53 @@ export async function registrarAcionamentoGarantiaAction(
     return { erro: err instanceof Error ? err.message : "Erro desconhecido" };
   }
 }
+
+export async function aplicarGarantiaAction(
+  chamadoId: string,
+  override?: { justificativa: string } | null,
+): Promise<{ osGarantiaId?: string; erro?: string }> {
+  const user = await exigirGarantias();
+  try {
+    const repo = criarGarantiaDecisaoRepoDrizzle(db);
+    const { osGarantiaId } = await aplicarGarantia(
+      {
+        chamadoId,
+        decididoPor: user.email!,
+        override,
+      },
+      {
+        repo,
+        notificar: (id) => notificarGarantiaAcionada(id, { forceMock: false }),
+      },
+    );
+    revalidatePath("/admin/garantias");
+    return { osGarantiaId };
+  } catch (err) {
+    console.error(`Erro ao aplicar chamado de garantia:`, err);
+    return { erro: err instanceof Error ? err.message : "Erro desconhecido" };
+  }
+}
+
+export async function rejeitarGarantiaAction(
+  chamadoId: string,
+  motivo: string,
+): Promise<{ ok?: true; erro?: string }> {
+  const user = await exigirGarantias();
+  try {
+    const repo = criarGarantiaDecisaoRepoDrizzle(db);
+    await rejeitarGarantia(
+      {
+        chamadoId,
+        motivo,
+        decididoPor: user.email!,
+      },
+      { repo },
+    );
+    revalidatePath("/admin/garantias");
+    return { ok: true };
+  } catch (err) {
+    console.error(`Erro ao rejeitar chamado de garantia:`, err);
+    return { erro: err instanceof Error ? err.message : "Erro desconhecido" };
+  }
+}
+
