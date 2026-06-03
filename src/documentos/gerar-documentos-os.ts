@@ -91,65 +91,75 @@ export async function gerarDocumentosOs(
   const resultado: GerarDocumentosResultado = { email: "skipped" };
   const anexos: { filename: string; content: Buffer }[] = [];
 
+  // Cada documento é gerado de forma independente: a falha de um (dados
+  // ausentes) apenas o pula — não descarta o que já foi gerado nem aborta o
+  // e-mail. Só pulamos tudo se nenhum documento sair (verificado no fim).
+
   // Fatura ------------------------------------------------------------------
   if (plano.fatura) {
     const pag = await carregarPagamento(osId);
-    if (!pag) return skip("pagamento não encontrado para a OS");
-
-    const buffer = await gerarFaturaPdf(
-      montarDadosFatura({
-        osId,
-        clienteNome: cli.nome,
-        endereco: sol.endereco,
-        tecnicoNome,
-        itens: orc.itens,
-        totalDeslocamento: orc.totalDeslocamento,
-        total: orc.total,
-        pagamento: {
-          criadoEm: pag.criadoEm,
-          metodo: pag.metodo,
-          paymentId: pag.paymentId,
-        },
-      }),
-    );
-    const chave = chaveFatura(osId);
-    const url = await salvarPDFR2(buffer, chave, armazenamento);
-    resultado.fatura = { chave, url };
-    anexos.push({ filename: `fatura_${numeroCurtoOs(osId)}.pdf`, content: buffer });
+    if (!pag) {
+      console.warn(
+        `[documentos] fatura_pulada: OS ${osId} sem pagamento approved.`,
+      );
+    } else {
+      const buffer = await gerarFaturaPdf(
+        montarDadosFatura({
+          osId,
+          clienteNome: cli.nome,
+          endereco: sol.endereco,
+          tecnicoNome,
+          itens: orc.itens,
+          totalDeslocamento: orc.totalDeslocamento,
+          total: orc.total,
+          pagamento: {
+            criadoEm: pag.criadoEm,
+            metodo: pag.metodo,
+            paymentId: pag.paymentId,
+          },
+        }),
+      );
+      const chave = chaveFatura(osId);
+      const url = await salvarPDFR2(buffer, chave, armazenamento);
+      resultado.fatura = { chave, url };
+      anexos.push({ filename: `fatura_${numeroCurtoOs(osId)}.pdf`, content: buffer });
+    }
   }
 
   // Certificado de garantia -------------------------------------------------
   if (plano.certificado) {
     const janelaInput = await montarJanelaInput(os, osId);
     if (!janelaInput) {
-      // Esperado só em dados inconsistentes: a OS paga/âncora sempre tem
-      // pagamento approved e prazo. Loga para observabilidade — o certificado
-      // é pulado sem quebrar a transição.
+      // Esperado só em dados inconsistentes (OS paga/âncora sem pagamento
+      // approved ou sem prazo). Pula só o certificado — a fatura, se gerada,
+      // segue para o e-mail.
       console.warn(
         `[documentos] certificado_pulado: OS ${osId} (tipo ${os.tipo}) sem janela de garantia resolvível (pagamento âncora/prazo ausente).`,
       );
-      return skip("dados de garantia ausentes");
+    } else {
+      const janela = resolverJanelaGarantia(janelaInput);
+      const buffer = await gerarCertificadoPdf(
+        montarDadosCertificado({
+          osId,
+          clienteNome: cli.nome,
+          servicos: servicosDistintos(orc.itens),
+          prazoGarantiaMeses: janela.prazoMeses,
+          inicio: janela.inicio,
+          fim: janela.fim,
+        }),
+      );
+      const chave = chaveCertificado(osId);
+      const url = await salvarPDFR2(buffer, chave, armazenamento);
+      resultado.certificado = { chave, url };
+      anexos.push({
+        filename: `certificado_garantia_${numeroCurtoOs(osId)}.pdf`,
+        content: buffer,
+      });
     }
-    const janela = resolverJanelaGarantia(janelaInput);
-
-    const buffer = await gerarCertificadoPdf(
-      montarDadosCertificado({
-        osId,
-        clienteNome: cli.nome,
-        servicos: servicosDistintos(orc.itens),
-        prazoGarantiaMeses: janela.prazoMeses,
-        inicio: janela.inicio,
-        fim: janela.fim,
-      }),
-    );
-    const chave = chaveCertificado(osId);
-    const url = await salvarPDFR2(buffer, chave, armazenamento);
-    resultado.certificado = { chave, url };
-    anexos.push({
-      filename: `certificado_garantia_${numeroCurtoOs(osId)}.pdf`,
-      content: buffer,
-    });
   }
+
+  // Nenhum documento gerado: nada a entregar.
+  if (anexos.length === 0) return skip("nenhum documento gerado");
 
   // E-mail ------------------------------------------------------------------
   if (!cli.email) {

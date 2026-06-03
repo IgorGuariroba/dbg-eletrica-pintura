@@ -80,7 +80,7 @@ describe.skipIf(!hasDb)("gerarDocumentosOs (#48)", () => {
     }
   });
 
-  async function seedOsPaga(opts: { email?: string | null; pagamentoEm?: Date } = {}) {
+  async function seedOsPaga(opts: { email?: string | null; pagamentoEm?: Date; prazo?: number | null } = {}) {
     const r = Math.random().toString(36).slice(2, 10);
     const [tec] = await db
       .insert(schema.membro)
@@ -124,7 +124,7 @@ describe.skipIf(!hasDb)("gerarDocumentosOs (#48)", () => {
         tipo: "NORMAL",
         estado: "CONCLUIDA",
         tecnicoId: tec.id,
-        prazoGarantiaMeses: 12,
+        prazoGarantiaMeses: opts.prazo === undefined ? 12 : opts.prazo,
       })
       .returning();
     osIds.push(os.id);
@@ -233,6 +233,25 @@ describe.skipIf(!hasDb)("gerarDocumentosOs (#48)", () => {
     expect(email.chamadas).toHaveLength(0);
     expect(arm.objetos.has(`fatura/os/${os.id}.pdf`)).toBe(true);
     expect(arm.objetos.has(`garantia/os/${os.id}.pdf`)).toBe(true);
+  });
+
+  it("falha do certificado não descarta a fatura já gerada nem o e-mail", async () => {
+    // OS paga sem prazo de garantia (coluna nullable): certificado não resolve,
+    // mas a fatura deve ser entregue mesmo assim.
+    const { os, cli } = await seedOsPaga({ prazo: null });
+    const arm = fakeArmazenamento();
+    const email = fakeEmail();
+
+    const res = await gerarDocumentosOs(os.id, "PAGA", { armazenamento: arm, email });
+
+    expect(res.fatura?.chave).toBe(`fatura/os/${os.id}.pdf`);
+    expect(res.certificado).toBeUndefined();
+    expect(arm.objetos.has(`fatura/os/${os.id}.pdf`)).toBe(true);
+    expect(arm.objetos.has(`garantia/os/${os.id}.pdf`)).toBe(false);
+    expect(res.email).toBe("sent");
+    expect(email.chamadas).toHaveLength(1);
+    expect(email.chamadas[0].para).toBe(cli.email);
+    expect(email.chamadas[0].anexos).toHaveLength(1);
   });
 
   it("regarantia (GARANTIA) no CONCLUIDA gera só certificado, ancorado na OS original", async () => {
