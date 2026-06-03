@@ -60,28 +60,8 @@ export default async function PortalSolicitacaoPage({
   );
 
   const repoGarantia = criarGarantiaRepoDrizzle(db);
-  const garantiaPorOs = new Map<string, { podeAcionar: boolean; fim?: Date }>();
-
-  await Promise.all(
-    solicitacao.ordens.map(async (os) => {
-      if (os.estado !== "CONCLUIDA" && os.estado !== "PAGA") {
-        garantiaPorOs.set(os.id, { podeAcionar: false });
-        return;
-      }
-      const ancora = await repoGarantia.carregarAncora(os.id);
-      if (!ancora) {
-        garantiaPorOs.set(os.id, { podeAcionar: false });
-        return;
-      }
-      const temCompRejeitado = await repoGarantia.temComplementarRejeitado(ancora.ancoraId);
-      const avaliacao = avaliarAcionamentoGarantia({
-        agora: new Date(),
-        ancora,
-        temComplementarRejeitado: temCompRejeitado,
-      });
-      garantiaPorOs.set(os.id, { podeAcionar: avaliacao.dentroDoPrazo, fim: avaliacao.fim });
-    })
-  );
+  const osIds = solicitacao.ordens.map((os) => os.id);
+  const garantiaPorOs = await repoGarantia.carregarGarantiasParaOsIds(osIds);
 
   return (
     <TooltipProvider>

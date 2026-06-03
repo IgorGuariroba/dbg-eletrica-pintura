@@ -17,4 +17,5 @@ export interface GarantiaRepo {
     temComplementarRejeitado: boolean;
     acionamentoInvalido: boolean;
   }): Promise<{ id: string }>;
+  carregarGarantiasParaOsIds(osIds: string[]): Promise<Map<string, { podeAcionar: boolean; fim?: Date }>>;
 }

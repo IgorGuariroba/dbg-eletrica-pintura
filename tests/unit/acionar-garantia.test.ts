@@ -7,6 +7,7 @@ describe("acionarGarantia Usecase", () => {
     carregarAncora: vi.fn(),
     temComplementarRejeitado: vi.fn(),
     criarChamado: vi.fn(),
+    carregarGarantiasParaOsIds: vi.fn(),
   });
 
   const dummyUpload = vi.fn();

@@ -427,4 +427,50 @@ describe.skipIf(!hasDb)("Garantia Acionamento Repo Drizzle Integration", () => {
       await dbRaw.delete(schema.garantiaChamado).where(eq(schema.garantiaChamado.id, out.chamadoId));
     });
   });
+
+  describe("carregarGarantiasParaOsIds", () => {
+    it("carrega corretamente o mapa de garantias para múltiplos IDs de OS", async () => {
+      const { sol, r } = await seedClienteESolicitacao();
+      const [os1] = await dbRaw
+        .insert(schema.ordemServico)
+        .values({
+          solicitacaoId: sol.id,
+          tipo: "NORMAL",
+          estado: "CONCLUIDA",
+          categoria: "ELETRICA",
+          prazoGarantiaMeses: 3,
+        })
+        .returning();
+      osIds.push(os1.id);
+
+      const [os2] = await dbRaw
+        .insert(schema.ordemServico)
+        .values({
+          solicitacaoId: sol.id,
+          tipo: "NORMAL",
+          estado: "AGENDADA",
+          categoria: "ELETRICA",
+          prazoGarantiaMeses: 3,
+        })
+        .returning();
+      osIds.push(os2.id);
+
+      // os1 paga para estar dentro da garantia
+      await dbRaw.insert(schema.pagamento).values({
+        osId: os1.id,
+        paymentId: `pay1-${r}`,
+        valor: "100.00",
+        metodo: "PIX",
+        status: "approved",
+        criadoEm: new Date(),
+      });
+      pagamentoIds.push({ paymentId: `pay1-${r}`, osId: os1.id });
+
+      const res = await repo.carregarGarantiasParaOsIds([os1.id, os2.id]);
+
+      expect(res.size).toBe(2);
+      expect(res.get(os1.id)?.podeAcionar).toBe(true);
+      expect(res.get(os2.id)?.podeAcionar).toBe(false);
+    });
+  });
 });
