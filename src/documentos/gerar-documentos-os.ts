@@ -12,6 +12,7 @@ import {
 } from "@/db/schema";
 import {
   criarEmailService,
+  renderizarEmailDocumentos,
   type EmailService,
 } from "@/notificacao/email-service";
 import type { EstadoOs } from "@/operacao/orcamento-repo";
@@ -175,7 +176,13 @@ export async function gerarDocumentosOs(
   await email.enviar({
     para: cli.email,
     assunto: `Documentos da OS ${numeroCurtoOs(osId)} — DBG`,
-    html: renderizarEmail(cli.nome, numeroCurtoOs(osId), urlPortal, resultado),
+    html: await renderizarEmailDocumentos({
+      clienteNome: cli.nome,
+      numeroOS: numeroCurtoOs(osId),
+      urlPortal,
+      faturaUrl: resultado.fatura?.url ?? null,
+      certificadoUrl: resultado.certificado?.url ?? null,
+    }),
     anexos,
   });
 
@@ -286,24 +293,4 @@ async function montarJanelaInput(
     prazoMeses: os.prazoGarantiaMeses,
     pagamentoEm: pag.criadoEm,
   };
-}
-
-function renderizarEmail(
-  clienteNome: string,
-  numeroOS: string,
-  urlPortal: string,
-  docs: GerarDocumentosResultado,
-): string {
-  const links: string[] = [];
-  if (docs.fatura) links.push(`<li><a href="${docs.fatura.url}">Fatura</a></li>`);
-  if (docs.certificado)
-    links.push(
-      `<li><a href="${docs.certificado.url}">Certificado de garantia</a></li>`,
-    );
-  return `
-    <p>Olá, ${clienteNome}.</p>
-    <p>Os documentos da OS <strong>${numeroOS}</strong> estão disponíveis (também em anexo):</p>
-    <ul>${links.join("")}</ul>
-    <p>Acompanhe tudo no seu portal: <a href="${urlPortal}">${urlPortal}</a></p>
-  `;
 }
