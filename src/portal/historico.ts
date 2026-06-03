@@ -104,6 +104,9 @@ export function montarDocumentosPortal(input: {
  * de `planejarDocumentos` (PAGA → fatura + certificado; GARANTIA concluída →
  * só certificado); quando disponível, assina a URL da chave determinística no
  * R2. Documentos não gerados ficam "em breve", sem assinar URL.
+ *
+ * A assinatura é local: `getSignedUrl` computa a presigned URL via HMAC, sem
+ * round-trip ao R2. Chamar isto por OS (no portal) não gera I/O por item.
  */
 export async function montarDocumentosPortalOs(input: {
   osId: string;
