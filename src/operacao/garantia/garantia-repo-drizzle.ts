@@ -14,7 +14,7 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
       })
       .from(pagamento)
       .where(and(eq(pagamento.osId, osId), eq(pagamento.status, "approved")))
-      .orderBy(asc(pagamento.criadoEm))
+      .orderBy(desc(pagamento.criadoEm))
       .limit(1);
     return pag ?? null;
   }
@@ -155,12 +155,12 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
         })
         .from(pagamento)
         .where(and(inArray(pagamento.osId, uniqueAnchorIds), eq(pagamento.status, "approved")))
-        .orderBy(asc(pagamento.criadoEm));
+        .orderBy(desc(pagamento.criadoEm));
 
-      const pagamentosPrimeiroMap = new Map<string, Date>();
+      const pagamentosMaisRecenteMap = new Map<string, Date>();
       for (const pag of pagamentos) {
-        if (!pagamentosPrimeiroMap.has(pag.osId)) {
-          pagamentosPrimeiroMap.set(pag.osId, pag.criadoEm);
+        if (!pagamentosMaisRecenteMap.has(pag.osId)) {
+          pagamentosMaisRecenteMap.set(pag.osId, pag.criadoEm);
         }
       }
 
@@ -231,7 +231,7 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
           continue;
         }
 
-        const pagamentoEm = pagamentosPrimeiroMap.get(ancoraId);
+        const pagamentoEm = pagamentosMaisRecenteMap.get(ancoraId);
         if (!pagamentoEm) {
           result.set(osId, { podeAcionar: false });
           continue;

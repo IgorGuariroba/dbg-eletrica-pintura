@@ -255,7 +255,7 @@ async function carregarPagamento(osId: string) {
     })
     .from(pagamento)
     .where(and(eq(pagamento.osId, osId), eq(pagamento.status, "approved")))
-    .orderBy(asc(pagamento.criadoEm))
+    .orderBy(desc(pagamento.criadoEm))
     .limit(1);
   return pag ?? null;
 }
