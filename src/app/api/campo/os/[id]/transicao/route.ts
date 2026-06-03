@@ -74,10 +74,11 @@ export async function POST(
       geo,
     );
 
-    // Dispara a notificação de e-mail de forma assíncrona (não-bloqueante)
-    const { notificarMudancaEstadoOs } = await import("@/notificacao/notificador");
-    notificarMudancaEstadoOs(id, registro.estadoNovo).catch((e) => {
-      console.error(`Erro ao enviar notificação de e-mail da OS ${id}:`, e);
+    // Despacha as notificações da transição (WhatsApp + e-mail) de forma
+    // assíncrona e não-bloqueante — o dispatcher decide canais por evento.
+    const { despacharEventoOs } = await import("@/notificacao/dispatcher");
+    despacharEventoOs(id, registro.estadoNovo).catch((e) => {
+      console.error(`Erro ao despachar notificação da OS ${id}:`, e);
     });
 
     return NextResponse.json({ estado: registro.estadoNovo });

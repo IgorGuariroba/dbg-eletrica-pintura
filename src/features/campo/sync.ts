@@ -104,9 +104,9 @@ export async function processarItemSync(
         payload.lat && payload.lon ? { lat: payload.lat, lon: payload.lon } : undefined
       );
 
-      const { notificarMudancaEstadoOs } = await import("@/notificacao/notificador");
-      notificarMudancaEstadoOs(osId, payload.alvo).catch((e) => {
-        console.error(`Erro ao notificar transição offline da OS ${osId}:`, e);
+      const { despacharEventoOs } = await import("@/notificacao/dispatcher");
+      despacharEventoOs(osId, payload.alvo).catch((e) => {
+        console.error(`Erro ao despachar notificação da OS ${osId}:`, e);
       });
     } else if (item.tipo === "FOTO") {
       const uploadService = options?.uploadFoto ?? uploadFotoOsR2();

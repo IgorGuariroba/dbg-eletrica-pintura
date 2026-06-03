@@ -145,10 +145,11 @@ export async function montarOrcamento(
   });
   if (!criado) throw new OsIndisponivelError();
 
-  // Dispara a notificação de e-mail de forma assíncrona (não-bloqueante)
-  const { notificarMudancaEstadoOs } = await import("@/notificacao/notificador");
-  notificarMudancaEstadoOs(os.id, "ORCADA").catch((e) => {
-    console.error(`Erro ao notificar e-mail de orçamento pronto da OS ${os.id}:`, e);
+  // Despacha as notificações de ORÇADA (WhatsApp orcamento_pronto + e-mail PDF)
+  // de forma assíncrona e não-bloqueante.
+  const { despacharEventoOs } = await import("@/notificacao/dispatcher");
+  despacharEventoOs(os.id, "ORCADA").catch((e) => {
+    console.error(`Erro ao despachar notificação de orçamento pronto da OS ${os.id}:`, e);
   });
 
   return { id: criado.id };
