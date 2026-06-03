@@ -50,6 +50,7 @@ export function criarHistoricoRepoDrizzle(db: DB): HistoricoRepo {
         solicitacaoId: ordemServico.solicitacaoId,
         id: ordemServico.id,
         categoria: ordemServico.categoria,
+        tipo: ordemServico.tipo,
         estado: ordemServico.estado,
         agendadoPara: ordemServico.agendadoPara,
         tecnicoId: membro.id,
@@ -115,6 +116,7 @@ export function criarHistoricoRepoDrizzle(db: DB): HistoricoRepo {
       ordens.push({
         id: row.id,
         categoria: row.categoria,
+        tipo: row.tipo,
         estado: row.estado,
         agendadoPara: row.agendadoPara,
         tecnico:

@@ -20,6 +20,22 @@ export function deveTransitarParaPaga(status: string): boolean {
 export interface ProcessarDeps {
   pagamentoRepo: PagamentoRepo;
   transicaoRepo: TransicaoRepo;
+  /**
+   * Emite a notificação da transição PAGA (gera fatura/certificado via
+   * dispatcher). Default: dispatcher fire-and-forget. Injetável para teste.
+   */
+  notificarTransicao?: (osId: string, estado: string) => void;
+}
+
+/** Emissão padrão: dispatcher de eventos, assíncrono e não-bloqueante. */
+function notificarPadrao(osId: string, estado: string): void {
+  import("@/notificacao/dispatcher")
+    .then(({ despacharEventoOs }) =>
+      despacharEventoOs(osId, estado).catch((e) =>
+        console.error(`Erro ao despachar notificação da OS ${osId}:`, e),
+      ),
+    )
+    .catch((e) => console.error(`Erro ao carregar dispatcher:`, e));
 }
 
 export interface ProcessarResultado {
@@ -74,6 +90,7 @@ export async function processarPagamento(
         agora,
       );
       transitadas.push(osId);
+      (deps.notificarTransicao ?? notificarPadrao)(osId, "PAGA");
       log("pagamento_confirmado", { ...base(dados), osId });
     } catch (e) {
       if (e instanceof TransicaoInvalidaError) {

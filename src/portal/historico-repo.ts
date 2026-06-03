@@ -1,12 +1,14 @@
-import type { categoriaServicoEnum, estadoOsEnum } from "@/db/schema";
+import type { categoriaServicoEnum, estadoOsEnum, tipoOsEnum } from "@/db/schema";
 import type { ItemView } from "@/operacao/aprovacao-repo";
 
 export type Categoria = (typeof categoriaServicoEnum.enumValues)[number];
 export type EstadoOs = (typeof estadoOsEnum.enumValues)[number];
+export type TipoOs = (typeof tipoOsEnum.enumValues)[number];
 
 export interface OsHistorico {
   id: string;
   categoria: Categoria;
+  tipo: TipoOs;
   estado: EstadoOs;
   agendadoPara: Date | null;
   tecnico: {

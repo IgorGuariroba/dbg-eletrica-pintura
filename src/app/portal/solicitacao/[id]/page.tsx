@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { criarHistoricoRepoDrizzle } from "@/portal/historico-repo-drizzle";
 import { exigirPortal } from "@/portal/guard";
-import { carregarSolicitacaoDoCliente, fotosOsR2Port, montarDocumentosPortal, montarFotosOs } from "@/portal/historico";
+import { carregarSolicitacaoDoCliente, fotosOsR2Port, montarDocumentosPortalOs, montarFotosOs } from "@/portal/historico";
 import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { formatBRL } from "@/lib/utils";
 import { LABEL_CATEGORIA, VARIANTE_ESTADO, dataCurta } from "@/portal/ui-helpers";
@@ -43,7 +43,17 @@ export default async function PortalSolicitacaoPage({
       solicitacao.ordens.map(async (os) => [os.id, await montarFotosOs(os.id, fotosOsR2Port())] as const),
     ),
   );
-  const documentos = montarDocumentosPortal({ faturaKey: null, certificadoKey: null });
+  const documentosPorOs = new Map(
+    await Promise.all(
+      solicitacao.ordens.map(
+        async (os) =>
+          [
+            os.id,
+            await montarDocumentosPortalOs({ osId: os.id, tipo: os.tipo, estado: os.estado }),
+          ] as const,
+      ),
+    ),
+  );
 
   return (
     <TooltipProvider>
@@ -83,6 +93,7 @@ export default async function PortalSolicitacaoPage({
         <div className="space-y-6">
           {solicitacao.ordens.map((os) => {
             const fotos = fotosPorOs.get(os.id) ?? { antes: [], depois: [] };
+            const documentos = documentosPorOs.get(os.id) ?? [];
             return (
               <Card key={os.id} className="rounded-lg">
                 <CardHeader>

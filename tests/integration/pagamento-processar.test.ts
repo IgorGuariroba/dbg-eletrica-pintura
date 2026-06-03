@@ -10,10 +10,7 @@ describe.skipIf(!hasDb)("processarPagamento (Drizzle)", () => {
   let dbRaw: typeof import("@/db/client").db;
   let schema: typeof import("@/db/schema");
   let processarPagamento: typeof import("@/pagamento/processar-pagamento").processarPagamento;
-  let deps: {
-    pagamentoRepo: import("@/pagamento/pagamento-repo").PagamentoRepo;
-    transicaoRepo: import("@/operacao/transicao-repo").TransicaoRepo;
-  };
+  let deps: import("@/pagamento/processar-pagamento").ProcessarDeps;
   let solicitacaoIds: string[] = [];
   let clienteIds: string[] = [];
   let paymentIds: string[] = [];
@@ -84,6 +81,8 @@ describe.skipIf(!hasDb)("processarPagamento (Drizzle)", () => {
       transicaoRepo: (
         await import("@/operacao/transicao-repo-drizzle")
       ).criarTransicaoRepoDrizzle(dbMod.db),
+      // Suprime o dispatch de documentos (R2/e-mail) — isola o teste.
+      notificarTransicao: () => {},
     };
   });
 
