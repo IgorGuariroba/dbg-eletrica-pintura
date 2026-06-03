@@ -23,6 +23,7 @@ export default async function setup() {
     pagamento,
     servico,
     solicitacao,
+    garantiaChamado,
   } = await import("@/db/schema");
   const { like, or, inArray } = await import("drizzle-orm");
 
@@ -40,6 +41,8 @@ export default async function setup() {
       .where(inArray(ordemServico.solicitacaoId, solIds));
     const osIds = oss.map((o) => o.id);
     if (osIds.length) {
+      // chamados de garantia referenciam a OS
+      await db.delete(garantiaChamado).where(inArray(garantiaChamado.osOrigemId, osIds));
       // pagamento tem FK `restrict` para a OS — apagar antes da OS.
       await db.delete(pagamento).where(inArray(pagamento.osId, osIds));
       // orcamentoItem cai por cascade ao apagar o orçamento.

@@ -76,7 +76,7 @@ export default function RegistrarGarantiaClientPage() {
 
     setSubmitting(true);
     try {
-      const res = await registrarAcionamentoGarantiaAction(osId.trim(), descricao, fotoDataUrl);
+      const res = await registrarAcionamentoGarantiaAction(osId.trim(), whatsapp.trim(), descricao, fotoDataUrl);
       if (res.erro) {
         toast.error(res.erro);
       } else {
