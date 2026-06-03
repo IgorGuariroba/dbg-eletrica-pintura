@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import {
+  Bell,
   Boxes,
   ClipboardList,
   DollarSign,
@@ -47,6 +48,12 @@ const ITENS: Item[] = [
     label: "Config Operação",
     href: "/admin/operacao/config" as Route,
     icon: Settings,
+    modulo: "OPERACAO",
+  },
+  {
+    label: "Notificações",
+    href: "/admin/operacao/notificacoes" as Route,
+    icon: Bell,
     modulo: "OPERACAO",
   },
 ];

@@ -509,6 +509,56 @@ export const notificacaoWhatsapp = pgTable(
 );
 
 // ============================================================
+// Marco de Notificação (idempotência do dispatcher — módulo Notificação)
+// ============================================================
+// Âncora de idempotência: cada evento de notificação que não pode duplicar
+// grava um marco (osId, marco). UNIQUE garante que reexecuções do job (ex:
+// lembrete de pagamento dia1/dia3) só disparem uma vez por marco. Insert com
+// onConflictDoNothing → 0 linhas devolvidas = já enviado, pula.
+
+export const notificacaoMarco = pgTable(
+  "notificacao_marco",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    osId: uuid("os_id")
+      .notNull()
+      .references(() => ordemServico.id, { onDelete: "cascade" }),
+    // Chave do marco, ex: "lembrete_pagamento:dia1", "lembrete_pagamento:dia3".
+    marco: varchar("marco", { length: 64 }).notNull(),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    osMarcoUq: uniqueIndex("notificacao_marco_os_marco_uq").on(t.osId, t.marco),
+  }),
+);
+
+// ============================================================
+// Template de Notificação (config do módulo Operação)
+// ============================================================
+// Variáveis padrão por template editáveis pela Operação (saudação, assinatura,
+// link curto base). Não edita o corpo do template Meta (precisa aprovação) — só
+// alimenta as variáveis dinâmicas do payload. O dispatcher mescla esses padrões
+// com as variáveis do evento (nome_cliente, valor, link) na hora do envio.
+
+export const notificacaoTemplate = pgTable("notificacao_template", {
+  // Nome do template aprovado na Meta (ex: "orcamento_pronto").
+  nome: varchar("nome", { length: 64 }).primaryKey(),
+  // Rótulo amigável exibido na UI de config.
+  rotulo: varchar("rotulo", { length: 120 }).notNull(),
+  // Variáveis padrão (saudacao, assinatura, link_base, ...).
+  variaveis: jsonb("variaveis")
+    .$type<Record<string, string>>()
+    .notNull()
+    .default(sql`'{}'::jsonb`),
+  atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+// ============================================================
 // Foto candidata a Portfólio (Marketing)
 // ============================================================
 // Só fotos que o técnico marcou "boa pra portfólio" ganham linha aqui.
