@@ -40,4 +40,16 @@ describe("resolverJanelaGarantia", () => {
     expect(ISO(j.fim)).toBe("2027-06-03T12:00:00.000Z");
     expect(j.prazoMeses).toBe(12);
   });
+
+  it("GARANTIA sem âncora original lança (guard de invariante)", () => {
+    // No fluxo real, montarJanelaInput nunca produz isto (garante `original`
+    // ou retorna null). O guard documenta o contrato e falha alto se violado.
+    expect(() =>
+      resolverJanelaGarantia({
+        tipo: "GARANTIA",
+        prazoMeses: 0,
+        pagamentoEm: new Date("2026-09-01T12:00:00Z"),
+      }),
+    ).toThrow(/regarantia exige/i);
+  });
 });
