@@ -176,6 +176,14 @@ describe.skipIf(!hasDb)("Notificação Dispatcher (Slice 2 — #46)", () => {
     expect(gateway.chamadas[0].destinatario).toBe(destinatario);
     expect(res.whatsapp?.status).toBe("enviado");
 
+    // Ordem posicional dos params casa com o catálogo (layout do template Meta).
+    expect(Object.keys(gateway.chamadas[0].variaveis)).toEqual([
+      "saudacao",
+      "nome_cliente",
+      "link",
+      "assinatura",
+    ]);
+
     // E-mail: delegado ao notificador para a mesma transição.
     expect(email.chamadas).toEqual([{ osId: os.id, estado: "ORCADA" }]);
     expect(res.email?.status).toBe("sent");

@@ -3,7 +3,12 @@ import { db } from "@/db/client";
 import { cliente, membro, ordemServico, solicitacao } from "@/db/schema";
 import { enviarTemplate } from "./enviar-template";
 import { notificarMudancaEstadoOs, type NotificacaoResultado } from "./notificador";
-import { criarTemplateRepo, normalizarWhatsapp, type TemplateRepo } from "./templates";
+import {
+  criarTemplateRepo,
+  normalizarWhatsapp,
+  ordenarVariaveis,
+  type TemplateRepo,
+} from "./templates";
 import { whatsappConfigurado, type GatewayWhatsApp } from "./whatsapp-gateway";
 
 /**
@@ -136,7 +141,8 @@ async function despacharWhatsapp(
 
   const repo = deps.templateRepo ?? criarTemplateRepo();
   const padrao = await repo.obterVariaveis(template);
-  const variaveis = { ...padrao, ...dinamicas };
+  // Ordem posicional fixada no catálogo — deve casar com o template Meta.
+  const variaveis = ordenarVariaveis(template, { ...padrao, ...dinamicas });
 
   const res = await enviarTemplate(
     { destinatario, template, variaveis },

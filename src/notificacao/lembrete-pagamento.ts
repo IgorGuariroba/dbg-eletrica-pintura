@@ -10,7 +10,12 @@ import {
 } from "@/db/schema";
 import { criarEmailService, renderizarEmailLembretePagamento } from "./email-service";
 import { enviarTemplate } from "./enviar-template";
-import { criarTemplateRepo, normalizarWhatsapp, type TemplateRepo } from "./templates";
+import {
+  criarTemplateRepo,
+  normalizarWhatsapp,
+  ordenarVariaveis,
+  type TemplateRepo,
+} from "./templates";
 import { whatsappConfigurado, type GatewayWhatsApp } from "./whatsapp-gateway";
 
 // Só OS que exigem pagamento entram no lembrete — Preventiva e Garantia
@@ -103,12 +108,13 @@ export async function processarLembretesPagamento(
         {
           destinatario,
           template: "lembrete_pagamento",
-          variaveis: {
+          // Ordem posicional fixada no catálogo — deve casar com o template Meta.
+          variaveis: ordenarVariaveis("lembrete_pagamento", {
             ...padrao,
             nome_cliente: cli.nome,
             valor: Number(total).toFixed(2),
             link,
-          },
+          }),
         },
         { gateway: deps.gateway, agora },
       );

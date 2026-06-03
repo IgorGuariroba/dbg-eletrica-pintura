@@ -16,6 +16,13 @@ export interface TemplateNotificacao {
   rotulo: string;
   /** Variáveis padrão editáveis (chave → valor default). */
   variaveisPadrao: Record<string, string>;
+  /**
+   * Ordem posicional dos parâmetros do corpo. O gateway envia
+   * `Object.values(variaveis)` como params posicionais ({{1}}, {{2}}, …), então
+   * ESTA ordem deve casar exatamente com o layout do template aprovado na Meta
+   * Business Manager. Ao aprovar/alterar o template lá, ajustar aqui.
+   */
+  ordemVariaveis: string[];
 }
 
 export const TEMPLATES_NOTIFICACAO: TemplateNotificacao[] = [
@@ -23,16 +30,19 @@ export const TEMPLATES_NOTIFICACAO: TemplateNotificacao[] = [
     nome: "orcamento_pronto",
     rotulo: "Orçamento Pronto",
     variaveisPadrao: { saudacao: "Olá", assinatura: "Equipe DBG Elétrica e Pintura" },
+    ordemVariaveis: ["saudacao", "nome_cliente", "link", "assinatura"],
   },
   {
     nome: "tecnico_a_caminho",
     rotulo: "Técnico a Caminho",
     variaveisPadrao: { saudacao: "Olá", assinatura: "Equipe DBG Elétrica e Pintura" },
+    ordemVariaveis: ["saudacao", "nome_cliente", "nome_tecnico", "assinatura"],
   },
   {
     nome: "lembrete_pagamento",
     rotulo: "Lembrete de Pagamento",
     variaveisPadrao: { saudacao: "Olá", assinatura: "Equipe DBG Elétrica e Pintura" },
+    ordemVariaveis: ["saudacao", "nome_cliente", "valor", "link", "assinatura"],
   },
 ];
 
@@ -99,6 +109,25 @@ export function criarTemplateRepo(db: DB = dbPadrao): TemplateRepo {
         });
     },
   };
+}
+
+/**
+ * Reordena as variáveis de um template na ordem posicional do corpo aprovado na
+ * Meta (`ordemVariaveis`). Chaves ausentes entram como string vazia para não
+ * deslocar as posições seguintes; o gateway mapeia `Object.values` em ordem para
+ * {{1}}, {{2}}, … Sem catálogo conhecido, devolve as variáveis como vieram.
+ */
+export function ordenarVariaveis(
+  nome: string,
+  variaveis: Record<string, string>,
+): Record<string, string> {
+  const tpl = buscarTemplate(nome);
+  if (!tpl) return variaveis;
+  const ordenado: Record<string, string> = {};
+  for (const chave of tpl.ordemVariaveis) {
+    ordenado[chave] = variaveis[chave] ?? "";
+  }
+  return ordenado;
 }
 
 /**

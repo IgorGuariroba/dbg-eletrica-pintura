@@ -174,6 +174,14 @@ describe.skipIf(!hasDb)("Lembrete de Pagamento (Slice 2 — #46)", () => {
     expect(minhas).toHaveLength(1);
     expect(minhas[0].template).toBe("lembrete_pagamento");
     expect(minhas[0].variaveis.valor).toContain("280");
+    // Ordem posicional dos params casa com o catálogo (layout do template Meta).
+    expect(Object.keys(minhas[0].variaveis)).toEqual([
+      "saudacao",
+      "nome_cliente",
+      "valor",
+      "link",
+      "assinatura",
+    ]);
     expect(email.chamadas.filter((c) => c.para === cli.email)).toHaveLength(1);
     expect(await marcosDaOs(os.id)).toEqual(["lembrete_pagamento:dia1"]);
   });
