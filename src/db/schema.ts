@@ -715,3 +715,31 @@ export const vinculacaoGoogleLogRelations = relations(vinculacaoGoogleLog, ({ on
   }),
 }));
 
+export const canalGarantiaEnum = pgEnum("canal_garantia", ["PORTAL", "WHATSAPP"]);
+export const statusGarantiaChamadoEnum = pgEnum("status_garantia_chamado", [
+  "pendente",
+]);
+
+export const garantiaChamado = pgTable("garantia_chamado", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  osOrigemId: uuid("os_origem_id")
+    .notNull()
+    .references(() => ordemServico.id, { onDelete: "restrict" }),
+  descricao: text("descricao").notNull(),
+  fotoUrl: text("foto_url").notNull(),
+  criadoPor: varchar("criado_por", { length: 255 }).notNull(),
+  canal: canalGarantiaEnum("canal").notNull(),
+  status: statusGarantiaChamadoEnum("status").notNull().default("pendente"),
+  temComplementarRejeitado: boolean("tem_complementar_rejeitado").notNull().default(false),
+  acionamentoInvalido: boolean("acionamento_invalido").notNull().default(false),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const garantiaChamadoRelations = relations(garantiaChamado, ({ one }) => ({
+  osOrigem: one(ordemServico, {
+    fields: [garantiaChamado.osOrigemId],
+    references: [ordemServico.id],
+  }),
+}));
+
+

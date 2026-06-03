@@ -405,3 +405,8 @@ Toda alteração de código deve seguir estritamente estes passos:
 4. **Analisar (Fallow):** rodar a análise pós-implementação da §3.1 (`dead-code`, `dupes`, `health`, `fix --dry-run`) e tratar os findings reais.
 5. **Revisar:** executar `/code-review` se aplicável e corrigir inconformidades.
 6. **Finalizar:** Fazer push da branch e abrir PR para a `main`. Nunca commitar diretamente na branch `main`.
+7. **Pós-Push e Gemini Code Review:** Após realizar o push para um PR aberto, deve-se:
+   - Verificar se os checks do CI/GitHub Actions passaram e se o Gemini Code Review deu veredicto aprovado.
+   - Caso o Gemini retorne `MUDANÇAS NECESSÁRIAS ❌`, devemos analisar os achados:
+     - Se for realmente um problema crítico, devemos corrigir o problema e reiniciar o processo de validação local e push.
+     - Se for um problema mais simples (não crítico), o agente deve perguntar ao usuário se deseja corrigir o problema ou apenas responder/comentar no review do Gemini explicando a decisão.

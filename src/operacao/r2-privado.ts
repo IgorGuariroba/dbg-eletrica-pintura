@@ -207,3 +207,21 @@ export async function listarFotosOs(osId: string, tipo: TipoFotoOs): Promise<str
     return [];
   }
 }
+
+export async function uploadFotoGarantia(dataUrl: string, osId: string): Promise<string> {
+  const virgula = dataUrl.indexOf(",");
+  if (virgula < 0) throw new Error("data URL de foto inválido");
+  const corpo = Buffer.from(dataUrl.slice(virgula + 1), "base64");
+  const key = `chamados/os-${osId}/${randomUUID()}.jpg`;
+  const { client, bucket } = init();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: corpo,
+      ContentType: "image/jpeg",
+    }),
+  );
+  return key;
+}
+
