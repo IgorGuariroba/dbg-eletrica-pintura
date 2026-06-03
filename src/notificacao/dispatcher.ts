@@ -4,6 +4,11 @@ import { cliente, membro, ordemServico, solicitacao } from "@/db/schema";
 import { enviarTemplate } from "./enviar-template";
 import { notificarMudancaEstadoOs, type NotificacaoResultado } from "./notificador";
 import {
+  gerarDocumentosOs,
+  type GerarDocumentosResultado,
+} from "@/documentos/gerar-documentos-os";
+import type { EstadoOs } from "@/operacao/orcamento-repo";
+import {
   criarTemplateRepo,
   normalizarWhatsapp,
   ordenarVariaveis,
@@ -13,17 +18,23 @@ import { whatsappConfigurado, type GatewayWhatsApp } from "./whatsapp-gateway";
 
 /**
  * Mapa de Evento de Notificação: cada transição de estado da OS define qual
- * template WhatsApp dispara (ação imediata) e se também sai e-mail (documento
- * PDF). Ver Prioridade de Canal em CONTEXT.md.
+ * template WhatsApp dispara (ação imediata), se sai e-mail de conclusão e se
+ * gera documentos (fatura/certificado). Ver Prioridade de Canal em CONTEXT.md.
  *
  * - ORCADA: orçamento pronto por WhatsApp + e-mail com PDF.
  * - A_CAMINHO: técnico a caminho por WhatsApp (sem e-mail).
- * - CONCLUIDA: e-mail de conclusão/avaliação (WhatsApp de avaliação fica no #7).
+ * - CONCLUIDA: e-mail de conclusão + documentos (certificado de regarantia
+ *   para OS GARANTIA; demais tipos só geram documentos no PAGA).
+ * - PAGA: documentos (fatura + certificado), sem WhatsApp/e-mail próprios.
  */
-const MAPA_EVENTOS: Record<string, { template?: string; email: boolean }> = {
+const MAPA_EVENTOS: Record<
+  string,
+  { template?: string; email?: boolean; documentos?: boolean }
+> = {
   ORCADA: { template: "orcamento_pronto", email: true },
-  A_CAMINHO: { template: "tecnico_a_caminho", email: false },
-  CONCLUIDA: { email: true },
+  A_CAMINHO: { template: "tecnico_a_caminho" },
+  CONCLUIDA: { email: true, documentos: true },
+  PAGA: { documentos: true },
 };
 
 export interface DespachoWhatsapp {
@@ -35,6 +46,7 @@ export interface DespachoWhatsapp {
 export interface DespachoResultado {
   whatsapp?: DespachoWhatsapp;
   email?: NotificacaoResultado;
+  documentos?: GerarDocumentosResultado;
 }
 
 export interface DespacharDeps {
@@ -46,6 +58,11 @@ export interface DespacharDeps {
   templateRepo?: TemplateRepo;
   /** Envio de e-mail por transição (default: notificarMudancaEstadoOs). */
   enviarEmail?: (osId: string, estado: string) => Promise<NotificacaoResultado>;
+  /** Geração de documentos por transição (default: gerarDocumentosOs). */
+  gerarDocumentos?: (
+    osId: string,
+    estado: string,
+  ) => Promise<GerarDocumentosResultado>;
   /** Força mock no envio de e-mail default (PDF/Resend). */
   forceMock?: boolean;
 }
@@ -80,6 +97,16 @@ export async function despacharEventoOs(
       ((id, estado) =>
         notificarMudancaEstadoOs(id, estado, { forceMock: deps.forceMock }));
     resultado.email = await enviarEmail(osId, estadoNovo);
+  }
+
+  // Documentos (fatura/certificado). gerarDocumentosOs auto-filtra por
+  // tipo/estado (planejarDocumentos) — retorna skip quando não aplicável.
+  if (evento.documentos) {
+    const gerar =
+      deps.gerarDocumentos ??
+      ((id, estado) =>
+        gerarDocumentosOs(id, estado as EstadoOs, { forceMock: deps.forceMock }));
+    resultado.documentos = await gerar(osId, estadoNovo);
   }
 
   return resultado;

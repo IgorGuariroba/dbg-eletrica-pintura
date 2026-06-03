@@ -1,5 +1,8 @@
-import type { FotosOsPort, HistoricoRepo } from "./historico-repo";
+import type { EstadoOs, FotosOsPort, HistoricoRepo } from "./historico-repo";
 import { listarFotosOs, obterUrlLeituraAssinada } from "@/operacao/r2-privado";
+import { chaveCertificado, chaveFatura } from "@/documentos/chaves";
+import { planejarDocumentos } from "@/documentos/planejar-documentos";
+import type { TipoOs } from "@/operacao/maquina-estado";
 
 export interface FotosOsView {
   antes: string[];
@@ -94,4 +97,31 @@ export function montarDocumentosPortal(input: {
       url: null,
     },
   ];
+}
+
+/**
+ * Resolve os documentos do portal de uma OS específica. A disponibilidade vem
+ * de `planejarDocumentos` (PAGA → fatura + certificado; GARANTIA concluída →
+ * só certificado); quando disponível, assina a URL da chave determinística no
+ * R2. Documentos não gerados ficam "em breve", sem assinar URL.
+ *
+ * A assinatura é local: `getSignedUrl` computa a presigned URL via HMAC, sem
+ * round-trip ao R2. Chamar isto por OS (no portal) não gera I/O por item.
+ */
+export async function montarDocumentosPortalOs(input: {
+  osId: string;
+  tipo: TipoOs;
+  estado: EstadoOs;
+  /** Assinador de leitura (default: R2 privado). */
+  urlAssinada?: (chave: string) => Promise<string>;
+}): Promise<DocumentoPortalView[]> {
+  const assinar = input.urlAssinada ?? ((c) => obterUrlLeituraAssinada(c));
+  const plano = planejarDocumentos(input.tipo, input.estado);
+
+  const faturaKey = plano.fatura ? await assinar(chaveFatura(input.osId)) : null;
+  const certificadoKey = plano.certificado
+    ? await assinar(chaveCertificado(input.osId))
+    : null;
+
+  return montarDocumentosPortal({ faturaKey, certificadoKey });
 }

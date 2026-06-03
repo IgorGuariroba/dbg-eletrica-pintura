@@ -9,10 +9,7 @@ const hasDb = Boolean(process.env.DATABASE_URL);
 describe.skipIf(!hasDb)("registrarPagamentoManual Integration", () => {
   let dbRaw: typeof import("@/db/client").db;
   let schema: typeof import("@/db/schema");
-  let deps: {
-    pagamentoRepo: import("@/pagamento/pagamento-repo").PagamentoRepo;
-    transicaoRepo: import("@/operacao/transicao-repo").TransicaoRepo;
-  };
+  let deps: import("@/pagamento/processar-pagamento").ProcessarDeps;
   let solicitacaoIds: string[] = [];
   let clienteIds: string[] = [];
 
@@ -67,6 +64,8 @@ describe.skipIf(!hasDb)("registrarPagamentoManual Integration", () => {
       transicaoRepo: (
         await import("@/operacao/transicao-repo-drizzle")
       ).criarTransicaoRepoDrizzle(dbMod.db),
+      // Suprime o dispatch de documentos (R2/e-mail) — isola o teste.
+      notificarTransicao: () => {},
     };
   });
 
