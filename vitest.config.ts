@@ -21,23 +21,30 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary"],
-      include: ["src/**/*.{ts,tsx}"],
+      // Mede só a camada de LÓGICA (domínio, repos, regras, libs).
+      // A camada de UI/rotas (.tsx, app/, components/) é coberta por
+      // Playwright (test:e2e), não por unit test — incluí-la aqui só
+      // diluiria o número sem valor.
+      include: ["src/**/*.ts"],
       exclude: [
         "src/**/*.d.ts",
-        "src/**/*.test.{ts,tsx}",
-        // Primitivos shadcn/ui — não testados por unidade.
-        "src/components/ui/**",
-        // RSC pages/layouts — cobertos via Playwright (test:e2e), não unit.
-        "src/app/**/layout.tsx",
-        "src/app/**/page.tsx",
+        "src/**/*.test.ts",
+        // Componentes/UI React — cobertos via e2e.
+        "src/**/*.tsx",
+        "src/app/**", // route handlers, server actions finos (orquestração)
+        "src/components/**",
+        "src/hooks/**", // React hooks
+        // Config de auth (NextAuth) — não unit-testável.
+        "src/auth.ts",
+        "src/auth-handlers.ts",
       ],
       // Gate "ratchet": piso = cobertura atual. CI quebra se REGREDIR.
       // Subir estes números conforme novos testes entram, rumo a 80%.
       thresholds: {
-        lines: 40,
-        functions: 39,
-        branches: 33,
-        statements: 40,
+        lines: 80,
+        functions: 80,
+        branches: 69,
+        statements: 78,
       },
     },
   },
