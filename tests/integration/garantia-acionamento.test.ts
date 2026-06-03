@@ -472,5 +472,63 @@ describe.skipIf(!hasDb)("Garantia Acionamento Repo Drizzle Integration", () => {
       expect(res.get(os1.id)?.podeAcionar).toBe(true);
       expect(res.get(os2.id)?.podeAcionar).toBe(false);
     });
+
+    it("carrega corretamente e resolve recursivamente para múltiplos níveis de OS tipo GARANTIA", async () => {
+      const { sol, r } = await seedClienteESolicitacao();
+      const [osPai] = await dbRaw
+        .insert(schema.ordemServico)
+        .values({
+          solicitacaoId: sol.id,
+          tipo: "NORMAL",
+          estado: "PAGA",
+          categoria: "ELETRICA",
+          prazoGarantiaMeses: 6,
+        })
+        .returning();
+      osIds.push(osPai.id);
+
+      const [osFilha] = await dbRaw
+        .insert(schema.ordemServico)
+        .values({
+          solicitacaoId: sol.id,
+          osPaiId: osPai.id,
+          tipo: "GARANTIA",
+          estado: "CONCLUIDA",
+          categoria: "ELETRICA",
+          prazoGarantiaMeses: 0,
+        })
+        .returning();
+      osIds.push(osFilha.id);
+
+      const [osNeta] = await dbRaw
+        .insert(schema.ordemServico)
+        .values({
+          solicitacaoId: sol.id,
+          osPaiId: osFilha.id,
+          tipo: "GARANTIA",
+          estado: "CONCLUIDA",
+          categoria: "ELETRICA",
+          prazoGarantiaMeses: 0,
+        })
+        .returning();
+      osIds.push(osNeta.id);
+
+      const dataPagamento = new Date();
+      await dbRaw.insert(schema.pagamento).values({
+        osId: osPai.id,
+        paymentId: `pay-rec-${r}`,
+        valor: "120.00",
+        metodo: "PIX",
+        status: "approved",
+        criadoEm: dataPagamento,
+      });
+      pagamentoIds.push({ paymentId: `pay-rec-${r}`, osId: osPai.id });
+
+      const res = await repo.carregarGarantiasParaOsIds([osNeta.id]);
+
+      expect(res.size).toBe(1);
+      expect(res.get(osNeta.id)?.podeAcionar).toBe(true);
+      expect(res.get(osNeta.id)?.fim).toBeDefined();
+    });
   });
 });

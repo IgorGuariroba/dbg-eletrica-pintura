@@ -21,7 +21,7 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
 
   return {
     async carregarAncora(osId: string) {
-      const [os] = await dbRaw
+      let [os] = await dbRaw
         .select()
         .from(ordemServico)
         .where(eq(ordemServico.id, osId))
@@ -29,8 +29,12 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
 
       if (!os) return null;
 
-      if (os.tipo === "GARANTIA") {
-        if (!os.osPaiId) return null;
+      const visited = new Set<string>([os.id]);
+      while (os.tipo === "GARANTIA" && os.osPaiId) {
+        if (visited.has(os.osPaiId)) {
+          return null; // loop detectado
+        }
+        visited.add(os.osPaiId);
 
         const [pai] = await dbRaw
           .select()
@@ -38,24 +42,17 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
           .where(eq(ordemServico.id, os.osPaiId))
           .limit(1);
 
-        if (!pai || pai.prazoGarantiaMeses == null) return null;
-
-        const pagPai = await carregarPagamento(os.osPaiId);
-        if (!pagPai) return null;
-
-        return {
-          ancoraId: os.osPaiId,
-          prazoMeses: pai.prazoGarantiaMeses,
-          pagamentoEm: pagPai.criadoEm,
-          tipo: pai.tipo,
-        };
+        if (!pai) return null;
+        os = pai;
       }
 
-      const pag = await carregarPagamento(osId);
-      if (!pag || os.prazoGarantiaMeses == null) return null;
+      if (os.prazoGarantiaMeses == null) return null;
+
+      const pag = await carregarPagamento(os.id);
+      if (!pag) return null;
 
       return {
-        ancoraId: osId,
+        ancoraId: os.id,
         prazoMeses: os.prazoGarantiaMeses,
         pagamentoEm: pag.criadoEm,
         tipo: os.tipo,
@@ -112,25 +109,80 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
       const result = new Map<string, { podeAcionar: boolean; fim?: Date }>();
       if (!osIds.length) return result;
 
-      const oss = await dbRaw
+      // Carregar todas as OSs iniciais
+      const initialOss = await dbRaw
         .select()
         .from(ordemServico)
         .where(inArray(ordemServico.id, osIds));
 
-      const osMap = new Map(oss.map(o => [o.id, o]));
-      const osAnchorMap = new Map<string, string>();
+      const osMap = new Map(initialOss.map(o => [o.id, o]));
+      const osAnchorMap = new Map<string, string>(); // osId -> ultimateAncoraId
       const uniqueAnchorIdsSet = new Set<string>();
 
+      // Carregar iterativamente os pais para resolver a âncora final de cada OS
+      let pendingAnchorIds = new Set<string>();
+      const allFetchedOss = new Map(osMap);
+
+      for (const os of initialOss) {
+        if (os.tipo === "GARANTIA" && os.osPaiId) {
+          pendingAnchorIds.add(os.osPaiId);
+        } else {
+          osAnchorMap.set(os.id, os.id);
+          uniqueAnchorIdsSet.add(os.id);
+        }
+      }
+
+      const visited = new Set<string>();
+      while (pendingAnchorIds.size > 0) {
+        const toFetch = Array.from(pendingAnchorIds).filter(id => !visited.has(id));
+        if (toFetch.length === 0) {
+          break;
+        }
+        for (const id of toFetch) {
+          visited.add(id);
+        }
+
+        const fetched = await dbRaw
+          .select()
+          .from(ordemServico)
+          .where(inArray(ordemServico.id, toFetch));
+
+        for (const o of fetched) {
+          allFetchedOss.set(o.id, o);
+        }
+
+        const nextPending = new Set<string>();
+        for (const id of pendingAnchorIds) {
+          const o = allFetchedOss.get(id);
+          if (!o) continue;
+
+          if (o.tipo === "GARANTIA" && o.osPaiId) {
+            nextPending.add(o.osPaiId);
+          } else {
+            uniqueAnchorIdsSet.add(o.id);
+          }
+        }
+        pendingAnchorIds = nextPending;
+      }
+
+      // Agora mapeamos cada OS de osIds para sua âncora final
       for (const osId of osIds) {
-        const os = osMap.get(osId);
+        const os = allFetchedOss.get(osId);
         if (!os) continue;
 
-        if (os.tipo === "GARANTIA" && os.osPaiId) {
-          osAnchorMap.set(osId, os.osPaiId);
-          uniqueAnchorIdsSet.add(os.osPaiId);
-        } else {
-          osAnchorMap.set(osId, osId);
-          uniqueAnchorIdsSet.add(osId);
+        if (os.tipo === "GARANTIA") {
+          let curr = os;
+          const localVisited = new Set<string>([curr.id]);
+          while (curr.tipo === "GARANTIA" && curr.osPaiId) {
+            if (localVisited.has(curr.osPaiId)) {
+              break; // loop detectado
+            }
+            localVisited.add(curr.osPaiId);
+            const parent = allFetchedOss.get(curr.osPaiId);
+            if (!parent) break;
+            curr = parent;
+          }
+          osAnchorMap.set(osId, curr.id);
         }
       }
 
@@ -142,12 +194,14 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
         return result;
       }
 
+      // Carregar os dados das âncoras resolvidas
       const anchors = await dbRaw
         .select()
         .from(ordemServico)
         .where(inArray(ordemServico.id, uniqueAnchorIds));
       const anchorMap = new Map(anchors.map(a => [a.id, a]));
 
+      // Carregar pagamentos das âncoras
       const pagamentos = await dbRaw
         .select({
           osId: pagamento.osId,
@@ -164,6 +218,7 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
         }
       }
 
+      // Carregar filhas complementares das âncoras
       const filhasComplementares = await dbRaw
         .select({
           id: ordemServico.id,
