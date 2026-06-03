@@ -110,7 +110,7 @@ export function AcionarGarantiaDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] gap-6 rounded-xl border bg-background/95 backdrop-blur-md shadow-2xl p-6 transition-all duration-300 ease-in-out">
+      <DialogContent className="sm:max-w-lg gap-6 rounded-xl border bg-background/95 backdrop-blur-md shadow-2xl p-6 transition-all duration-300 ease-in-out">
         <DialogHeader className="space-y-1.5">
           <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
             Solicitar Acionamento de Garantia
@@ -129,7 +129,7 @@ export function AcionarGarantiaDialog({
               <span
                 className={`text-xs font-mono transition-colors duration-200 ${
                   descricao.trim().length >= 20
-                    ? "text-emerald-500"
+                    ? "text-success"
                     : "text-muted-foreground"
                 }`}
               >
@@ -142,7 +142,7 @@ export function AcionarGarantiaDialog({
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               disabled={submitting}
-              className="min-h-[110px] resize-none text-base border-input bg-background/50 hover:bg-background/80 focus:bg-background transition-colors duration-200 rounded-lg p-3 leading-relaxed ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="min-h-28 resize-none text-base border-input bg-background/50 hover:bg-background/80 focus:bg-background transition-colors duration-200 rounded-lg p-3 leading-relaxed ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
 
@@ -165,7 +165,7 @@ export function AcionarGarantiaDialog({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={submitting}
-                className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-muted bg-muted/20 hover:bg-muted/40 active:bg-muted/50 transition-all duration-200 rounded-lg p-6 group cursor-pointer min-h-[120px] focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-muted bg-muted/20 hover:bg-muted/40 active:bg-muted/50 transition-all duration-200 rounded-lg p-6 group cursor-pointer min-h-32 focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <div className="p-3 bg-background rounded-full shadow-sm group-hover:scale-105 transition-transform duration-200 border">
                   <Camera className="size-6 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
@@ -184,7 +184,7 @@ export function AcionarGarantiaDialog({
                   className="object-contain w-full h-full"
                 />
                 <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-90 hover:opacity-100 transition-opacity">
-                  <span className="text-xs bg-background/90 text-foreground px-2 py-1 rounded shadow border truncate max-w-[150px] font-mono">
+                  <span className="text-xs bg-background/90 text-foreground px-2 py-1 rounded shadow border truncate max-w-36 font-mono">
                     {fotoNome}
                   </span>
                   <Button
@@ -208,14 +208,14 @@ export function AcionarGarantiaDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={submitting}
-              className="w-full sm:w-auto min-h-[44px] cursor-pointer"
+              className="w-full sm:w-auto min-h-11 cursor-pointer"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={!isValido || submitting}
-              className="w-full sm:w-auto font-bold min-h-[44px] shadow-md cursor-pointer transition-all active:scale-[0.98]"
+              className="w-full sm:w-auto font-bold min-h-11 shadow-md cursor-pointer transition-all active:scale-95"
             >
               {submitting ? (
                 <>

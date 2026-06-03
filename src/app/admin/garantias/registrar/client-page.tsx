@@ -162,7 +162,7 @@ export default function RegistrarGarantiaClientPage() {
                 </Label>
                 <span
                   className={`text-xs font-mono transition-colors ${
-                    descricao.trim().length >= 20 ? "text-emerald-500" : "text-muted-foreground"
+                    descricao.trim().length >= 20 ? "text-success" : "text-muted-foreground"
                   }`}
                 >
                   {descricao.trim().length}/20 carac. mín.
@@ -174,7 +174,7 @@ export default function RegistrarGarantiaClientPage() {
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 disabled={submitting}
-                className="min-h-[120px] resize-none bg-background/50 focus:bg-background transition-colors leading-relaxed"
+                className="min-h-32 resize-none bg-background/50 focus:bg-background transition-colors leading-relaxed"
                 required
               />
             </div>
@@ -198,7 +198,7 @@ export default function RegistrarGarantiaClientPage() {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={submitting}
-                  className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-muted bg-muted/10 hover:bg-muted/30 transition-all rounded-lg p-6 cursor-pointer min-h-[120px] group focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full flex flex-col items-center justify-center gap-3 border-2 border-dashed border-muted bg-muted/10 hover:bg-muted/30 transition-all rounded-lg p-6 cursor-pointer min-h-32 group focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <div className="p-3 bg-background rounded-full shadow-sm group-hover:scale-105 transition-transform duration-200 border">
                     <Camera className="size-6 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -217,7 +217,7 @@ export default function RegistrarGarantiaClientPage() {
                     className="object-contain w-full h-full"
                   />
                   <div className="absolute top-2 right-2 flex items-center gap-1.5">
-                    <span className="text-xs bg-background/90 text-foreground px-2 py-1 rounded shadow border truncate max-w-[150px] font-mono">
+                    <span className="text-xs bg-background/90 text-foreground px-2 py-1 rounded shadow border truncate max-w-36 font-mono">
                       {fotoNome}
                     </span>
                     <Button
@@ -239,7 +239,7 @@ export default function RegistrarGarantiaClientPage() {
               <Button
                 type="submit"
                 disabled={!isValido || submitting}
-                className="w-full sm:w-auto font-bold min-h-[44px] cursor-pointer shadow-md"
+                className="w-full sm:w-auto font-bold min-h-11 cursor-pointer shadow-md"
               >
                 {submitting ? (
                   <>
