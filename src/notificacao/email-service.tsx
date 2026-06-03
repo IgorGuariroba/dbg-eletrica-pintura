@@ -108,6 +108,56 @@ export const ConclusaoEmail: React.FC<ConclusaoEmailProps> = ({
   </Html>
 );
 
+export interface LembretePagamentoEmailProps {
+  clienteNome: string;
+  numeroOS: string;
+  valor: string;
+  urlPortal: string;
+}
+
+export const LembretePagamentoEmail: React.FC<LembretePagamentoEmailProps> = ({
+  clienteNome,
+  numeroOS,
+  valor,
+  urlPortal,
+}) => (
+  <Html>
+    <Head />
+    <Body style={{ fontFamily: "sans-serif", backgroundColor: CORES.mutedBg, color: CORES.texto, padding: "20px" }}>
+      <Container style={{ backgroundColor: CORES.fundo, padding: "20px", borderRadius: "8px", border: `1px solid ${CORES.borda}` }}>
+        <Heading style={{ color: CORES.primaria, fontSize: "20px", marginBottom: "15px" }}>Olá, {clienteNome}!</Heading>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5" }}>
+          A sua Ordem de Serviço <strong>{numeroOS}</strong> foi concluída, mas ainda não identificamos o pagamento.
+        </Text>
+        <Text style={{ fontSize: "16px", margin: "15px 0" }}>
+          Valor em aberto: <strong style={{ color: CORES.primaria }}>R$ {Number(valor).toFixed(2)}</strong>
+        </Text>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5", marginTop: "20px" }}>
+          Você pode regularizar o pagamento de forma rápida e segura pelo nosso portal:
+        </Text>
+        <Link
+          href={urlPortal}
+          style={{
+            display: "inline-block",
+            backgroundColor: CORES.primaria,
+            color: CORES.primariaTexto,
+            padding: "10px 20px",
+            borderRadius: "6px",
+            textDecoration: "none",
+            fontWeight: "bold",
+            marginTop: "10px",
+          }}
+        >
+          Efetuar Pagamento
+        </Link>
+        <Text style={{ fontSize: "11px", color: CORES.mutedTexto, marginTop: "30px", borderTop: `1px solid ${CORES.borda}`, paddingTop: "10px" }}>
+          Este é um e-mail automático enviado por DBG Elétrica e Pintura. Por favor, não responda a este e-mail.
+        </Text>
+      </Container>
+    </Body>
+  </Html>
+);
+
 // ============================================================
 // 2. Funções Auxiliares de Renderização
 // ============================================================
@@ -119,6 +169,11 @@ export async function renderizarEmailOrcamento(props: OrcamentoEmailProps): Prom
 
 export async function renderizarEmailConclusao(props: ConclusaoEmailProps): Promise<string> {
   const comp = React.createElement(ConclusaoEmail, props);
+  return await render(comp);
+}
+
+export async function renderizarEmailLembretePagamento(props: LembretePagamentoEmailProps): Promise<string> {
+  const comp = React.createElement(LembretePagamentoEmail, props);
   return await render(comp);
 }
 
