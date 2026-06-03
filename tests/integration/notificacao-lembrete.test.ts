@@ -9,9 +9,13 @@ config({ path: ".env.local" });
 const hasDb = Boolean(process.env.DATABASE_URL);
 const PREFIXO_WPP = "5511955501";
 
+// messageId único por chamada e por instância — o job varre TODAS as OS
+// CONCLUÍDA globalmente (correto em produção), então pode enviar também para OS
+// semeadas por outros testes; um wamid aleatório evita colisão na coluna UNIQUE.
 function fakeGateway(): GatewayWhatsApp & {
   chamadas: { destinatario: string; template: string; variaveis: Record<string, string> }[];
 } {
+  const id = Math.random().toString(36).slice(2, 10);
   const chamadas: {
     destinatario: string;
     template: string;
@@ -21,7 +25,7 @@ function fakeGateway(): GatewayWhatsApp & {
     chamadas,
     async enviarTemplate(req) {
       chamadas.push(req);
-      return { messageId: `wamid.LEMB-${chamadas.length}` };
+      return { messageId: `wamid.LEMB-${id}-${chamadas.length}` };
     },
   };
 }
@@ -145,64 +149,74 @@ describe.skipIf(!hasDb)("Lembrete de Pagamento (Slice 2 — #46)", () => {
     return { os, sol, cli };
   }
 
-  it("dispara lembrete dia1 para OS CONCLUIDA há ≥24h sem PAGA (WhatsApp + e-mail)", async () => {
-    const destinatario = `${PREFIXO_WPP}01`;
-    const { os } = await seedConcluida({ whatsapp: destinatario, horasAtras: 25 });
-    const gateway = fakeGateway();
-    const email = fakeEmail();
-
-    const res = await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
-
-    expect(res.enviados).toBe(1);
-    expect(gateway.chamadas).toHaveLength(1);
-    expect(gateway.chamadas[0].template).toBe("lembrete_pagamento");
-    expect(gateway.chamadas[0].destinatario).toBe(destinatario);
-    expect(gateway.chamadas[0].variaveis.valor).toContain("280");
-    expect(email.chamadas).toHaveLength(1);
-
-    const marcos = await db
+  /** Marcos de lembrete persistidos para uma OS específica. */
+  async function marcosDaOs(osId: string) {
+    const linhas = await db
       .select()
       .from(schema.notificacaoMarco)
       .where(like(schema.notificacaoMarco.marco, "lembrete_pagamento:%"));
-    const meu = marcos.filter((m) => m.osId === os.id);
-    expect(meu).toHaveLength(1);
-    expect(meu[0].marco).toBe("lembrete_pagamento:dia1");
+    return linhas.filter((m) => m.osId === osId).map((m) => m.marco);
+  }
+
+  // O job varre TODAS as OS CONCLUÍDA do banco — em suíte paralela ele pode
+  // tocar OS de outros testes. Por isso as asserções olham só os dados desta OS
+  // (destinatário + marco), nunca a contagem global de enviados.
+
+  it("dispara lembrete dia1 para OS CONCLUIDA há ≥24h sem PAGA (WhatsApp + e-mail)", async () => {
+    const destinatario = `${PREFIXO_WPP}01`;
+    const { os, cli } = await seedConcluida({ whatsapp: destinatario, horasAtras: 25 });
+    const gateway = fakeGateway();
+    const email = fakeEmail();
+
+    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
+
+    const minhas = gateway.chamadas.filter((c) => c.destinatario === destinatario);
+    expect(minhas).toHaveLength(1);
+    expect(minhas[0].template).toBe("lembrete_pagamento");
+    expect(minhas[0].variaveis.valor).toContain("280");
+    expect(email.chamadas.filter((c) => c.para === cli.email)).toHaveLength(1);
+    expect(await marcosDaOs(os.id)).toEqual(["lembrete_pagamento:dia1"]);
   });
 
   it("lembrete dia1 envia só 1 vez mesmo rodando o job várias vezes (dedup por marco)", async () => {
     const destinatario = `${PREFIXO_WPP}02`;
-    await seedConcluida({ whatsapp: destinatario, horasAtras: 30 });
+    const { os, cli } = await seedConcluida({ whatsapp: destinatario, horasAtras: 30 });
     const gateway = fakeGateway();
     const email = fakeEmail();
 
-    const r1 = await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
-    const r2 = await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
+    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
+    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
 
-    expect(r1.enviados).toBe(1);
-    expect(r2.enviados).toBe(0);
-    expect(gateway.chamadas).toHaveLength(1);
-    expect(email.chamadas).toHaveLength(1);
+    // Apesar de duas execuções, o marco garante um único envio por canal.
+    expect(gateway.chamadas.filter((c) => c.destinatario === destinatario)).toHaveLength(1);
+    expect(email.chamadas.filter((c) => c.para === cli.email)).toHaveLength(1);
+    expect(await marcosDaOs(os.id)).toEqual(["lembrete_pagamento:dia1"]);
   });
 
   it("não dispara para OS já PAGA nem para tipo PREVENTIVA (sem pagamento)", async () => {
-    await seedConcluida({ whatsapp: `${PREFIXO_WPP}03`, horasAtras: 50, estado: "PAGA" });
-    await seedConcluida({ whatsapp: `${PREFIXO_WPP}04`, horasAtras: 50, tipo: "PREVENTIVA" });
+    const wppPaga = `${PREFIXO_WPP}03`;
+    const wppPrev = `${PREFIXO_WPP}04`;
+    const paga = await seedConcluida({ whatsapp: wppPaga, horasAtras: 50, estado: "PAGA" });
+    const prev = await seedConcluida({ whatsapp: wppPrev, horasAtras: 50, tipo: "PREVENTIVA" });
     const gateway = fakeGateway();
     const email = fakeEmail();
 
-    const res = await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
+    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
 
-    expect(res.enviados).toBe(0);
-    expect(gateway.chamadas).toHaveLength(0);
+    expect(gateway.chamadas.filter((c) => c.destinatario === wppPaga || c.destinatario === wppPrev)).toHaveLength(0);
+    expect(await marcosDaOs(paga.os.id)).toEqual([]);
+    expect(await marcosDaOs(prev.os.id)).toEqual([]);
   });
 
   it("OS concluída há <24h ainda não recebe lembrete", async () => {
-    await seedConcluida({ whatsapp: `${PREFIXO_WPP}05`, horasAtras: 10 });
+    const destinatario = `${PREFIXO_WPP}05`;
+    const { os } = await seedConcluida({ whatsapp: destinatario, horasAtras: 10 });
     const gateway = fakeGateway();
     const email = fakeEmail();
 
-    const res = await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
+    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
 
-    expect(res.enviados).toBe(0);
+    expect(gateway.chamadas.filter((c) => c.destinatario === destinatario)).toHaveLength(0);
+    expect(await marcosDaOs(os.id)).toEqual([]);
   });
 });

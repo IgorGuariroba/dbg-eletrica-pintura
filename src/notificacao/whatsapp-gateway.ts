@@ -31,6 +31,17 @@ export interface CriarGatewayWhatsAppConfig {
 const GRAPH_API_VERSION = "v21.0";
 
 /**
+ * `true` quando a Cloud API tem credenciais reais no ambiente. Usado pelos
+ * orquestradores (dispatcher, lembrete) para decidir se vale acionar o canal
+ * WhatsApp por padrão — sem credenciais não há como enviar, então o canal é
+ * pulado (e-mail segue normalmente). Testes injetam um gateway fake e ignoram
+ * esta checagem.
+ */
+export function whatsappConfigurado(): boolean {
+  return Boolean(process.env.META_PHONE_NUMBER_ID && process.env.META_ACCESS_TOKEN);
+}
+
+/**
  * Constrói o gateway real a partir das credenciais de ambiente
  * (`META_PHONE_NUMBER_ID`, `META_ACCESS_TOKEN`). Sem elas — ou com `forceMock`
  * — devolve um mock que loga e retorna um `messageId` falso.

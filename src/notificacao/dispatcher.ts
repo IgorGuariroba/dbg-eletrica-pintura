@@ -4,7 +4,7 @@ import { cliente, membro, ordemServico, solicitacao } from "@/db/schema";
 import { enviarTemplate } from "./enviar-template";
 import { notificarMudancaEstadoOs, type NotificacaoResultado } from "./notificador";
 import { criarTemplateRepo, normalizarWhatsapp, type TemplateRepo } from "./templates";
-import type { GatewayWhatsApp } from "./whatsapp-gateway";
+import { whatsappConfigurado, type GatewayWhatsApp } from "./whatsapp-gateway";
 
 /**
  * Mapa de Evento de Notificação: cada transição de estado da OS define qual
@@ -62,8 +62,9 @@ export async function despacharEventoOs(
 
   const resultado: DespachoResultado = {};
 
-  // Canal WhatsApp (ação imediata).
-  if (evento.template) {
+  // Canal WhatsApp (ação imediata). Sem gateway injetado e sem Cloud API
+  // configurada, pula o canal — não há como enviar/enfileirar (e-mail segue).
+  if (evento.template && (deps.gateway || whatsappConfigurado())) {
     resultado.whatsapp = await despacharWhatsapp(osId, evento.template, deps);
   }
 

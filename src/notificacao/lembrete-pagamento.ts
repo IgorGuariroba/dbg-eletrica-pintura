@@ -11,7 +11,7 @@ import {
 import { criarEmailService, renderizarEmailLembretePagamento } from "./email-service";
 import { enviarTemplate } from "./enviar-template";
 import { criarTemplateRepo, normalizarWhatsapp, type TemplateRepo } from "./templates";
-import type { GatewayWhatsApp } from "./whatsapp-gateway";
+import { whatsappConfigurado, type GatewayWhatsApp } from "./whatsapp-gateway";
 
 // Só OS que exigem pagamento entram no lembrete — Preventiva e Garantia
 // concluem sem PAGA por natureza (ver fluxo-casos-uso e CONTEXT.md).
@@ -95,9 +95,10 @@ export async function processarLembretesPagamento(
     const numeroOS = os.id.slice(0, 8).toUpperCase();
     let algumCanal = false;
 
-    // WhatsApp (ação imediata).
+    // WhatsApp (ação imediata). Sem gateway injetado nem Cloud API configurada,
+    // pula o canal (e-mail segue).
     const destinatario = normalizarWhatsapp(cli.whatsapp);
-    if (destinatario) {
+    if (destinatario && (deps.gateway || whatsappConfigurado())) {
       await enviarTemplate(
         {
           destinatario,
