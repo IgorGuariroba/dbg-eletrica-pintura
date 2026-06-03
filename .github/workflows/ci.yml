@@ -14,6 +14,35 @@ jobs:
   lint-typecheck-unit:
     name: Lint + typecheck + unit
     runs-on: ubuntu-latest
+    # Banco real para os testes de integração (drizzle repos) rodarem no CI.
+    # Sem ele os 43 arquivos com `describe.skipIf(!hasDb)` skipam, zeram a
+    # cobertura dos *-drizzle.ts e o coverage gate fica impossível de bater.
+    #
+    # O app usa o driver Neon serverless (HTTP/WS), que NÃO fala o wire-protocol
+    # do Postgres comum. Por isso, além do postgres, sobe-se o proxy
+    # `local-neon-http-proxy`: ele traduz HTTP/WS do driver Neon -> Postgres.
+    # `NEON_LOCAL_PROXY` aponta o driver ao proxy (ver src/db/neon-local-proxy.ts).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      neon-proxy:
+        image: ghcr.io/timowilhelm/local-neon-http-proxy:main
+        env:
+          PG_CONNECTION_STRING: postgres://ci:ci@postgres:5432/ci
+        ports:
+          - 4444:4444
+    env:
+      DATABASE_URL: postgres://ci:ci@localhost:5432/ci?sslmode=disable
+      NEON_LOCAL_PROXY: localhost:4444
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +61,13 @@ jobs:
 
       - run: pnpm typecheck
 
-      - run: pnpm test:coverage
+      # Aplica o schema (migrations commitadas) antes da suíte de integração,
+      # via migrator neon-http (respeita o proxy local; ver scripts/ci-migrate.mjs).
+      - run: pnpm db:migrate:ci
+
+      # Integração roda sequencial (truncate-por-arquivo exige sem paralelismo)
+      # e com timeout maior (round-trips HTTP via proxy são mais lentos).
+      - run: pnpm test:coverage:ci
 
   e2e:
     name: Playwright smoke

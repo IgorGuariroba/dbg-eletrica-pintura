@@ -11,9 +11,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:coverage:ci": "vitest run --coverage --no-file-parallelism --testTimeout=20000",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:ci": "node scripts/ci-migrate.mjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },

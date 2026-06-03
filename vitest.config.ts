@@ -15,6 +15,9 @@ export default defineConfig({
       "tests/integration/**/*.test.ts",
     ],
     globals: false,
+    // Redireciona o driver Neon ao proxy local quando NEON_LOCAL_PROXY existe
+    // (CI/docker); no-op caso contrário. Roda antes de cada arquivo de teste.
+    setupFiles: ["./tests/setup/neon-proxy.ts", "./tests/setup/db-reset.ts"],
     // Varre lixo de seeds de runs anteriores antes de spawnar os workers,
     // evitando que a janela `limit` da fila caia em OS órfãs (ver global-setup).
     globalSetup: ["./tests/integration/global-setup.ts"],
@@ -70,6 +73,8 @@ export default defineConfig({
         "src/db/migrate-slugs.ts",
         // Bypass de auth dev-only (duplo gate, inerte em produção).
         "src/auth/dev-bypass.ts",
+        // Wiring do proxy Neon local (CI/docker), inerte em produção.
+        "src/db/neon-local-proxy.ts",
       ],
       // Gate "ratchet": piso = cobertura atual. CI quebra se REGREDIR.
       // Subir estes números conforme novos testes entram, rumo a 80%.
