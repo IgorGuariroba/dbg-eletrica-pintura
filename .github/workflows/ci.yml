@@ -43,6 +43,9 @@ jobs:
     env:
       DATABASE_URL: postgres://ci:ci@localhost:5432/ci?sslmode=disable
       NEON_LOCAL_PROXY: localhost:4444
+      # Segredo do webhook Mercado Pago: bate com o fallback do teste
+      # (pagamento-route.test.ts) para a validação HMAC fechar.
+      MP_WEBHOOK_SECRET: test_webhook_secret_dev
     steps:
       - uses: actions/checkout@v4
 
