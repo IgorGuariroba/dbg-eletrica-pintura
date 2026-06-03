@@ -121,7 +121,15 @@ export async function gerarDocumentosOs(
   // Certificado de garantia -------------------------------------------------
   if (plano.certificado) {
     const janelaInput = await montarJanelaInput(os, osId);
-    if (!janelaInput) return skip("dados de garantia ausentes");
+    if (!janelaInput) {
+      // Esperado só em dados inconsistentes: a OS paga/âncora sempre tem
+      // pagamento approved e prazo. Loga para observabilidade — o certificado
+      // é pulado sem quebrar a transição.
+      console.warn(
+        `[documentos] certificado_pulado: OS ${osId} (tipo ${os.tipo}) sem janela de garantia resolvível (pagamento âncora/prazo ausente).`,
+      );
+      return skip("dados de garantia ausentes");
+    }
     const janela = resolverJanelaGarantia(janelaInput);
 
     const buffer = await gerarCertificadoPdf(
