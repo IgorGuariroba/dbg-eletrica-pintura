@@ -17,6 +17,10 @@ import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { formatBRL } from "@/lib/utils";
 import { LABEL_CATEGORIA, VARIANTE_ESTADO, dataCurta } from "@/portal/ui-helpers";
 import { dentroDaJanelaCliente } from "@/operacao/reagendamento";
+import { criarGarantiaRepoDrizzle } from "@/operacao/garantia/garantia-repo-drizzle";
+import { avaliarAcionamentoGarantia } from "@/operacao/garantia/avaliar-acionamento";
+import { AcionarGarantiaBotao } from "@/components/shared/acionar-garantia-botao";
+import { urlWhatsApp } from "@/lib/contato";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -53,6 +57,30 @@ export default async function PortalSolicitacaoPage({
           ] as const,
       ),
     ),
+  );
+
+  const repoGarantia = criarGarantiaRepoDrizzle(db);
+  const garantiaPorOs = new Map<string, { podeAcionar: boolean; fim?: Date }>();
+
+  await Promise.all(
+    solicitacao.ordens.map(async (os) => {
+      if (os.estado !== "CONCLUIDA" && os.estado !== "PAGA") {
+        garantiaPorOs.set(os.id, { podeAcionar: false });
+        return;
+      }
+      const ancora = await repoGarantia.carregarAncora(os.id);
+      if (!ancora) {
+        garantiaPorOs.set(os.id, { podeAcionar: false });
+        return;
+      }
+      const temCompRejeitado = await repoGarantia.temComplementarRejeitado(ancora.ancoraId);
+      const avaliacao = avaliarAcionamentoGarantia({
+        agora: new Date(),
+        ancora,
+        temComplementarRejeitado: temCompRejeitado,
+      });
+      garantiaPorOs.set(os.id, { podeAcionar: avaliacao.dentroDoPrazo, fim: avaliacao.fim });
+    })
   );
 
   return (
@@ -119,6 +147,23 @@ export default async function PortalSolicitacaoPage({
                           >
                             Cancelar
                           </Link>
+                        </div>
+                      )}
+                      {garantiaPorOs.get(os.id)?.podeAcionar && (
+                        <div className="flex items-center gap-2 mr-2">
+                          <AcionarGarantiaBotao osId={os.id} />
+                          <a
+                            href={urlWhatsApp(`Olá! Gostaria de acionar a garantia para a Ordem de Serviço #${os.id.slice(0, 8)} (ID completo: ${os.id})`)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={buttonVariants({
+                              variant: "ghost",
+                              size: "sm",
+                              className: "h-8 font-medium cursor-pointer flex items-center gap-1.5 hover:bg-accent text-muted-foreground hover:text-foreground",
+                            })}
+                          >
+                            Acionar via WhatsApp
+                          </a>
                         </div>
                       )}
                       <Badge variant={VARIANTE_ESTADO[os.estado] ?? "default"} className="w-fit font-semibold">

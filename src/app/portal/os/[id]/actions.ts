@@ -14,6 +14,9 @@ import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
 import { slotsPorHorario, DIAS_AGENDAMENTO, escolherSlot } from "@/operacao/agendamento-cliente";
 import { eq } from "drizzle-orm";
 import { ordemServico } from "@/db/schema";
+import { acionarGarantia, ForaDoPrazoError } from "@/operacao/garantia/acionar-garantia";
+import { criarGarantiaRepoDrizzle } from "@/operacao/garantia/garantia-repo-drizzle";
+import { uploadFotoGarantia } from "@/operacao/r2-privado";
 
 export async function cancelarOsClienteAction(osId: string): Promise<{ erro?: string }> {
   try {
@@ -102,3 +105,36 @@ export async function reagendarOsClienteAction(
     return { erro: err instanceof Error ? err.message : "Erro ao reagendar OS" };
   }
 }
+
+export async function acionarGarantiaPortalAction(
+  osId: string,
+  descricao: string,
+  fotoDataUrl: string,
+): Promise<{ erro?: string }> {
+  try {
+    const user = await exigirPortal();
+    const repo = criarGarantiaRepoDrizzle(db);
+    await acionarGarantia(
+      {
+        osId,
+        descricao,
+        fotoDataUrl,
+        criadoPor: user.email!,
+        canal: "PORTAL",
+      },
+      {
+        repo,
+        uploadFoto: uploadFotoGarantia,
+      },
+    );
+    revalidatePath("/portal");
+    return { erro: undefined };
+  } catch (err) {
+    if (err instanceof ForaDoPrazoError) {
+      return { erro: "Fora do prazo de garantia" };
+    }
+    console.error(`Erro ao acionar garantia da OS ${osId} (portal):`, err);
+    return { erro: err instanceof Error ? err.message : "Erro ao acionar garantia" };
+  }
+}
+
