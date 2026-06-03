@@ -11,7 +11,13 @@ import {
 } from "@react-pdf/renderer";
 import { dadosEmpresa } from "@/documentos/dados-empresa";
 
-/** Carrega o logo DBG uma única vez; ausência vira placeholder textual. */
+/**
+ * Carrega o logo DBG uma única vez; ausência vira placeholder textual.
+ *
+ * O asset é empacotado nas serverless functions via `outputFileTracingIncludes`
+ * em `next.config.ts` — sem isso, `assets/` da raiz não iria pro bundle e este
+ * `readFileSync` falharia em deploy (Vercel), degradando para o placeholder.
+ */
 function carregarLogo(): Buffer | null {
   try {
     return readFileSync(

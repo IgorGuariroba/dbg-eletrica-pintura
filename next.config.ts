@@ -11,6 +11,12 @@ const withSerwist = withSerwistInit({
 export default withSerwist({
   reactStrictMode: true,
   typedRoutes: true,
+  // Garante que o logo lido server-side (PDF) seja empacotado nas functions —
+  // sem isso, `assets/` da raiz não vai pro bundle e o readFileSync falha em
+  // deploy (cai no placeholder textual). Ver src/documentos/pdf/componentes.tsx.
+  outputFileTracingIncludes: {
+    "/**": ["./assets/images/branding/01-logo-dbg.jpeg"],
+  },
   images: {
     remotePatterns: [
       {
