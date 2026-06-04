@@ -162,6 +162,13 @@
       "when": 1780500576611,
       "tag": "0022_needy_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1780517471635,
+      "tag": "0023_new_rattler",
+      "breakpoints": true
     }
   ]
 }

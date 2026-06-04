@@ -53,7 +53,8 @@ export function transicionar(
   const permitidas = TRANSICOES[ctx.estado] ?? [];
   const ok =
     (permitidas.includes(alvo) && !bloqueiaPagamento(ctx, alvo)) ||
-    permiteExecucaoImediata(ctx, alvo);
+    permiteExecucaoImediata(ctx, alvo) ||
+    permiteAberturaGarantia(ctx, alvo);
   if (!ok) {
     throw new TransicaoInvalidaError(ctx.estado, alvo);
   }
@@ -84,6 +85,18 @@ function permiteExecucaoImediata(ctx: ContextoOs, alvo: EstadoOs): boolean {
 }
 
 /**
+ * PAGA → GARANTIA_ABERTA (tipos pagos) e CONCLUIDA → GARANTIA_ABERTA (tipo GARANTIA).
+ */
+function permiteAberturaGarantia(ctx: ContextoOs, alvo: EstadoOs): boolean {
+  if (alvo !== "GARANTIA_ABERTA") return false;
+  const pagos = ctx.tipo === "NORMAL" || ctx.tipo === "EXPRESS" || ctx.tipo === "COMPLEMENTAR";
+  return (
+    (ctx.estado === "PAGA" && pagos) ||
+    (ctx.estado === "CONCLUIDA" && ctx.tipo === "GARANTIA")
+  );
+}
+
+/**
  * OS Preventiva e de Garantia não têm custo — terminam em CONCLUIDA, sem PAGA.
  */
 function bloqueiaPagamento(ctx: ContextoOs, alvo: EstadoOs): boolean {
@@ -91,6 +104,7 @@ function bloqueiaPagamento(ctx: ContextoOs, alvo: EstadoOs): boolean {
     alvo === "PAGA" && (ctx.tipo === "PREVENTIVA" || ctx.tipo === "GARANTIA")
   );
 }
+
 
 /**
  * Caso de uso: valida a transição pela máquina (pura) e persiste o resultado

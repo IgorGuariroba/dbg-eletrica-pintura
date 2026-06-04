@@ -14,6 +14,10 @@ export default async function setup() {
   config({ path: ".env.local" });
   if (!process.env.DATABASE_URL) return;
 
+  // globalSetup não passa pelos setupFiles — configura o proxy aqui também.
+  const { configurarProxyLocalNeon } = await import("@/db/neon-local-proxy");
+  configurarProxyLocalNeon();
+
   const { db } = await import("@/db/client");
   const {
     cliente,

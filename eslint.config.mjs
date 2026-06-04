@@ -15,6 +15,7 @@ export default [
       "public/**",
       "playwright-report/**",
       "test-results/**",
+      "coverage/**",
       "drizzle/**",
     ],
   },
