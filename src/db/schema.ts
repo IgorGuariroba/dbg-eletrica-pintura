@@ -386,6 +386,7 @@ export const operacaoConfig = pgTable("operacao_config", {
     sex?: { inicio: string; fim: string } | null;
     sab?: { inicio: string; fim: string } | null;
   }>(),
+  googleReviewUrl: text("google_review_url"),
   atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
     .defaultNow()
     .notNull()
@@ -823,5 +824,49 @@ export const comentarioGeralRelations = relations(comentarioGeral, ({ one }) => 
     references: [solicitacao.id],
   }),
 }));
+
+export const alertaAvaliacao = pgTable(
+  "alerta_avaliacao",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    osId: uuid("os_id")
+      .notNull()
+      .references(() => ordemServico.id, { onDelete: "restrict" }),
+    solicitacaoId: uuid("solicitacao_id")
+      .notNull()
+      .references(() => solicitacao.id, { onDelete: "cascade" }),
+    tecnicoId: uuid("tecnico_id").references(() => membro.id, {
+      onDelete: "set null",
+    }),
+    nota: integer("nota").notNull(),
+    comentarioOs: text("comentario_os"),
+    status: varchar("status", { length: 16 }).default("PENDENTE").notNull(),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    osIdUq: uniqueIndex("alerta_avaliacao_os_id_uq").on(t.osId),
+  }),
+);
+
+export const alertaAvaliacaoRelations = relations(alertaAvaliacao, ({ one }) => ({
+  os: one(ordemServico, {
+    fields: [alertaAvaliacao.osId],
+    references: [ordemServico.id],
+  }),
+  solicitacao: one(solicitacao, {
+    fields: [alertaAvaliacao.solicitacaoId],
+    references: [solicitacao.id],
+  }),
+  tecnico: one(membro, {
+    fields: [alertaAvaliacao.tecnicoId],
+    references: [membro.id],
+  }),
+}));
+
 
 

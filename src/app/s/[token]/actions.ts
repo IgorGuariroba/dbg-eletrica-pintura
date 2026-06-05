@@ -9,6 +9,10 @@ import { registrarAvaliacoes } from "@/operacao/avaliacao/avaliacao";
 import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
 import type { RegistrarAvaliacoesPayload } from "@/operacao/avaliacao/avaliacao-repo";
 
+import { finalizarAvaliacao } from "@/marketing/filtro-avaliacao";
+import { criarAlertaAvaliacaoRepoDrizzle } from "@/marketing/alerta-avaliacao-repo-drizzle";
+import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
+
 function repo() {
   return criarAprovacaoRepoDrizzle(db);
 }
@@ -40,9 +44,21 @@ export async function rejeitarOsAction(
 export async function registrarAvaliacaoAction(
   token: string,
   payload: RegistrarAvaliacoesPayload,
-): Promise<void> {
+): Promise<{ qualificada: boolean; googleReviewUrl: string | null }> {
   const ip = await ipDoCliente();
   const repoAval = criarAvaliacaoRepoDrizzle(db);
-  await registrarAvaliacoes(token, payload, { ip }, repoAval);
+  const alertaRepo = criarAlertaAvaliacaoRepoDrizzle(db);
+  const configRepo = criarOperacaoConfigRepoDrizzle(db);
+  
+  const result = await finalizarAvaliacao(
+    token,
+    payload,
+    { ip },
+    { avaliacaoRepo: repoAval, alertaRepo, configRepo }
+  );
+  
   revalidatePath(`/s/${token}/avaliar`);
+  revalidatePath(`/s/${token}`);
+  
+  return result;
 }

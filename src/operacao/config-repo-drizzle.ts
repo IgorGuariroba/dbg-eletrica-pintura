@@ -10,12 +10,14 @@ const COLUNAS = {
   precoLitro: operacaoConfig.precoLitro,
   kmPorLitro: operacaoConfig.kmPorLitro,
   horarioComercial: operacaoConfig.horarioComercial,
+  googleReviewUrl: operacaoConfig.googleReviewUrl,
 };
 
 type Linha = {
   precoLitro: string;
   kmPorLitro: string;
   horarioComercial: HorarioComercial | null;
+  googleReviewUrl: string | null;
 };
 
 // Linha nunca configurada (jsonb null) cai no horário comercial de fábrica.
@@ -24,6 +26,7 @@ function materializar(row: Linha): OperacaoConfig {
     precoLitro: row.precoLitro,
     kmPorLitro: row.kmPorLitro,
     horarioComercial: row.horarioComercial ?? HORARIO_COMERCIAL_PADRAO,
+    googleReviewUrl: row.googleReviewUrl ?? null,
   };
 }
 
@@ -53,6 +56,7 @@ export function criarOperacaoConfigRepoDrizzle(db: DB): OperacaoConfigRepo {
         precoLitro: config.precoLitro,
         kmPorLitro: config.kmPorLitro,
         horarioComercial: config.horarioComercial,
+        googleReviewUrl: config.googleReviewUrl,
       };
       const [row] = await db
         .insert(operacaoConfig)

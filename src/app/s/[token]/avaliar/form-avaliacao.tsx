@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { EstrelasInput } from "@/components/shared/estrelas-input";
+import { RecompensasAvaliacao } from "@/components/shared/recompensas-avaliacao";
 import { registrarAvaliacaoAction } from "../actions";
 import { toast } from "sonner";
 import { CheckCircle2, MessageSquare, ArrowLeft } from "lucide-react";
@@ -46,6 +47,7 @@ const LABEL_CATEGORIA: Record<string, string> = {
 export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
   const [isPending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
+  const [resultado, setResultado] = useState<{ qualificada: boolean; googleReviewUrl: string | null } | null>(null);
 
   const [avaliacoes, setAvaliacoes] = useState<Record<string, { nota: number; comentarioOs: string }>>(() => {
     const initial: Record<string, { nota: number; comentarioOs: string }> = {};
@@ -105,8 +107,9 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
           comentarioGeral: comentarioGeral.trim() || null,
         };
 
-        await registrarAvaliacaoAction(token, payload);
+        const res = await registrarAvaliacaoAction(token, payload);
         toast.success("Avaliação enviada com sucesso!");
+        setResultado(res);
         setSubmitted(true);
       } catch (err) {
         console.error(err);
@@ -115,17 +118,39 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
     });
   };
 
-  if (submitted) {
+  if (submitted && resultado) {
+    if (resultado.qualificada) {
+      return (
+        <Card className="mt-8 p-8 flex flex-col items-center text-center space-y-6 bg-success/5 border-success/20">
+          <CheckCircle2 className="size-16 text-success" />
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-foreground">Muito obrigado por sua avaliação!</h2>
+            <p className="text-sm text-muted-foreground max-w-md">
+              Sua opinião nos ajuda a manter a excelência nos serviços e a reconhecer os melhores profissionais.
+            </p>
+          </div>
+
+          <RecompensasAvaliacao googleReviewUrl={resultado.googleReviewUrl} />
+
+          <div className="flex gap-4 pt-2">
+            <Link href={`/s/${token}`} className={buttonVariants({ variant: "outline" })}>
+              Voltar para o Portal
+            </Link>
+          </div>
+        </Card>
+      );
+    }
+
     return (
-      <Card className="mt-8 p-8 flex flex-col items-center text-center space-y-6 bg-success/5 border-success/20">
-        <CheckCircle2 className="size-16 text-success" />
+      <Card className="mt-8 p-8 flex flex-col items-center text-center space-y-6 bg-muted/10 border-border">
+        <CheckCircle2 className="size-16 text-muted-foreground" />
         <div className="space-y-2">
-          <h2 className="text-xl font-bold text-foreground">Muito obrigado por sua avaliação!</h2>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Sua opinião nos ajuda a manter a excelência nos serviços e a reconhecer os melhores profissionais.
+          <h2 className="text-xl font-bold text-foreground">Obrigado pelo seu feedback!</h2>
+          <p className="text-sm text-muted-foreground max-w-md">
+            Obrigado pelo feedback, vamos te procurar pra entender melhor como podemos melhorar a sua experiência.
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 pt-2">
           <Link href={`/s/${token}`} className={buttonVariants()}>
             Voltar para o Portal
           </Link>

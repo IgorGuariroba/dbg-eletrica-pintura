@@ -76,9 +76,11 @@ export async function salvarConfigAction(
       String(form.get("kmPorLitro") ?? "").trim(),
       "Km por litro",
     );
+    const googleReviewUrlRaw = String(form.get("googleReviewUrl") ?? "").trim();
+    const googleReviewUrl = googleReviewUrlRaw || null;
     const repo = criarOperacaoConfigRepoDrizzle(db);
     const atual = await repo.obter();
-    await repo.atualizar({ ...atual, precoLitro, kmPorLitro });
+    await repo.atualizar({ ...atual, precoLitro, kmPorLitro, googleReviewUrl });
   } catch (e) {
     return { erro: e instanceof Error ? e.message : "erro desconhecido" };
   }

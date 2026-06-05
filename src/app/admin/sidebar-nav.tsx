@@ -11,6 +11,7 @@ import {
   ImageIcon,
   LayoutDashboard,
   Settings,
+  Star,
   Users,
 } from "lucide-react";
 import {
@@ -42,6 +43,12 @@ const ITENS: Item[] = [
     label: "Portfólio",
     href: "/admin/marketing/portfolio" as Route,
     icon: ImageIcon,
+    modulo: "MARKETING",
+  },
+  {
+    label: "Avaliações",
+    href: "/admin/marketing/avaliacoes" as Route,
+    icon: Star,
     modulo: "MARKETING",
   },
   {

@@ -50,6 +50,17 @@ export function ConfigForm({ config }: { config: OperacaoConfig }) {
         </div>
       </div>
 
+      <div className="space-y-1">
+        <Label htmlFor="googleReviewUrl">Link do Google Review</Label>
+        <Input
+          id="googleReviewUrl"
+          name="googleReviewUrl"
+          type="url"
+          placeholder="e.g. https://g.page/r/..."
+          defaultValue={config.googleReviewUrl ?? ""}
+        />
+      </div>
+
       <p className="text-sm text-muted-foreground">
         Usados para calcular o deslocamento do orçamento:
         <br />

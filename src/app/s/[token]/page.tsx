@@ -16,6 +16,9 @@ import { AcoesOrcamento } from "./acoes-orcamento";
 import { AgendarOs } from "./agendar-os";
 import { EstouAqui } from "./estou-aqui";
 import { ArrowRight, CalendarCheck } from "lucide-react";
+import { RecompensasAvaliacao } from "@/components/shared/recompensas-avaliacao";
+import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
+import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
 
 export const metadata = {
   title: "Seu orçamento — DBG Elétrica e Pintura",
@@ -50,6 +53,19 @@ export default async function AcompanhamentoPage({
     if (e instanceof TokenInvalidoError) notFound();
     throw e;
   }
+
+  const avalRepo = criarAvaliacaoRepoDrizzle(db);
+  const viewAval = await avalRepo.carregarPorToken(token);
+  const configRepo = criarOperacaoConfigRepoDrizzle(db);
+  const opConfig = await configRepo.obter();
+
+  const qualificada =
+    viewAval &&
+    viewAval.ordens.length > 0 &&
+    viewAval.ordens.every(
+      (o) => o.avaliacao !== null && o.avaliacao.nota >= 4
+    );
+  const googleReviewUrl = qualificada ? (opConfig.googleReviewUrl ?? null) : null;
 
   const protocolo = token.slice(0, 8).toUpperCase();
 
@@ -210,6 +226,19 @@ export default async function AcompanhamentoPage({
             );
           })}
         </div>
+
+        {qualificada && (
+          <section className="mt-8 rounded-lg border bg-success/5 border-success/20 p-6 flex flex-col items-center text-center space-y-6">
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold text-foreground">Obrigado pelo seu apoio!</h2>
+              <p className="text-xs text-muted-foreground max-w-md">
+                Como todas as suas ordens de serviço foram avaliadas de forma positiva, você está qualificado para nossas ações especiais:
+              </p>
+            </div>
+
+            <RecompensasAvaliacao googleReviewUrl={googleReviewUrl} />
+          </section>
+        )}
       </main>
       <SiteFooter />
     </>
