@@ -96,49 +96,51 @@ export async function despacharEventoOs(
   estadoNovo: string,
   deps: DespacharDeps = {},
 ): Promise<DespachoResultado> {
-  const obterOs = deps.obterOs ?? (async (id) => {
-    const [row] = await db
-      .select()
-      .from(ordemServico)
-      .where(eq(ordemServico.id, id))
-      .limit(1);
-    return row;
-  });
-
-  const os = await obterOs(osId);
-  if (!os) return {};
-
   const resultado: DespachoResultado = {};
 
-  // Convite à avaliação (Issue #51): no estado terminal do cliente — PAGA para
-  // tipos pagáveis, CONCLUIDA para os demais (Preventiva/Garantia, sem cobrança).
-  const pagavel = (TIPOS_PAGAVEIS as readonly string[]).includes(os.tipo);
-  const deveAvaliar = pagavel ? estadoNovo === "PAGA" : estadoNovo === "CONCLUIDA";
-
-  if (deveAvaliar) {
-    // Reivindica o marco ANTES de enviar: reexecução da transição não reenvia.
-    const claimAvaliacao = deps.claimAvaliacao ?? (async (id) => {
-      const claim = await db
-        .insert(notificacaoMarco)
-        .values({ osId: id, marco: "pedido_avaliacao:disparo" })
-        .onConflictDoNothing({
-          target: [notificacaoMarco.osId, notificacaoMarco.marco],
-        })
-        .returning({ id: notificacaoMarco.id });
-      return claim.length > 0;
+  // Convite à avaliação (Issue #51): só no estado terminal do cliente — PAGA
+  // para tipos pagáveis, CONCLUIDA para os demais (Preventiva/Garantia, sem
+  // cobrança). Demais transições nunca avaliam, então só aqui vale carregar o
+  // tipo da OS — fora desses estados não há query extra.
+  if (estadoNovo === "PAGA" || estadoNovo === "CONCLUIDA") {
+    const obterOs = deps.obterOs ?? (async (id) => {
+      const [row] = await db
+        .select({ tipo: ordemServico.tipo })
+        .from(ordemServico)
+        .where(eq(ordemServico.id, id))
+        .limit(1);
+      return row;
     });
 
-    if (await claimAvaliacao(osId)) {
-      const avaliacao: { whatsapp?: DespachoWhatsapp; email?: NotificacaoResultado } = {};
-      if (deps.gateway || whatsappConfigurado()) {
-        avaliacao.whatsapp = await despacharWhatsapp(osId, "pedido_avaliacao", deps);
+    const os = await obterOs(osId);
+    const pagavel = os != null && (TIPOS_PAGAVEIS as readonly string[]).includes(os.tipo);
+    const deveAvaliar = pagavel ? estadoNovo === "PAGA" : estadoNovo === "CONCLUIDA";
+
+    if (os && deveAvaliar) {
+      // Reivindica o marco ANTES de enviar: reexecução da transição não reenvia.
+      const claimAvaliacao = deps.claimAvaliacao ?? (async (id) => {
+        const claim = await db
+          .insert(notificacaoMarco)
+          .values({ osId: id, marco: "pedido_avaliacao:disparo" })
+          .onConflictDoNothing({
+            target: [notificacaoMarco.osId, notificacaoMarco.marco],
+          })
+          .returning({ id: notificacaoMarco.id });
+        return claim.length > 0;
+      });
+
+      if (await claimAvaliacao(osId)) {
+        const avaliacao: { whatsapp?: DespachoWhatsapp; email?: NotificacaoResultado } = {};
+        if (deps.gateway || whatsappConfigurado()) {
+          avaliacao.whatsapp = await despacharWhatsapp(osId, "pedido_avaliacao", deps);
+        }
+        const enviarEmail =
+          deps.enviarEmail ??
+          ((id, est) =>
+            notificarMudancaEstadoOs(id, est, { forceMock: deps.forceMock }));
+        avaliacao.email = await enviarEmail(osId, "PEDIDO_AVALIACAO");
+        resultado.avaliacao = avaliacao;
       }
-      const enviarEmail =
-        deps.enviarEmail ??
-        ((id, est) =>
-          notificarMudancaEstadoOs(id, est, { forceMock: deps.forceMock }));
-      avaliacao.email = await enviarEmail(osId, "PEDIDO_AVALIACAO");
-      resultado.avaliacao = avaliacao;
     }
   }
 
