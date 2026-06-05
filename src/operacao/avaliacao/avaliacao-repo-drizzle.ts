@@ -2,6 +2,7 @@ import type { AvaliacaoRepo, SolicitacaoAvaliacaoView } from "./avaliacao-repo";
 import type { DB } from "@/db/client";
 import { and, asc, eq, inArray, or } from "drizzle-orm";
 import * as schema from "@/db/schema";
+import { MotivoObrigatorioError } from "@/marketing/invalidacao";
 
 export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
   return {
@@ -180,6 +181,22 @@ export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
         .where(eq(schema.solicitacao.token, token))
         .limit(1);
       return sol?.id ?? null;
+    },
+
+    async invalidarAvaliacao(osId, motivo, atorEmail) {
+      if (!motivo || !motivo.trim()) {
+        throw new MotivoObrigatorioError();
+      }
+      await db
+        .update(schema.avaliacao)
+        .set({
+          invalida: true,
+          motivoInvalidacao: motivo.trim(),
+          invalidadaPor: atorEmail,
+          invalidadaEm: new Date(),
+          atualizadoEm: new Date(),
+        })
+        .where(eq(schema.avaliacao.osId, osId));
     },
   };
 }

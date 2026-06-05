@@ -58,6 +58,16 @@ export interface AvaliacaoRepo {
   obterTecnicoSnapshot(osId: string): Promise<string | null>;
 
   obterSolicitacaoIdPorToken(token: string): Promise<string | null>;
+
+  /**
+   * Marca uma avaliação como inválida (spam/abuso). Motivo obrigatório — lança
+   * MotivoObrigatorioError se vazio/brancos.
+   */
+  invalidarAvaliacao(
+    osId: string,
+    motivo: string,
+    atorEmail: string,
+  ): Promise<void>;
 }
 
 export class NotaInvalidaError extends Error {
