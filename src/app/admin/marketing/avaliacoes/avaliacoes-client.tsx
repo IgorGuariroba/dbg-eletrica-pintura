@@ -63,6 +63,9 @@ function formatarData(d: Date) {
 }
 
 function BadgeStatus({ status }: { status: string }) {
+  if (status === "INVALIDADA") {
+    return <Badge variant="outline" className="text-xs border-border text-muted-foreground line-through">Invalidada</Badge>;
+  }
   if (status === "RESOLVIDO") {
     return <Badge variant="outline" className="text-xs border-border text-muted-foreground">Resolvido</Badge>;
   }
