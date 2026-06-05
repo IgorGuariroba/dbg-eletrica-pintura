@@ -2,7 +2,7 @@ import type { AvaliacaoRepo, SolicitacaoAvaliacaoView } from "./avaliacao-repo";
 import type { DB } from "@/db/client";
 import { and, asc, eq, inArray, or } from "drizzle-orm";
 import * as schema from "@/db/schema";
-import { MotivoObrigatorioError } from "@/marketing/invalidacao";
+import { MotivoInvalidacaoObrigatorioError } from "@/marketing/invalidacao";
 
 export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
   return {
@@ -185,7 +185,7 @@ export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
 
     async invalidarAvaliacao(osId, motivo, atorEmail) {
       if (!motivo || !motivo.trim()) {
-        throw new MotivoObrigatorioError();
+        throw new MotivoInvalidacaoObrigatorioError();
       }
       await db
         .update(schema.avaliacao)

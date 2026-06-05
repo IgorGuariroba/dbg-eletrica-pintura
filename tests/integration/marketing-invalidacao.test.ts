@@ -5,7 +5,7 @@ import { db as dbClient } from "@/db/client";
 import * as schema from "@/db/schema";
 import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
 import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo-drizzle";
-import { MotivoObrigatorioError } from "@/marketing/invalidacao";
+import { MotivoInvalidacaoObrigatorioError } from "@/marketing/invalidacao";
 
 config({ path: ".env.local" });
 
@@ -112,21 +112,21 @@ describe.skipIf(!hasDb)("Invalidação de Avaliação (Bloco INV)", () => {
     expect(nota!.total).toBe(0);
   });
 
-  it("INV2: motivo vazio lança MotivoObrigatorioError", async () => {
+  it("INV2: motivo vazio lança MotivoInvalidacaoObrigatorioError", async () => {
     const token = `tok-inv2-${Math.random().toString(36).slice(2, 10)}`;
     const { os } = await seedContexto(token);
 
     const repo = criarAvaliacaoRepoDrizzle(db);
     await expect(repo.invalidarAvaliacao(os.id, "", "admin@dbg.test"))
-      .rejects.toThrow(MotivoObrigatorioError);
+      .rejects.toThrow(MotivoInvalidacaoObrigatorioError);
   });
 
-  it("INV3: motivo em branco (espaços) lança MotivoObrigatorioError", async () => {
+  it("INV3: motivo em branco (espaços) lança MotivoInvalidacaoObrigatorioError", async () => {
     const token = `tok-inv3-${Math.random().toString(36).slice(2, 10)}`;
     const { os } = await seedContexto(token);
 
     const repo = criarAvaliacaoRepoDrizzle(db);
     await expect(repo.invalidarAvaliacao(os.id, "   ", "admin@dbg.test"))
-      .rejects.toThrow(MotivoObrigatorioError);
+      .rejects.toThrow(MotivoInvalidacaoObrigatorioError);
   });
 });
