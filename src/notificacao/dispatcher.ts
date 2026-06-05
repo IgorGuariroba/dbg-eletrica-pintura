@@ -112,34 +112,38 @@ export async function despacharEventoOs(
       return row;
     });
 
+    // OS pode ter sumido entre a transição e o despacho — sem ela, nada a
+    // avaliar (o MAPA_EVENTOS adiante trata a ausência por conta própria).
     const os = await obterOs(osId);
-    const pagavel = os != null && (TIPOS_PAGAVEIS as readonly string[]).includes(os.tipo);
-    const deveAvaliar = pagavel ? estadoNovo === "PAGA" : estadoNovo === "CONCLUIDA";
+    if (os) {
+      const pagavel = (TIPOS_PAGAVEIS as readonly string[]).includes(os.tipo);
+      const deveAvaliar = pagavel ? estadoNovo === "PAGA" : estadoNovo === "CONCLUIDA";
 
-    if (os && deveAvaliar) {
-      // Reivindica o marco ANTES de enviar: reexecução da transição não reenvia.
-      const claimAvaliacao = deps.claimAvaliacao ?? (async (id) => {
-        const claim = await db
-          .insert(notificacaoMarco)
-          .values({ osId: id, marco: "pedido_avaliacao:disparo" })
-          .onConflictDoNothing({
-            target: [notificacaoMarco.osId, notificacaoMarco.marco],
-          })
-          .returning({ id: notificacaoMarco.id });
-        return claim.length > 0;
-      });
+      if (deveAvaliar) {
+        // Reivindica o marco ANTES de enviar: reexecução da transição não reenvia.
+        const claimAvaliacao = deps.claimAvaliacao ?? (async (id) => {
+          const claim = await db
+            .insert(notificacaoMarco)
+            .values({ osId: id, marco: "pedido_avaliacao:disparo" })
+            .onConflictDoNothing({
+              target: [notificacaoMarco.osId, notificacaoMarco.marco],
+            })
+            .returning({ id: notificacaoMarco.id });
+          return claim.length > 0;
+        });
 
-      if (await claimAvaliacao(osId)) {
-        const avaliacao: { whatsapp?: DespachoWhatsapp; email?: NotificacaoResultado } = {};
-        if (deps.gateway || whatsappConfigurado()) {
-          avaliacao.whatsapp = await despacharWhatsapp(osId, "pedido_avaliacao", deps);
+        if (await claimAvaliacao(osId)) {
+          const avaliacao: { whatsapp?: DespachoWhatsapp; email?: NotificacaoResultado } = {};
+          if (deps.gateway || whatsappConfigurado()) {
+            avaliacao.whatsapp = await despacharWhatsapp(osId, "pedido_avaliacao", deps);
+          }
+          const enviarEmail =
+            deps.enviarEmail ??
+            ((id, est) =>
+              notificarMudancaEstadoOs(id, est, { forceMock: deps.forceMock }));
+          avaliacao.email = await enviarEmail(osId, "PEDIDO_AVALIACAO");
+          resultado.avaliacao = avaliacao;
         }
-        const enviarEmail =
-          deps.enviarEmail ??
-          ((id, est) =>
-            notificarMudancaEstadoOs(id, est, { forceMock: deps.forceMock }));
-        avaliacao.email = await enviarEmail(osId, "PEDIDO_AVALIACAO");
-        resultado.avaliacao = avaliacao;
       }
     }
   }
