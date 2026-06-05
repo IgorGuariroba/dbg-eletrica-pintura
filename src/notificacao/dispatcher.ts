@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cliente, membro, ordemServico, solicitacao } from "@/db/schema";
+import { cliente, membro, ordemServico, solicitacao, notificacaoMarco } from "@/db/schema";
+import { TIPOS_PAGAVEIS } from "./lembrete-pagamento";
 import { enviarTemplate } from "./enviar-template";
 import { notificarMudancaEstadoOs, type NotificacaoResultado } from "./notificador";
 import {
@@ -47,6 +48,12 @@ export interface DespachoResultado {
   whatsapp?: DespachoWhatsapp;
   email?: NotificacaoResultado;
   documentos?: GerarDocumentosResultado;
+  /**
+   * Convite à avaliação (Issue #51). Canal próprio: num CONCLUIDA de OS
+   * não-pagável saem DOIS e-mails distintos — o de conclusão (`email`) e o
+   * convite à avaliação (`avaliacao.email`) —, por isso resultados separados.
+   */
+  avaliacao?: { whatsapp?: DespachoWhatsapp; email?: NotificacaoResultado };
 }
 
 export interface DespacharDeps {
@@ -65,6 +72,16 @@ export interface DespacharDeps {
   ) => Promise<GerarDocumentosResultado>;
   /** Força mock no envio de e-mail default (PDF/Resend). */
   forceMock?: boolean;
+  /** Obtém o tipo da OS por ID (default: query Drizzle). */
+  obterOs?: (
+    osId: string,
+  ) => Promise<Pick<typeof ordemServico.$inferSelect, "tipo"> | undefined>;
+  /**
+   * Reivindica o marco de convite à avaliação (idempotência). Default: insere
+   * em `notificacaoMarco` com `onConflictDoNothing` e devolve `true` se ganhou a
+   * corrida. Injetável para isolar testes do banco.
+   */
+  claimAvaliacao?: (osId: string) => Promise<boolean>;
 }
 
 /**
@@ -79,10 +96,60 @@ export async function despacharEventoOs(
   estadoNovo: string,
   deps: DespacharDeps = {},
 ): Promise<DespachoResultado> {
-  const evento = MAPA_EVENTOS[estadoNovo];
-  if (!evento) return {};
-
   const resultado: DespachoResultado = {};
+
+  // Convite à avaliação (Issue #51): só no estado terminal do cliente — PAGA
+  // para tipos pagáveis, CONCLUIDA para os demais (Preventiva/Garantia, sem
+  // cobrança). Demais transições nunca avaliam, então só aqui vale carregar o
+  // tipo da OS — fora desses estados não há query extra.
+  if (estadoNovo === "PAGA" || estadoNovo === "CONCLUIDA") {
+    const obterOs = deps.obterOs ?? (async (id) => {
+      const [row] = await db
+        .select({ tipo: ordemServico.tipo })
+        .from(ordemServico)
+        .where(eq(ordemServico.id, id))
+        .limit(1);
+      return row;
+    });
+
+    // OS pode ter sumido entre a transição e o despacho — sem ela, nada a
+    // avaliar (o MAPA_EVENTOS adiante trata a ausência por conta própria).
+    const os = await obterOs(osId);
+    if (os) {
+      const pagavel = (TIPOS_PAGAVEIS as readonly string[]).includes(os.tipo);
+      const deveAvaliar = pagavel ? estadoNovo === "PAGA" : estadoNovo === "CONCLUIDA";
+
+      if (deveAvaliar) {
+        // Reivindica o marco ANTES de enviar: reexecução da transição não reenvia.
+        const claimAvaliacao = deps.claimAvaliacao ?? (async (id) => {
+          const claim = await db
+            .insert(notificacaoMarco)
+            .values({ osId: id, marco: "pedido_avaliacao:disparo" })
+            .onConflictDoNothing({
+              target: [notificacaoMarco.osId, notificacaoMarco.marco],
+            })
+            .returning({ id: notificacaoMarco.id });
+          return claim.length > 0;
+        });
+
+        if (await claimAvaliacao(osId)) {
+          const avaliacao: { whatsapp?: DespachoWhatsapp; email?: NotificacaoResultado } = {};
+          if (deps.gateway || whatsappConfigurado()) {
+            avaliacao.whatsapp = await despacharWhatsapp(osId, "pedido_avaliacao", deps);
+          }
+          const enviarEmail =
+            deps.enviarEmail ??
+            ((id, est) =>
+              notificarMudancaEstadoOs(id, est, { forceMock: deps.forceMock }));
+          avaliacao.email = await enviarEmail(osId, "PEDIDO_AVALIACAO");
+          resultado.avaliacao = avaliacao;
+        }
+      }
+    }
+  }
+
+  const evento = MAPA_EVENTOS[estadoNovo];
+  if (!evento) return resultado;
 
   // Canal WhatsApp (ação imediata). Sem gateway injetado e sem Cloud API
   // configurada, pula o canal — não há como enviar/enfileirar (e-mail segue).
@@ -186,6 +253,8 @@ function montarVariaveis(
   switch (template) {
     case "orcamento_pronto":
       return { nome_cliente: ctx.clienteNome, link: ctx.urlPortal };
+    case "pedido_avaliacao":
+      return { nome_cliente: ctx.clienteNome, link: ctx.urlPortal + "/avaliar" };
     case "tecnico_a_caminho":
       return { nome_cliente: ctx.clienteNome, nome_tecnico: ctx.tecnicoNome };
     default:

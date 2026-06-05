@@ -15,6 +15,7 @@ import {
   criarEmailService,
   renderizarEmailOrcamento,
   renderizarEmailConclusao,
+  renderizarEmailPedidoAvaliacao,
 } from "./email-service";
 
 export interface NotificacaoResultado {
@@ -29,8 +30,8 @@ export async function notificarMudancaEstadoOs(
   estadoNovo: string,
   config: { forceMock?: boolean } = {},
 ): Promise<NotificacaoResultado> {
-  // Apenas e-mails para ORCADA e CONCLUIDA
-  if (estadoNovo !== "ORCADA" && estadoNovo !== "CONCLUIDA") {
+  // Apenas e-mails para ORCADA, CONCLUIDA e PEDIDO_AVALIACAO
+  if (estadoNovo !== "ORCADA" && estadoNovo !== "CONCLUIDA" && estadoNovo !== "PEDIDO_AVALIACAO") {
     return { status: "skipped", motivo: `estado ${estadoNovo} não dispara e-mail` };
   }
 
@@ -144,6 +145,27 @@ export async function notificarMudancaEstadoOs(
       status: "sent",
       emailId: res?.id,
       pdfUrl,
+    };
+  }
+
+  // ============================================================
+  // Caso PEDIDO_AVALIACAO
+  // ============================================================
+  if (estadoNovo === "PEDIDO_AVALIACAO") {
+    const html = await renderizarEmailPedidoAvaliacao({
+      clienteNome: cli.nome,
+      urlPortal,
+    });
+
+    const res = await emailService.enviar({
+      para: cli.email,
+      assunto: `Como foi o nosso atendimento? - DBG Elétrica e Pintura`,
+      html,
+    });
+
+    return {
+      status: "sent",
+      emailId: res?.id,
     };
   }
 

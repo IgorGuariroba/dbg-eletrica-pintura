@@ -169,6 +169,13 @@
       "when": 1780517471635,
       "tag": "0023_new_rattler",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1780672650256,
+      "tag": "0024_third_slipstream",
+      "breakpoints": true
     }
   ]
 }
