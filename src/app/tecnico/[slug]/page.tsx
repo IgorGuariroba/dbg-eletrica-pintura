@@ -63,7 +63,7 @@ export default async function TecnicoPerfilPage({ params }: Props) {
                   {notaMedia.media !== null ? notaMedia.media.toFixed(1) : "—"}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  ({notaMedia.total} avaliação{notaMedia.total !== 1 ? "ões" : ""})
+                  ({notaMedia.total === 1 ? "1 avaliação" : `${notaMedia.total} avaliações`})
                 </span>
               </div>
             )}

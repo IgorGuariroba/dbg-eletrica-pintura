@@ -99,5 +99,17 @@ export function criarAlertaAvaliacaoRepoDrizzle(db: DB): AlertaAvaliacaoRepo {
         avaliacaoMotivoInvalidacao: r.avaliacaoMotivoInvalidacao ?? null,
       }));
     },
+
+    async marcarReavaliado(osId: string): Promise<void> {
+      await db
+        .update(alertaAvaliacao)
+        .set({ status: "REAVALIADO", atualizadoEm: new Date() })
+        .where(
+          and(
+            eq(alertaAvaliacao.osId, osId),
+            eq(alertaAvaliacao.status, "RESOLVIDO"),
+          ),
+        );
+    },
   };
 }

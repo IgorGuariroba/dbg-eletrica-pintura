@@ -43,4 +43,10 @@ export interface AlertaAvaliacaoRepo {
   criar(dados: AlertaAvaliacaoInput): Promise<void>;
   listarPendentes(): Promise<AlertaPendenteView[]>;
   listarTodas(filtro?: FiltroAvaliacoes): Promise<AvaliacaoAdminView[]>;
+  /**
+   * Marca como REAVALIADO o alerta da OS que já estava RESOLVIDO (tratativa
+   * concluída) quando chega uma reavaliação positiva (≥ 4★). No-op se a OS não
+   * tem alerta resolvido — primeira avaliação alta nunca cria/altera alerta.
+   */
+  marcarReavaliado(osId: string): Promise<void>;
 }

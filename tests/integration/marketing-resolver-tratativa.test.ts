@@ -116,28 +116,71 @@ describe.skipIf(!hasDb)("Resolver Tratativa → Reavaliação Idempotente (Bloco
     // Reavaliação enviada 1x
     expect(enviarReavaliacao).toHaveBeenCalledTimes(1);
     expect(enviarReavaliacao).toHaveBeenCalledWith(os.id);
-
-    // Marco criado
-    const marcos = await db
-      .select()
-      .from(schema.notificacaoMarco)
-      .where(eq(schema.notificacaoMarco.osId, os.id));
-    const marco = marcos.find(m => m.marco === "reavaliacao:disparo");
-    expect(marco).toBeDefined();
   });
 
-  it("RES2: reexecutar resolverTratativa não reenvia reavaliação (idempotente)", async () => {
+  it("RES2: reexecutar resolverTratativa não reenvia reavaliação (idempotente por status)", async () => {
     const token = `tok-res2-${Math.random().toString(36).slice(2, 10)}`;
-    const { alerta, os } = await seedContexto(token);
+    const { alerta } = await seedContexto(token);
 
     const enviarReavaliacao = vi.fn().mockResolvedValue(undefined);
 
     // Primeira execução
     await resolverTratativa(alerta.id, { db, enviarReavaliacao });
-    // Segunda execução
+    // Segunda execução (alerta já RESOLVIDO)
     await resolverTratativa(alerta.id, { db, enviarReavaliacao });
 
     // enviarReavaliacao chamada apenas 1x
     expect(enviarReavaliacao).toHaveBeenCalledTimes(1);
+  });
+
+  it("RES3: alerta reaberto (PENDENTE) por reavaliação negativa volta a disparar", async () => {
+    const token = `tok-res3-${Math.random().toString(36).slice(2, 10)}`;
+    const { alerta } = await seedContexto(token);
+
+    const enviarReavaliacao = vi.fn().mockResolvedValue(undefined);
+
+    // 1ª rodada de tratativa
+    await resolverTratativa(alerta.id, { db, enviarReavaliacao });
+
+    // Cliente reavalia mal de novo → fluxo de avaliação reabre o alerta
+    await db
+      .update(schema.alertaAvaliacao)
+      .set({ status: "PENDENTE" })
+      .where(eq(schema.alertaAvaliacao.id, alerta.id));
+
+    // 2ª rodada de tratativa dispara um novo convite
+    await resolverTratativa(alerta.id, { db, enviarReavaliacao });
+
+    expect(enviarReavaliacao).toHaveBeenCalledTimes(2);
+  });
+
+  it("RES4: falha no envio reverte status para PENDENTE e permite nova tentativa", async () => {
+    const token = `tok-res4-${Math.random().toString(36).slice(2, 10)}`;
+    const { alerta } = await seedContexto(token);
+
+    const enviarFalho = vi.fn().mockRejectedValueOnce(new Error("WhatsApp down"));
+
+    await expect(
+      resolverTratativa(alerta.id, { db, enviarReavaliacao: enviarFalho }),
+    ).rejects.toThrow("WhatsApp down");
+
+    // Status revertido para PENDENTE (não ficou resolvido sem notificar)
+    const [revertido] = await db
+      .select()
+      .from(schema.alertaAvaliacao)
+      .where(eq(schema.alertaAvaliacao.id, alerta.id));
+    expect(revertido.status).toBe("PENDENTE");
+    expect(revertido.resolvidoEm).toBeNull();
+
+    // Retry com envio funcionando resolve e dispara
+    const enviarOk = vi.fn().mockResolvedValue(undefined);
+    await resolverTratativa(alerta.id, { db, enviarReavaliacao: enviarOk });
+    expect(enviarOk).toHaveBeenCalledTimes(1);
+
+    const [resolvido] = await db
+      .select()
+      .from(schema.alertaAvaliacao)
+      .where(eq(schema.alertaAvaliacao.id, alerta.id));
+    expect(resolvido.status).toBe("RESOLVIDO");
   });
 });

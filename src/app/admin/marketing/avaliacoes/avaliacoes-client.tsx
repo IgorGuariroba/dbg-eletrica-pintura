@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { Star, CheckCircle2, Ban, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -124,7 +125,7 @@ function DialogCriarTratativa({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        className="inline-flex h-8 items-center gap-1 rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-8 gap-1 text-xs")}
       >
         <Plus className="size-3" /> Tratativa
       </DialogTrigger>
@@ -227,7 +228,10 @@ function DialogInvalidar({ alerta }: { alerta: AvaliacaoAdminView }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        className="inline-flex h-8 items-center gap-1 rounded-md border border-destructive/30 bg-background px-3 text-xs font-medium text-destructive ring-offset-background transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className={cn(
+          buttonVariants({ variant: "outline", size: "sm" }),
+          "h-8 gap-1 text-xs border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive",
+        )}
       >
         <Ban className="size-3" /> Invalidar
       </DialogTrigger>
@@ -310,7 +314,7 @@ function PainelNotasTecnicos({ notas }: { notas: NotaTecnicoView[] }) {
                   {n.media !== null ? n.media.toFixed(1) : "—"}
                 </span>
               </div>
-              <span className="text-xs text-muted-foreground">{n.total} avaliação{n.total !== 1 ? "ões" : ""}</span>
+              <span className="text-xs text-muted-foreground">{n.total === 1 ? "1 avaliação" : `${n.total} avaliações`}</span>
             </div>
           ))}
         </div>
@@ -461,7 +465,8 @@ export function AvaliacoesClient({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todas as notas</SelectItem>
-                  {[1, 2, 3, 4, 5].map((n) => (
+                  {/* Alertas só existem para notas baixas (≤ 3★) — ver Filtro Inteligente. */}
+                  {[1, 2, 3].map((n) => (
                     <SelectItem key={n} value={String(n)}>{n} ★</SelectItem>
                   ))}
                 </SelectContent>

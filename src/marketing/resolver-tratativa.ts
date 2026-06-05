@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { DB } from "@/db/client";
-import { alertaAvaliacao, notificacaoMarco } from "@/db/schema";
+import { alertaAvaliacao } from "@/db/schema";
 
 export interface ResolverTratativaDeps {
   db: DB;
@@ -13,8 +13,16 @@ export interface ResolverTratativaDeps {
 
 /**
  * Marca o alerta de avaliação como RESOLVIDO e dispara o pedido de reavaliação
- * ao cliente (WhatsApp + e-mail) exatamente 1x, usando o marco idempotente
- * "reavaliacao:disparo" em `notificacao_marco`.
+ * ao cliente (WhatsApp + e-mail).
+ *
+ * Idempotência ancorada no **status do alerta**, não num marco permanente: a
+ * transição PENDENTE → RESOLVIDO é feita por um UPDATE condicional que só casa
+ * uma vez por ciclo. Reexecutar (duplo clique) vê o alerta já RESOLVIDO e é
+ * no-op. Quando uma reavaliação negativa reabre o alerta para PENDENTE, um novo
+ * resolve volta a disparar — cada rodada de tratativa convida uma vez.
+ *
+ * Se o envio falhar, o status é revertido para PENDENTE para permitir nova
+ * tentativa (não fica "resolvido sem nunca ter notificado").
  */
 export async function resolverTratativa(
   alertaAvaliacaoId: string,
@@ -22,9 +30,9 @@ export async function resolverTratativa(
 ): Promise<void> {
   const { db } = deps;
 
-  // 1. Buscar o alerta para obter o osId
+  // 1. Garante que o alerta existe (contrato de erro distinto de "já resolvido").
   const [alerta] = await db
-    .select({ osId: alertaAvaliacao.osId })
+    .select({ id: alertaAvaliacao.id })
     .from(alertaAvaliacao)
     .where(eq(alertaAvaliacao.id, alertaAvaliacaoId))
     .limit(1);
@@ -33,21 +41,33 @@ export async function resolverTratativa(
     throw new Error(`Alerta de avaliação não encontrado: ${alertaAvaliacaoId}`);
   }
 
-  // 2. Marcar alerta como RESOLVIDO
-  await db
+  // 2. Reivindica a resolução: só transiciona se ainda PENDENTE. O returning
+  //    devolve o osId apenas quando esta chamada ganhou a corrida.
+  const agora = new Date();
+  const reivindicado = await db
     .update(alertaAvaliacao)
-    .set({ status: "RESOLVIDO", resolvidoEm: new Date(), atualizadoEm: new Date() })
-    .where(eq(alertaAvaliacao.id, alertaAvaliacaoId));
+    .set({ status: "RESOLVIDO", resolvidoEm: agora, atualizadoEm: agora })
+    .where(
+      and(
+        eq(alertaAvaliacao.id, alertaAvaliacaoId),
+        eq(alertaAvaliacao.status, "PENDENTE"),
+      ),
+    )
+    .returning({ osId: alertaAvaliacao.osId });
 
-  // 3. Reivindica o marco idempotente — onConflictDoNothing garante envio único
-  const claim = await db
-    .insert(notificacaoMarco)
-    .values({ osId: alerta.osId, marco: "reavaliacao:disparo" })
-    .onConflictDoNothing({ target: [notificacaoMarco.osId, notificacaoMarco.marco] })
-    .returning({ id: notificacaoMarco.id });
+  // 3. Já resolvido (duplo clique / ciclo anterior) → não reenvia.
+  if (reivindicado.length === 0) return;
 
-  // 4. Só dispara se ganhou a corrida (1ª execução)
-  if (claim.length > 0 && deps.enviarReavaliacao) {
-    await deps.enviarReavaliacao(alerta.osId);
+  // 4. Dispara o convite; se falhar, reverte para PENDENTE para retry.
+  if (deps.enviarReavaliacao) {
+    try {
+      await deps.enviarReavaliacao(reivindicado[0].osId);
+    } catch (e) {
+      await db
+        .update(alertaAvaliacao)
+        .set({ status: "PENDENTE", resolvidoEm: null, atualizadoEm: new Date() })
+        .where(eq(alertaAvaliacao.id, alertaAvaliacaoId));
+      throw e;
+    }
   }
 }
