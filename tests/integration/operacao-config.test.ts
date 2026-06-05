@@ -50,4 +50,23 @@ describe.skipIf(!hasDb)("OperacaoConfigRepo Drizzle — horário comercial", () 
     expect(lido.horarioComercial.sab).toEqual({ inicio: "08:00", fim: "12:00" });
     expect(lido.horarioComercial.dom ?? null).toBeNull();
   });
+
+  it("C1 — tracer: atualiza googleReviewUrl e relê", async () => {
+    await repo.atualizar({
+      ...original,
+      googleReviewUrl: "https://g.page/dbg-review",
+    });
+    const lido = await repo.obter();
+    expect(lido.googleReviewUrl).toBe("https://g.page/dbg-review");
+  });
+
+  it("C2: config sem googleReviewUrl retorna null", async () => {
+    await repo.atualizar({
+      ...original,
+      googleReviewUrl: null,
+    });
+    const lido = await repo.obter();
+    expect(lido.googleReviewUrl).toBeNull();
+  });
 });
+

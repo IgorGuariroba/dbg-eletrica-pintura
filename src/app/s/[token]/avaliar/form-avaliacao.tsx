@@ -8,7 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { EstrelasInput } from "@/components/shared/estrelas-input";
 import { registrarAvaliacaoAction } from "../actions";
 import { toast } from "sonner";
-import { CheckCircle2, MessageSquare, ArrowLeft } from "lucide-react";
+import { CheckCircle2, MessageSquare, ArrowLeft, Star, Share2, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 interface OSInfo {
@@ -46,6 +46,7 @@ const LABEL_CATEGORIA: Record<string, string> = {
 export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
   const [isPending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
+  const [resultado, setResultado] = useState<{ qualificada: boolean; googleReviewUrl: string | null } | null>(null);
 
   const [avaliacoes, setAvaliacoes] = useState<Record<string, { nota: number; comentarioOs: string }>>(() => {
     const initial: Record<string, { nota: number; comentarioOs: string }> = {};
@@ -105,8 +106,9 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
           comentarioGeral: comentarioGeral.trim() || null,
         };
 
-        await registrarAvaliacaoAction(token, payload);
+        const res = await registrarAvaliacaoAction(token, payload);
         toast.success("Avaliação enviada com sucesso!");
+        setResultado(res);
         setSubmitted(true);
       } catch (err) {
         console.error(err);
@@ -115,17 +117,70 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
     });
   };
 
-  if (submitted) {
+  if (submitted && resultado) {
+    if (resultado.qualificada) {
+      return (
+        <Card className="mt-8 p-8 flex flex-col items-center text-center space-y-6 bg-success/5 border-success/20">
+          <CheckCircle2 className="size-16 text-success" />
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-foreground">Muito obrigado por sua avaliação!</h2>
+            <p className="text-sm text-muted-foreground max-w-md">
+              Sua opinião nos ajuda a manter a excelência nos serviços e a reconhecer os melhores profissionais.
+            </p>
+          </div>
+
+          {resultado.googleReviewUrl && (
+            <Card className="w-full max-w-md border border-border bg-card p-6 space-y-4">
+              <div className="flex items-center justify-center gap-2 text-warning">
+                <Star className="size-5 fill-current" />
+                <span className="font-semibold text-foreground text-sm">Avalie-nos no Google</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Seu feedback positivo ajuda outros clientes a nos encontrarem e apoia nossa equipe!
+              </p>
+              <a
+                href={resultado.googleReviewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ className: "w-full gap-2 text-sm font-medium" })}
+              >
+                Avaliar no Google <ExternalLink className="size-4" />
+              </a>
+            </Card>
+          )}
+
+          <Card className="w-full max-w-md border border-dashed border-border bg-muted/20 p-6 opacity-70 space-y-3">
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Share2 className="size-5" />
+              <span className="font-semibold text-foreground text-sm">Indique e Ganhe (Em breve)</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Em breve você poderá indicar amigos e acumular créditos para descontos em seus próximos serviços!
+            </p>
+            <Button disabled variant="outline" className="w-full text-sm">
+              Indicar Amigos (Em breve)
+            </Button>
+          </Card>
+
+          <div className="flex gap-4 pt-2">
+            <Link href={`/s/${token}`} className={buttonVariants({ variant: "outline" })}>
+              Voltar para o Portal
+            </Link>
+          </div>
+        </Card>
+      );
+    }
+
     return (
-      <Card className="mt-8 p-8 flex flex-col items-center text-center space-y-6 bg-success/5 border-success/20">
-        <CheckCircle2 className="size-16 text-success" />
+      <Card className="mt-8 p-8 flex flex-col items-center text-center space-y-6 bg-muted/10 border-border">
+        <CheckCircle2 className="size-16 text-muted-foreground" />
         <div className="space-y-2">
-          <h2 className="text-xl font-bold text-foreground">Muito obrigado por sua avaliação!</h2>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Sua opinião nos ajuda a manter a excelência nos serviços e a reconhecer os melhores profissionais.
+          <h2 className="text-xl font-bold text-foreground">Obrigado pelo seu feedback!</h2>
+          <p className="text-sm text-muted-foreground max-w-md">
+            Obrigado pelo feedback, vamos te procurar pra entender melhor como podemos melhorar a sua experiência.
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 pt-2">
           <Link href={`/s/${token}`} className={buttonVariants()}>
             Voltar para o Portal
           </Link>

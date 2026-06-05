@@ -4,6 +4,7 @@ export interface OperacaoConfig {
   precoLitro: string;
   kmPorLitro: string;
   horarioComercial: HorarioComercial;
+  googleReviewUrl?: string | null;
 }
 
 export interface OperacaoConfigRepo {

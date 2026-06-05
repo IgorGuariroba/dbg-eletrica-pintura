@@ -7,7 +7,8 @@ import { criarAprovacaoRepoDrizzle } from "@/operacao/aprovacao-repo-drizzle";
 import { TokenInvalidoError } from "@/operacao/aprovacao-repo";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { formatBRL } from "@/lib/utils";
 import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { SiteHeader } from "../../_landing/site-header";
@@ -15,7 +16,9 @@ import { SiteFooter } from "../../_landing/site-footer";
 import { AcoesOrcamento } from "./acoes-orcamento";
 import { AgendarOs } from "./agendar-os";
 import { EstouAqui } from "./estou-aqui";
-import { ArrowRight, CalendarCheck } from "lucide-react";
+import { ArrowRight, CalendarCheck, Star, Share2, ExternalLink } from "lucide-react";
+import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
+import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
 
 export const metadata = {
   title: "Seu orçamento — DBG Elétrica e Pintura",
@@ -50,6 +53,19 @@ export default async function AcompanhamentoPage({
     if (e instanceof TokenInvalidoError) notFound();
     throw e;
   }
+
+  const avalRepo = criarAvaliacaoRepoDrizzle(db);
+  const viewAval = await avalRepo.carregarPorToken(token);
+  const configRepo = criarOperacaoConfigRepoDrizzle(db);
+  const opConfig = await configRepo.obter();
+
+  const qualificada =
+    viewAval &&
+    viewAval.ordens.length > 0 &&
+    viewAval.ordens.every(
+      (o) => o.avaliacao !== null && o.avaliacao.nota >= 4
+    );
+  const googleReviewUrl = qualificada ? (opConfig.googleReviewUrl ?? null) : null;
 
   const protocolo = token.slice(0, 8).toUpperCase();
 
@@ -210,6 +226,50 @@ export default async function AcompanhamentoPage({
             );
           })}
         </div>
+
+        {qualificada && (
+          <section className="mt-8 rounded-lg border bg-success/5 border-success/20 p-6 flex flex-col items-center text-center space-y-6">
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold text-foreground">Obrigado pelo seu apoio!</h2>
+              <p className="text-xs text-muted-foreground max-w-md">
+                Como todas as suas ordens de serviço foram avaliadas de forma positiva, você está qualificado para nossas ações especiais:
+              </p>
+            </div>
+
+            {googleReviewUrl && (
+              <Card className="w-full border border-border bg-card p-6 space-y-4">
+                <div className="flex items-center justify-center gap-2 text-warning">
+                  <Star className="size-5 fill-current" />
+                  <span className="font-semibold text-foreground text-sm">Avalie-nos no Google</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Seu feedback positivo ajuda outros clientes a nos encontrarem e apoia nossa equipe!
+                </p>
+                <a
+                  href={googleReviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={buttonVariants({ className: "w-full gap-2 text-sm font-medium" })}
+                >
+                  Avaliar no Google <ExternalLink className="size-4" />
+                </a>
+              </Card>
+            )}
+
+            <Card className="w-full border border-dashed border-border bg-muted/20 p-6 opacity-70 space-y-3">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                <Share2 className="size-5" />
+                <span className="font-semibold text-foreground text-sm">Indique e Ganhe (Em breve)</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Em breve você poderá indicar amigos e acumular créditos para descontos em seus próximos serviços!
+              </p>
+              <Button disabled variant="outline" className="w-full text-sm">
+                Indicar Amigos (Em breve)
+              </Button>
+            </Card>
+          </section>
+        )}
       </main>
       <SiteFooter />
     </>
