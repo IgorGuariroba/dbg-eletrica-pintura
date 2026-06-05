@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export interface KpiCardProps {
   label: string;
-  value: number;
+  value: number | string;
 }
 
 export function KpiCard({ label, value }: KpiCardProps) {

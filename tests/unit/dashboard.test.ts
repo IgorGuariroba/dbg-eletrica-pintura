@@ -15,6 +15,15 @@ function repoFake(over: Partial<DashboardRepo> = {}): DashboardRepo {
     contarOsAguardandoAprovacao: vi.fn(async () => 0),
     contarOsAtribuidasA: vi.fn(async () => 0),
     contarMinhaFila: vi.fn(async () => 0),
+    contarOsOrcadas30d: vi.fn(async () => 0),
+    contarOsAprovadas30d: vi.fn(async () => 0),
+    obterNotaMediaGeral: vi.fn(async () => null),
+    contarAlertasPendentes: vi.fn(async () => 0),
+    listarNotasPorTecnico: vi.fn(async () => []),
+    contarChamadosGarantiaAbertos: vi.fn(async () => 0),
+    contarChamadosGarantiaResolvidosNoMes: vi.fn(async () => 0),
+    contarGarantiasAtivas: vi.fn(async () => 0),
+    contarInadimplenciaMais7Dias: vi.fn(async () => 0),
     ...over,
   };
 }
@@ -52,11 +61,13 @@ describe("montarDashboard", () => {
     expect(dash.catalogo).toBeUndefined();
   });
 
-  it("membro com módulo OPERACAO vê o card de Operação", async () => {
+  it("membro com módulo OPERACAO vê o card de Operação com taxa de aprovação", async () => {
     const repo = repoFake({
       contarOsCriadasHoje: vi.fn(async () => 3),
       contarOsNovasNaFila: vi.fn(async () => 5),
       contarOsAguardandoAprovacao: vi.fn(async () => 2),
+      contarOsOrcadas30d: vi.fn(async () => 4),
+      contarOsAprovadas30d: vi.fn(async () => 3),
     });
     const dash = await montarDashboard(usuario({ modulos: ["OPERACAO"] }), repo);
 
@@ -64,8 +75,77 @@ describe("montarDashboard", () => {
       criadasHoje: 3,
       novasNaFila: 5,
       aguardandoAprovacao: 2,
+      taxaAprovacao: {
+        aprovadas: 3,
+        totalOrcadas: 4,
+        pct: 0.75,
+      },
     });
     expect(dash.tecnico).toBeUndefined();
+  });
+
+  it("taxa de aprovação com zero ORÇADAS resulta em pct null", async () => {
+    const repo = repoFake({
+      contarOsOrcadas30d: vi.fn(async () => 0),
+      contarOsAprovadas30d: vi.fn(async () => 0),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["OPERACAO"] }), repo);
+
+    expect(dash.operacao?.taxaAprovacao).toEqual({
+      aprovadas: 0,
+      totalOrcadas: 0,
+      pct: null,
+    });
+  });
+
+  it("membro com módulo MARKETING vê card de Marketing, e sem o módulo não vê", async () => {
+    const repo = repoFake({
+      obterNotaMediaGeral: vi.fn(async () => 4.2),
+      contarAlertasPendentes: vi.fn(async () => 2),
+      listarNotasPorTecnico: vi.fn(async () => []),
+    });
+
+    const dashCom = await montarDashboard(usuario({ modulos: ["MARKETING"] }), repo);
+    expect(dashCom.marketing).toEqual({
+      notaMediaGeral: 4.2,
+      alertasPendentes: 2,
+      ranking: [],
+    });
+
+    const dashSem = await montarDashboard(usuario({ modulos: [] }), repo);
+    expect(dashSem.marketing).toBeUndefined();
+  });
+
+  it("membro com módulo GARANTIAS vê card de Garantias, e sem o módulo não vê", async () => {
+    const repo = repoFake({
+      contarChamadosGarantiaAbertos: vi.fn(async () => 2),
+      contarChamadosGarantiaResolvidosNoMes: vi.fn(async () => 5),
+      contarGarantiasAtivas: vi.fn(async () => 12),
+    });
+
+    const dashCom = await montarDashboard(usuario({ modulos: ["GARANTIAS"] }), repo);
+    expect(dashCom.garantias).toEqual({
+      chamadosAbertos: 2,
+      resolvidosNoMes: 5,
+      ativas: 12,
+    });
+
+    const dashSem = await montarDashboard(usuario({ modulos: [] }), repo);
+    expect(dashSem.garantias).toBeUndefined();
+  });
+
+  it("membro com módulo FINANCEIRO vê card Financeiro, e sem o módulo não vê", async () => {
+    const repo = repoFake({
+      contarInadimplenciaMais7Dias: vi.fn(async () => 4),
+    });
+
+    const dashCom = await montarDashboard(usuario({ modulos: ["FINANCEIRO"] }), repo);
+    expect(dashCom.financeiro).toEqual({
+      inadimplenciaMais7Dias: 4,
+    });
+
+    const dashSem = await montarDashboard(usuario({ modulos: [] }), repo);
+    expect(dashSem.financeiro).toBeUndefined();
   });
 
   it("técnico sempre vê o card Técnico, mesmo sem módulos", async () => {
@@ -93,6 +173,10 @@ describe("montarDashboard", () => {
     );
 
     expect(dash.operacao).toBeDefined();
+    expect(dash.operacao?.taxaAprovacao).toBeDefined();
+    expect(dash.marketing).toBeDefined();
+    expect(dash.garantias).toBeDefined();
+    expect(dash.financeiro).toBeDefined();
     expect(dash.catalogo).toBeDefined();
     expect(dash.equipe).toBeDefined();
     expect(dash.tecnico).toBeUndefined();
