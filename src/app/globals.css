@@ -12,43 +12,70 @@
   --card-foreground: oklch(0.1776 0 0);
   --popover: oklch(1.0000 0 0);
   --popover-foreground: oklch(0.1776 0 0);
-  --primary: oklch(0.7072 0.1414 241.2584);
+  --primary: var(--primary-700);
   --primary-foreground: oklch(1.0000 0 0);
   --secondary: oklch(0.96 0 0);
   --secondary-foreground: oklch(0.3867 0 0);
   --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.6268 0 0);
-  --accent: oklch(0.7587 0.1216 238.6063);
+  --muted-foreground: oklch(0.5370 0 0);
+  --accent: var(--accent-700);
   --accent-foreground: oklch(1.0000 0 0);
-  --destructive: oklch(0.6368 0.2078 25.3313);
+  --destructive: oklch(0.5905 0.2078 25.3313);
   --destructive-foreground: oklch(1.0000 0 0);
-  --success: oklch(0.627 0.194 149.2);
+  --success: oklch(0.5355 0.194 149.2);
   --success-foreground: oklch(1.0000 0 0);
   --warning: oklch(0.769 0.166 70.0);
   --warning-foreground: oklch(0.15 0.02 70.0);
-  --info: oklch(0.661 0.142 221.7);
+  --info: oklch(0.5421 0.142 221.7);
   --info-foreground: oklch(1.0000 0 0);
   --rating: oklch(0.828 0.155 84.4);
   --border: oklch(0.9288 0.0126 255.5078);
   --input: oklch(1.0000 0 0);
-  --ring: oklch(0.7072 0.1414 241.2584);
+  --ring: var(--primary-500);
   /* Assinatura manuscrita: tinta escura sobre papel branco, independente de
      tema (artefato legal, PNG armazenado consistente). */
   --signature-paper: oklch(1.0000 0 0);
   --signature-ink: oklch(0.1776 0 0);
-  --chart-1: oklch(0.7072 0.1414 241.2584);
+  --chart-1: var(--primary-500);
   --chart-2: oklch(0.7610 0.2015 149.7403);
   --chart-3: oklch(0.6263 0.1369 244.0440);
-  --chart-4: oklch(0.7587 0.1216 238.6063);
+  --chart-4: var(--accent-500);
   --chart-5: oklch(0.6731 0 0);
   --sidebar: oklch(1.0000 0 0);
   --sidebar-foreground: oklch(0.3867 0 0);
-  --sidebar-primary: oklch(0.7072 0.1414 241.2584);
+  --sidebar-primary: var(--primary-700);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
   --sidebar-accent: oklch(0.9288 0.0126 255.5078);
   --sidebar-accent-foreground: oklch(0.1776 0 0);
   --sidebar-border: oklch(0.8690 0.0198 252.8943);
-  --sidebar-ring: oklch(0.7072 0.1414 241.2584);
+  --sidebar-ring: var(--primary-500);
+
+  /* Escala de marca (primary, azul h≈241). Estática, não varia por tema:
+     tokens semânticos referenciam-na; --primary === --primary-500. */
+  --primary-50: oklch(0.9720 0.0150 241.2584);
+  --primary-100: oklch(0.9400 0.0350 241.2584);
+  --primary-200: oklch(0.8850 0.0650 241.2584);
+  --primary-300: oklch(0.8200 0.0980 241.2584);
+  --primary-400: oklch(0.7600 0.1280 241.2584);
+  --primary-500: oklch(0.7072 0.1414 241.2584);
+  --primary-600: oklch(0.6250 0.1480 241.2584);
+  --primary-700: oklch(0.5250 0.1320 241.2584);
+  --primary-800: oklch(0.4250 0.1020 241.2584);
+  --primary-900: oklch(0.3250 0.0760 241.2584);
+  --primary-950: oklch(0.2300 0.0500 241.2584);
+
+  /* Escala de accent (azul claro h≈238). --accent === --accent-500. */
+  --accent-50: oklch(0.9730 0.0130 238.6063);
+  --accent-100: oklch(0.9430 0.0310 238.6063);
+  --accent-200: oklch(0.8900 0.0580 238.6063);
+  --accent-300: oklch(0.8420 0.0860 238.6063);
+  --accent-400: oklch(0.8000 0.1080 238.6063);
+  --accent-500: oklch(0.7587 0.1216 238.6063);
+  --accent-600: oklch(0.6650 0.1300 238.6063);
+  --accent-700: oklch(0.5550 0.1180 238.6063);
+  --accent-800: oklch(0.4450 0.0930 238.6063);
+  --accent-900: oklch(0.3450 0.0690 238.6063);
+  --accent-950: oklch(0.2450 0.0450 238.6063);
 
   --font-sans: Inter, system-ui, sans-serif;
   --font-serif: Georgia, serif;
@@ -81,43 +108,43 @@
   --card-foreground: oklch(0.9755 0.0045 258.3245);
   --popover: oklch(0.1743 0.0227 283.7998);
   --popover-foreground: oklch(0.9755 0.0045 258.3245);
-  --primary: oklch(0.7072 0.1414 241.2584);
+  --primary: var(--primary-700);
   --primary-foreground: oklch(1.0000 0 0);
   --secondary: oklch(0.23 0.0227 283.7998);
   --secondary-foreground: oklch(0.6731 0 0);
   --muted: oklch(0.23 0.0227 283.7998);
   --muted-foreground: oklch(0.6731 0 0);
-  --accent: oklch(0.6263 0.1369 244.0440);
+  --accent: var(--accent-700);
   --accent-foreground: oklch(1.0000 0 0);
-  --destructive: oklch(0.6368 0.2078 25.3313);
+  --destructive: oklch(0.5905 0.2078 25.3313);
   --destructive-foreground: oklch(1.0000 0 0);
-  --success: oklch(0.627 0.194 149.2);
+  --success: oklch(0.5355 0.194 149.2);
   --success-foreground: oklch(1.0000 0 0);
   --warning: oklch(0.769 0.166 70.0);
   --warning-foreground: oklch(0.15 0.02 70.0);
-  --info: oklch(0.661 0.142 221.7);
+  --info: oklch(0.5421 0.142 221.7);
   --info-foreground: oklch(1.0000 0 0);
   --rating: oklch(0.828 0.155 84.4);
   --border: oklch(0.2973 0.0325 284.2512);
   --input: oklch(0.1743 0.0227 283.7998);
-  --ring: oklch(0.7072 0.1414 241.2584);
+  --ring: var(--primary-500);
   /* Mesmo papel branco/tinta escura no tema escuro: a assinatura é sempre
      dark-on-white, como um documento assinado. */
   --signature-paper: oklch(1.0000 0 0);
   --signature-ink: oklch(0.1776 0 0);
-  --chart-1: oklch(0.7072 0.1414 241.2584);
+  --chart-1: var(--primary-500);
   --chart-2: oklch(0.7610 0.2015 149.7403);
   --chart-3: oklch(0.6263 0.1369 244.0440);
-  --chart-4: oklch(0.7587 0.1216 238.6063);
+  --chart-4: var(--accent-500);
   --chart-5: oklch(0.6731 0 0);
   --sidebar: oklch(0.1743 0.0227 283.7998);
   --sidebar-foreground: oklch(0.9755 0.0045 258.3245);
-  --sidebar-primary: oklch(0.7072 0.1414 241.2584);
+  --sidebar-primary: var(--primary-700);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
   --sidebar-accent: oklch(0.1743 0.0227 283.7998);
   --sidebar-accent-foreground: oklch(1.0000 0 0);
   --sidebar-border: oklch(0.2973 0.0325 284.2512);
-  --sidebar-ring: oklch(0.7072 0.1414 241.2584);
+  --sidebar-ring: var(--primary-500);
 }
 
 @theme inline {
@@ -162,6 +189,30 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+
+  --color-accent-50: var(--accent-50);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+  --color-accent-800: var(--accent-800);
+  --color-accent-900: var(--accent-900);
+  --color-accent-950: var(--accent-950);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
