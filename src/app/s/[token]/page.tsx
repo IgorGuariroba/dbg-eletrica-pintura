@@ -7,8 +7,7 @@ import { criarAprovacaoRepoDrizzle } from "@/operacao/aprovacao-repo-drizzle";
 import { TokenInvalidoError } from "@/operacao/aprovacao-repo";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 import { formatBRL } from "@/lib/utils";
 import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { SiteHeader } from "../../_landing/site-header";
@@ -16,7 +15,8 @@ import { SiteFooter } from "../../_landing/site-footer";
 import { AcoesOrcamento } from "./acoes-orcamento";
 import { AgendarOs } from "./agendar-os";
 import { EstouAqui } from "./estou-aqui";
-import { ArrowRight, CalendarCheck, Star, Share2, ExternalLink } from "lucide-react";
+import { ArrowRight, CalendarCheck } from "lucide-react";
+import { RecompensasAvaliacao } from "@/components/shared/recompensas-avaliacao";
 import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
 import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
 
@@ -236,38 +236,7 @@ export default async function AcompanhamentoPage({
               </p>
             </div>
 
-            {googleReviewUrl && (
-              <Card className="w-full border border-border bg-card p-6 space-y-4">
-                <div className="flex items-center justify-center gap-2 text-warning">
-                  <Star className="size-5 fill-current" />
-                  <span className="font-semibold text-foreground text-sm">Avalie-nos no Google</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Seu feedback positivo ajuda outros clientes a nos encontrarem e apoia nossa equipe!
-                </p>
-                <a
-                  href={googleReviewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={buttonVariants({ className: "w-full gap-2 text-sm font-medium" })}
-                >
-                  Avaliar no Google <ExternalLink className="size-4" />
-                </a>
-              </Card>
-            )}
-
-            <Card className="w-full border border-dashed border-border bg-muted/20 p-6 opacity-70 space-y-3">
-              <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                <Share2 className="size-5" />
-                <span className="font-semibold text-foreground text-sm">Indique e Ganhe (Em breve)</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Em breve você poderá indicar amigos e acumular créditos para descontos em seus próximos serviços!
-              </p>
-              <Button disabled variant="outline" className="w-full text-sm">
-                Indicar Amigos (Em breve)
-              </Button>
-            </Card>
+            <RecompensasAvaliacao googleReviewUrl={googleReviewUrl} />
           </section>
         )}
       </main>

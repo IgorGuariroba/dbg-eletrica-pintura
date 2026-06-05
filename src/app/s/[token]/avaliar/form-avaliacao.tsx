@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { EstrelasInput } from "@/components/shared/estrelas-input";
+import { RecompensasAvaliacao } from "@/components/shared/recompensas-avaliacao";
 import { registrarAvaliacaoAction } from "../actions";
 import { toast } from "sonner";
-import { CheckCircle2, MessageSquare, ArrowLeft, Star, Share2, ExternalLink } from "lucide-react";
+import { CheckCircle2, MessageSquare, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 interface OSInfo {
@@ -129,38 +130,7 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
             </p>
           </div>
 
-          {resultado.googleReviewUrl && (
-            <Card className="w-full max-w-md border border-border bg-card p-6 space-y-4">
-              <div className="flex items-center justify-center gap-2 text-warning">
-                <Star className="size-5 fill-current" />
-                <span className="font-semibold text-foreground text-sm">Avalie-nos no Google</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Seu feedback positivo ajuda outros clientes a nos encontrarem e apoia nossa equipe!
-              </p>
-              <a
-                href={resultado.googleReviewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonVariants({ className: "w-full gap-2 text-sm font-medium" })}
-              >
-                Avaliar no Google <ExternalLink className="size-4" />
-              </a>
-            </Card>
-          )}
-
-          <Card className="w-full max-w-md border border-dashed border-border bg-muted/20 p-6 opacity-70 space-y-3">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Share2 className="size-5" />
-              <span className="font-semibold text-foreground text-sm">Indique e Ganhe (Em breve)</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Em breve você poderá indicar amigos e acumular créditos para descontos em seus próximos serviços!
-            </p>
-            <Button disabled variant="outline" className="w-full text-sm">
-              Indicar Amigos (Em breve)
-            </Button>
-          </Card>
+          <RecompensasAvaliacao googleReviewUrl={resultado.googleReviewUrl} />
 
           <div className="flex gap-4 pt-2">
             <Link href={`/s/${token}`} className={buttonVariants({ variant: "outline" })}>
