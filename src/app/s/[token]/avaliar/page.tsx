@@ -17,7 +17,7 @@ interface AvaliarPageProps {
 
 export default async function AvaliarPage({ params }: AvaliarPageProps) {
   const { token } = await params;
-  let view;
+  let view: Awaited<ReturnType<typeof carregarParaAvaliar>>;
   try {
     view = await carregarParaAvaliar(token, criarAvaliacaoRepoDrizzle(db));
   } catch (e) {

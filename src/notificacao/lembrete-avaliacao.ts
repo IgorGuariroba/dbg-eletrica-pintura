@@ -2,9 +2,18 @@ import { and, eq, inArray, notInArray, isNull, or, desc } from "drizzle-orm";
 import { db } from "@/db/client";
 import * as schema from "@/db/schema";
 import { normalizarWhatsapp, ordenarVariaveis } from "./templates";
-import { whatsappConfigurado } from "./whatsapp-gateway";
-import { notificarMudancaEstadoOs } from "./notificador";
+import { whatsappConfigurado, type GatewayWhatsApp } from "./whatsapp-gateway";
+import { notificarMudancaEstadoOs, type NotificacaoResultado } from "./notificador";
 import { TIPOS_PAGAVEIS } from "./lembrete-pagamento";
+
+interface LembreteAvaliacaoDeps {
+  /** Gateway da Cloud API (default: real/mock por env). */
+  gateway?: GatewayWhatsApp;
+  /** Envio do e-mail (default: notificarMudancaEstadoOs). */
+  enviarEmail?: (osId: string, estado: string) => Promise<NotificacaoResultado>;
+  /** Relógio injetável (default: agora). */
+  agora?: Date;
+}
 
 async function checarElegibilidadeLembrete(
   solOsList: { id: string; tipo: string; estado: string }[],
@@ -36,11 +45,7 @@ async function dispararCanaisLembrete(
   cli: typeof schema.cliente.$inferSelect,
   token: string,
   anchorOsId: string,
-  deps: {
-    gateway?: any;
-    enviarEmail?: (osId: string, estado: string) => Promise<any>;
-    agora?: Date;
-  }
+  deps: LembreteAvaliacaoDeps
 ): Promise<boolean> {
   const agora = deps.agora ?? new Date();
   let algumCanal = false;
@@ -80,16 +85,12 @@ async function dispararCanaisLembrete(
 }
 
 export async function processarLembretesAvaliacao(
-  deps: {
-    gateway?: any;
-    enviarEmail?: (osId: string, estado: string) => Promise<any>;
-    agora?: Date;
-  } = {}
+  deps: LembreteAvaliacaoDeps = {}
 ) {
   const agora = deps.agora ?? new Date();
   const limite48h = new Date(agora.getTime() - 48 * 60 * 60 * 1000);
 
-  // 1. Get all OSs that are terminal and have no evaluations
+  // 1. OS no estado terminal do cliente (PAGA/CONCLUIDA por tipo) e sem avaliação.
   const osCandidatas = await db
     .select({
       id: schema.ordemServico.id,
@@ -121,11 +122,11 @@ export async function processarLembretesAvaliacao(
 
   let enviados = 0;
 
-  // Group candidates by solicitation
+  // Agrupa as candidatas por Solicitação (1 lembrete por Solicitação).
   const solIds = [...new Set(osCandidatas.map(o => o.solicitacaoId))];
 
   for (const solId of solIds) {
-    // Check if the solicitation has already sent the reminder
+    // Pula se a Solicitação já recebeu o lembrete.
     const [solInfo] = await db
       .select({
         id: schema.solicitacao.id,
@@ -139,15 +140,14 @@ export async function processarLembretesAvaliacao(
 
     if (!solInfo || solInfo.lembreteAvaliacaoEnviado) continue;
 
-    // Get the OSs for this solicitation
+    // OS desta Solicitação; elegível se ao menos uma está terminal há ≥48h.
     const solOsList = osCandidatas.filter(o => o.solicitacaoId === solId);
-    
-    // Check the latest transition date among these OSs to ensure at least one has been terminal for >=48h
+
     const { elegivel, anchorOsId } = await checarElegibilidadeLembrete(solOsList, limite48h);
 
     if (!elegivel) continue;
 
-    // 2. Claim atomically
+    // 2. Reivindica atomicamente: UPDATE ... WHERE flag=false RETURNING.
     const claim = await db
       .update(schema.solicitacao)
       .set({ lembreteAvaliacaoEnviado: true })
@@ -161,7 +161,7 @@ export async function processarLembretesAvaliacao(
 
     if (claim.length === 0) continue;
 
-    // Get client details
+    // Carrega o cliente para montar os canais.
     const [cli] = await db
       .select()
       .from(schema.cliente)

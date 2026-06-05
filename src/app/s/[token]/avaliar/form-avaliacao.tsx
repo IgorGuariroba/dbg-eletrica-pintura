@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { EstrelasInput } from "@/components/shared/estrelas-input";
 import { registrarAvaliacaoAction } from "../actions";
 import { toast } from "sonner";
@@ -25,7 +24,7 @@ interface OSInfo {
   } | null;
 }
 
-interface SolicitationView {
+interface SolicitacaoView {
   token: string;
   clienteNome: string;
   solicitacaoId: string;
@@ -35,7 +34,7 @@ interface SolicitationView {
 
 interface FormAvaliacaoProps {
   token: string;
-  view: SolicitationView;
+  view: SolicitacaoView;
 }
 
 const LABEL_CATEGORIA: Record<string, string> = {
@@ -45,7 +44,6 @@ const LABEL_CATEGORIA: Record<string, string> = {
 };
 
 export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
 
@@ -119,8 +117,8 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
 
   if (submitted) {
     return (
-      <Card className="mt-8 p-8 flex flex-col items-center text-center space-y-6 bg-emerald-500/5 border-emerald-500/20">
-        <CheckCircle2 className="size-16 text-emerald-500 animate-bounce" />
+      <Card className="mt-8 p-8 flex flex-col items-center text-center space-y-6 bg-success/5 border-success/20">
+        <CheckCircle2 className="size-16 text-success" />
         <div className="space-y-2">
           <h2 className="text-xl font-bold text-foreground">Muito obrigado por sua avaliação!</h2>
           <p className="text-sm text-muted-foreground max-w-sm">
@@ -128,7 +126,7 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
           </p>
         </div>
         <div className="flex gap-4">
-          <Link href={`/s/${token}`} className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+          <Link href={`/s/${token}`} className={buttonVariants()}>
             Voltar para o Portal
           </Link>
         </div>
@@ -178,7 +176,7 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
                 value={avaliacoes[os.id]?.comentarioOs ?? ""}
                 onChange={(e) => handleComentarioChange(os.id, e.target.value)}
                 disabled={isPending}
-                className="min-h-[80px]"
+                className="min-h-20"
               />
             </div>
           </Card>
@@ -199,17 +197,14 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
               value={comentarioGeral}
               onChange={(e) => setComentarioGeral(e.target.value)}
               disabled={isPending}
-              className="min-h-[100px]"
+              className="min-h-24"
             />
           </div>
         </Card>
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
-        <Link
-          href={`/s/${token}`}
-          className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-muted"
-        >
+        <Link href={`/s/${token}`} className={buttonVariants({ variant: "outline" })}>
           <ArrowLeft className="size-4 mr-2" /> Voltar sem avaliar
         </Link>
         <Button

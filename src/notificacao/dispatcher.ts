@@ -48,6 +48,12 @@ export interface DespachoResultado {
   whatsapp?: DespachoWhatsapp;
   email?: NotificacaoResultado;
   documentos?: GerarDocumentosResultado;
+  /**
+   * Convite à avaliação (Issue #51). Canal próprio: num CONCLUIDA de OS
+   * não-pagável saem DOIS e-mails distintos — o de conclusão (`email`) e o
+   * convite à avaliação (`avaliacao.email`) —, por isso resultados separados.
+   */
+  avaliacao?: { whatsapp?: DespachoWhatsapp; email?: NotificacaoResultado };
 }
 
 export interface DespacharDeps {
@@ -66,8 +72,16 @@ export interface DespacharDeps {
   ) => Promise<GerarDocumentosResultado>;
   /** Força mock no envio de e-mail default (PDF/Resend). */
   forceMock?: boolean;
-  /** Obtém OS por ID (default: query Drizzle). */
-  obterOs?: (osId: string) => Promise<any>;
+  /** Obtém o tipo da OS por ID (default: query Drizzle). */
+  obterOs?: (
+    osId: string,
+  ) => Promise<Pick<typeof ordemServico.$inferSelect, "tipo"> | undefined>;
+  /**
+   * Reivindica o marco de convite à avaliação (idempotência). Default: insere
+   * em `notificacaoMarco` com `onConflictDoNothing` e devolve `true` se ganhou a
+   * corrida. Injetável para isolar testes do banco.
+   */
+  claimAvaliacao?: (osId: string) => Promise<boolean>;
 }
 
 /**
@@ -96,41 +110,35 @@ export async function despacharEventoOs(
 
   const resultado: DespachoResultado = {};
 
-  // Avaliação por token (Issue #51)
+  // Convite à avaliação (Issue #51): no estado terminal do cliente — PAGA para
+  // tipos pagáveis, CONCLUIDA para os demais (Preventiva/Garantia, sem cobrança).
   const pagavel = (TIPOS_PAGAVEIS as readonly string[]).includes(os.tipo);
   const deveAvaliar = pagavel ? estadoNovo === "PAGA" : estadoNovo === "CONCLUIDA";
 
   if (deveAvaliar) {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(osId);
-    let claimId: string | undefined;
-
-    if (isUuid) {
+    // Reivindica o marco ANTES de enviar: reexecução da transição não reenvia.
+    const claimAvaliacao = deps.claimAvaliacao ?? (async (id) => {
       const claim = await db
         .insert(notificacaoMarco)
-        .values({
-          osId,
-          marco: "pedido_avaliacao:disparo",
-        })
+        .values({ osId: id, marco: "pedido_avaliacao:disparo" })
         .onConflictDoNothing({
           target: [notificacaoMarco.osId, notificacaoMarco.marco],
         })
         .returning({ id: notificacaoMarco.id });
-      if (claim.length > 0) {
-        claimId = claim[0].id;
-      }
-    } else {
-      claimId = "mock-claim-id";
-    }
+      return claim.length > 0;
+    });
 
-    if (claimId) {
+    if (await claimAvaliacao(osId)) {
+      const avaliacao: { whatsapp?: DespachoWhatsapp; email?: NotificacaoResultado } = {};
       if (deps.gateway || whatsappConfigurado()) {
-        resultado.whatsapp = await despacharWhatsapp(osId, "pedido_avaliacao", deps);
+        avaliacao.whatsapp = await despacharWhatsapp(osId, "pedido_avaliacao", deps);
       }
       const enviarEmail =
         deps.enviarEmail ??
         ((id, est) =>
           notificarMudancaEstadoOs(id, est, { forceMock: deps.forceMock }));
-      resultado.email = await enviarEmail(osId, "PEDIDO_AVALIACAO");
+      avaliacao.email = await enviarEmail(osId, "PEDIDO_AVALIACAO");
+      resultado.avaliacao = avaliacao;
     }
   }
 

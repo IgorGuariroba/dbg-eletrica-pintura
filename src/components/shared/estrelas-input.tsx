@@ -34,8 +34,8 @@ export function EstrelasInput({ value, onChange, disabled }: EstrelasInputProps)
           <Star
             className={`size-6 transition-all duration-150 ${
               star <= currentValue
-                ? "fill-amber-400 text-amber-400 scale-110"
-                : "text-muted-foreground/50 hover:text-amber-400"
+                ? "fill-rating text-rating scale-110"
+                : "text-muted-foreground/50 hover:text-rating"
             }`}
           />
         </Button>

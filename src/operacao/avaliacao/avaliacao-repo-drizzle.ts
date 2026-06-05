@@ -1,6 +1,6 @@
-import type { AvaliacaoRepo, SolicitationAvaliacaoView } from "./avaliacao-repo";
+import type { AvaliacaoRepo, SolicitacaoAvaliacaoView } from "./avaliacao-repo";
 import type { DB } from "@/db/client";
-import { eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, or } from "drizzle-orm";
 import * as schema from "@/db/schema";
 
 export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
@@ -49,10 +49,8 @@ export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
         });
     },
 
-    async carregarPorToken(token): Promise<SolicitationAvaliacaoView | null> {
-      const { and, eq, or, asc } = await import("drizzle-orm");
-
-      // 1. Get solicitation and client
+    async carregarPorToken(token): Promise<SolicitacaoAvaliacaoView | null> {
+      // 1. Solicitação + cliente.
       const [sol] = await db
         .select({
           id: schema.solicitacao.id,
@@ -68,14 +66,14 @@ export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
 
       if (!sol) return null;
 
-      // 2. Get general comment if any
+      // 2. Comentário geral, se houver.
       const [comGeral] = await db
         .select({ comentario: schema.comentarioGeral.comentario })
         .from(schema.comentarioGeral)
         .where(eq(schema.comentarioGeral.solicitacaoId, sol.id))
         .limit(1);
 
-      // 3. Get all eligible OS (CONCLUIDA or PAGA)
+      // 3. OS avaliáveis (CONCLUIDA ou PAGA).
       const ordens = await db
         .select({
           id: schema.ordemServico.id,
@@ -110,7 +108,7 @@ export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
         };
       }
 
-      // 4. Get existing evaluations for these OSs
+      // 4. Avaliações já existentes destas OS (pré-preenchimento).
       const osIds = ordens.map((o) => o.id);
       const evaluations = await db
         .select({
@@ -149,7 +147,6 @@ export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
 
     async verificarPertencimento(token, osIds) {
       if (osIds.length === 0) return true;
-      const { inArray, and, eq, or } = await import("drizzle-orm");
       const rows = await db
         .select({ id: schema.ordemServico.id })
         .from(schema.ordemServico)

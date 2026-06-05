@@ -1,6 +1,6 @@
 import { TokenInvalidoError } from "@/operacao/aprovacao-repo";
 import { NotaInvalidaError, OsNaoAvaliavelError } from "./avaliacao-repo";
-import type { AvaliacaoRepo, RegistrarAvaliacoesPayload, SolicitationAvaliacaoView } from "./avaliacao-repo";
+import type { AvaliacaoRepo, RegistrarAvaliacoesPayload, SolicitacaoAvaliacaoView } from "./avaliacao-repo";
 
 export async function registrarAvaliacoes(
   token: string,
@@ -48,7 +48,7 @@ export async function registrarAvaliacoes(
 export async function carregarParaAvaliar(
   token: string,
   repo: AvaliacaoRepo,
-): Promise<SolicitationAvaliacaoView> {
+): Promise<SolicitacaoAvaliacaoView> {
   const view = await repo.carregarPorToken(token);
   if (!view) {
     throw new TokenInvalidoError();

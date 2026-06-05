@@ -9,7 +9,7 @@ export interface RegistrarAvaliacoesPayload {
   comentarioGeral?: string | null;
 }
 
-export interface SolicitationAvaliacaoView {
+export interface SolicitacaoAvaliacaoView {
   token: string;
   clienteNome: string;
   clienteEmail: string | null;
@@ -51,7 +51,7 @@ export interface AvaliacaoRepo {
     }
   ): Promise<void>;
 
-  carregarPorToken(token: string): Promise<SolicitationAvaliacaoView | null>;
+  carregarPorToken(token: string): Promise<SolicitacaoAvaliacaoView | null>;
 
   verificarPertencimento(token: string, osIds: string[]): Promise<boolean>;
 
