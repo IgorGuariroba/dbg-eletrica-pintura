@@ -219,6 +219,49 @@ export const DocumentosEmail: React.FC<DocumentosEmailProps> = ({
   </Html>
 );
 
+export interface PedidoAvaliacaoEmailProps {
+  clienteNome: string;
+  urlPortal: string;
+}
+
+export const PedidoAvaliacaoEmail: React.FC<PedidoAvaliacaoEmailProps> = ({
+  clienteNome,
+  urlPortal,
+}) => (
+  <Html>
+    <Head />
+    <Body style={{ fontFamily: "sans-serif", backgroundColor: CORES.mutedBg, color: CORES.texto, padding: "20px" }}>
+      <Container style={{ backgroundColor: CORES.fundo, padding: "20px", borderRadius: "8px", border: `1px solid ${CORES.borda}` }}>
+        <Heading style={{ color: CORES.primaria, fontSize: "20px", marginBottom: "15px" }}>Olá, {clienteNome}!</Heading>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5" }}>
+          Sua opinião é muito importante para nós. Por favor, dedique um minuto para avaliar o serviço realizado na sua residência/empresa.
+        </Text>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5", marginTop: "20px" }}>
+          Acesse o link abaixo para avaliar a sua Ordem de Serviço com estrelas e deixar seus comentários:
+        </Text>
+        <Link
+          href={`${urlPortal}/avaliar`}
+          style={{
+            display: "inline-block",
+            backgroundColor: CORES.primaria,
+            color: CORES.primariaTexto,
+            padding: "10px 20px",
+            borderRadius: "6px",
+            textDecoration: "none",
+            fontWeight: "bold",
+            marginTop: "10px",
+          }}
+        >
+          Avaliar Serviço
+        </Link>
+        <Text style={{ fontSize: "11px", color: CORES.mutedTexto, marginTop: "30px", borderTop: `1px solid ${CORES.borda}`, paddingTop: "10px" }}>
+          Este é um e-mail automático enviado por DBG Elétrica e Pintura. Por favor, não responda a este e-mail.
+        </Text>
+      </Container>
+    </Body>
+  </Html>
+);
+
 // ============================================================
 // 2. Funções Auxiliares de Renderização
 // ============================================================
@@ -293,6 +336,11 @@ export const GarantiaAcionadaEmail: React.FC<GarantiaAcionadaEmailProps> = ({
 
 export async function renderizarEmailGarantiaAcionada(props: GarantiaAcionadaEmailProps): Promise<string> {
   const comp = React.createElement(GarantiaAcionadaEmail, props);
+  return await render(comp);
+}
+
+export async function renderizarEmailPedidoAvaliacao(props: PedidoAvaliacaoEmailProps): Promise<string> {
+  const comp = React.createElement(PedidoAvaliacaoEmail, props);
   return await render(comp);
 }
 

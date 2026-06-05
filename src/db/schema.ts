@@ -197,6 +197,9 @@ export const solicitacao = pgTable(
     lgpdAceito: boolean("lgpd_aceito").notNull().default(false),
     origem: varchar("origem", { length: 20 }).notNull().default("FORMULARIO"), // FORMULARIO | EXPRESS | MANUAL
     foraCobertura: boolean("fora_cobertura").notNull().default(false),
+    lembreteAvaliacaoEnviado: boolean("lembrete_avaliacao_enviado")
+      .notNull()
+      .default(false),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -622,6 +625,7 @@ export const solicitacaoRelations = relations(solicitacao, ({ one, many }) => ({
     references: [cliente.id],
   }),
   ordens: many(ordemServico),
+  comentarioGeral: one(comentarioGeral),
 }));
 
 export const ordemServicoRelations = relations(ordemServico, ({ one, many }) => ({
@@ -642,6 +646,7 @@ export const ordemServicoRelations = relations(ordemServico, ({ one, many }) => 
   orcamentos: many(orcamento),
   transicoes: many(transicaoOs),
   conflitos: many(osHistoricoConflito),
+  avaliacao: one(avaliacao),
 }));
 
 export const transicaoOsRelations = relations(transicaoOs, ({ one }) => ({
@@ -753,6 +758,69 @@ export const garantiaChamadoRelations = relations(garantiaChamado, ({ one }) => 
   osGarantia: one(ordemServico, {
     fields: [garantiaChamado.osGarantiaId],
     references: [ordemServico.id],
+  }),
+}));
+
+// ============================================================
+// Avaliação de OS pelo Cliente
+// ============================================================
+
+export const avaliacao = pgTable(
+  "avaliacao",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    osId: uuid("os_id")
+      .notNull()
+      .references(() => ordemServico.id, { onDelete: "restrict" }),
+    tecnicoId: uuid("tecnico_id").references(() => membro.id, {
+      onDelete: "set null",
+    }),
+    nota: integer("nota").notNull(),
+    comentarioOs: text("comentario_os"),
+    atorToken: varchar("ator_token", { length: 64 }).notNull(),
+    ip: varchar("ip", { length: 64 }).notNull(),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    osIdUq: uniqueIndex("avaliacao_os_id_uq").on(t.osId),
+  }),
+);
+
+export const comentarioGeral = pgTable("comentario_geral", {
+  solicitacaoId: uuid("solicitacao_id")
+    .primaryKey()
+    .references(() => solicitacao.id, { onDelete: "cascade" }),
+  comentario: text("comentario").notNull(),
+  atorToken: varchar("ator_token", { length: 64 }).notNull(),
+  ip: varchar("ip", { length: 64 }).notNull(),
+  criadoEm: timestamp("criado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const avaliacaoRelations = relations(avaliacao, ({ one }) => ({
+  os: one(ordemServico, {
+    fields: [avaliacao.osId],
+    references: [ordemServico.id],
+  }),
+  tecnico: one(membro, {
+    fields: [avaliacao.tecnicoId],
+    references: [membro.id],
+  }),
+}));
+
+export const comentarioGeralRelations = relations(comentarioGeral, ({ one }) => ({
+  solicitacao: one(solicitacao, {
+    fields: [comentarioGeral.solicitacaoId],
+    references: [solicitacao.id],
   }),
 }));
 

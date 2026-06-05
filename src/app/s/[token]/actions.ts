@@ -5,6 +5,9 @@ import { headers } from "next/headers";
 import { db } from "@/db/client";
 import { aprovarOrcamento, rejeitarOrcamento } from "@/operacao/aprovacao";
 import { criarAprovacaoRepoDrizzle } from "@/operacao/aprovacao-repo-drizzle";
+import { registrarAvaliacoes } from "@/operacao/avaliacao/avaliacao";
+import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
+import type { RegistrarAvaliacoesPayload } from "@/operacao/avaliacao/avaliacao-repo";
 
 function repo() {
   return criarAprovacaoRepoDrizzle(db);
@@ -32,4 +35,14 @@ export async function rejeitarOsAction(
 ): Promise<void> {
   await rejeitarOrcamento(token, osId, motivo, repo());
   revalidatePath(`/s/${token}`);
+}
+
+export async function registrarAvaliacaoAction(
+  token: string,
+  payload: RegistrarAvaliacoesPayload,
+): Promise<void> {
+  const ip = await ipDoCliente();
+  const repoAval = criarAvaliacaoRepoDrizzle(db);
+  await registrarAvaliacoes(token, payload, { ip }, repoAval);
+  revalidatePath(`/s/${token}/avaliar`);
 }

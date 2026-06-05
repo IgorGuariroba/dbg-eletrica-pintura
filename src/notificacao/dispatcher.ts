@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cliente, membro, ordemServico, solicitacao } from "@/db/schema";
+import { cliente, membro, ordemServico, solicitacao, notificacaoMarco } from "@/db/schema";
+import { TIPOS_PAGAVEIS } from "./lembrete-pagamento";
 import { enviarTemplate } from "./enviar-template";
 import { notificarMudancaEstadoOs, type NotificacaoResultado } from "./notificador";
 import {
@@ -65,6 +66,8 @@ export interface DespacharDeps {
   ) => Promise<GerarDocumentosResultado>;
   /** Força mock no envio de e-mail default (PDF/Resend). */
   forceMock?: boolean;
+  /** Obtém OS por ID (default: query Drizzle). */
+  obterOs?: (osId: string) => Promise<any>;
 }
 
 /**
@@ -79,10 +82,60 @@ export async function despacharEventoOs(
   estadoNovo: string,
   deps: DespacharDeps = {},
 ): Promise<DespachoResultado> {
-  const evento = MAPA_EVENTOS[estadoNovo];
-  if (!evento) return {};
+  const obterOs = deps.obterOs ?? (async (id) => {
+    const [row] = await db
+      .select()
+      .from(ordemServico)
+      .where(eq(ordemServico.id, id))
+      .limit(1);
+    return row;
+  });
+
+  const os = await obterOs(osId);
+  if (!os) return {};
 
   const resultado: DespachoResultado = {};
+
+  // Avaliação por token (Issue #51)
+  const pagavel = (TIPOS_PAGAVEIS as readonly string[]).includes(os.tipo);
+  const deveAvaliar = pagavel ? estadoNovo === "PAGA" : estadoNovo === "CONCLUIDA";
+
+  if (deveAvaliar) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(osId);
+    let claimId: string | undefined;
+
+    if (isUuid) {
+      const claim = await db
+        .insert(notificacaoMarco)
+        .values({
+          osId,
+          marco: "pedido_avaliacao:disparo",
+        })
+        .onConflictDoNothing({
+          target: [notificacaoMarco.osId, notificacaoMarco.marco],
+        })
+        .returning({ id: notificacaoMarco.id });
+      if (claim.length > 0) {
+        claimId = claim[0].id;
+      }
+    } else {
+      claimId = "mock-claim-id";
+    }
+
+    if (claimId) {
+      if (deps.gateway || whatsappConfigurado()) {
+        resultado.whatsapp = await despacharWhatsapp(osId, "pedido_avaliacao", deps);
+      }
+      const enviarEmail =
+        deps.enviarEmail ??
+        ((id, est) =>
+          notificarMudancaEstadoOs(id, est, { forceMock: deps.forceMock }));
+      resultado.email = await enviarEmail(osId, "PEDIDO_AVALIACAO");
+    }
+  }
+
+  const evento = MAPA_EVENTOS[estadoNovo];
+  if (!evento) return resultado;
 
   // Canal WhatsApp (ação imediata). Sem gateway injetado e sem Cloud API
   // configurada, pula o canal — não há como enviar/enfileirar (e-mail segue).
@@ -186,6 +239,8 @@ function montarVariaveis(
   switch (template) {
     case "orcamento_pronto":
       return { nome_cliente: ctx.clienteNome, link: ctx.urlPortal };
+    case "pedido_avaliacao":
+      return { nome_cliente: ctx.clienteNome, link: ctx.urlPortal + "/avaliar" };
     case "tecnico_a_caminho":
       return { nome_cliente: ctx.clienteNome, nome_tecnico: ctx.tecnicoNome };
     default:

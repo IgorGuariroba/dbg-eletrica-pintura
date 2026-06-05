@@ -18,9 +18,7 @@ import {
 } from "./templates";
 import { whatsappConfigurado, type GatewayWhatsApp } from "./whatsapp-gateway";
 
-// Só OS que exigem pagamento entram no lembrete — Preventiva e Garantia
-// concluem sem PAGA por natureza (ver fluxo-casos-uso e CONTEXT.md).
-const TIPOS_PAGAVEIS = ["NORMAL", "EXPRESS", "COMPLEMENTAR"] as const;
+export const TIPOS_PAGAVEIS = ["NORMAL", "EXPRESS", "COMPLEMENTAR"] as const;
 
 const HORAS_DIA1 = 24;
 const HORAS_DIA3 = 72;
