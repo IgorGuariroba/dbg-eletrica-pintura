@@ -780,6 +780,11 @@ export const avaliacao = pgTable(
     comentarioOs: text("comentario_os"),
     atorToken: varchar("ator_token", { length: 64 }).notNull(),
     ip: varchar("ip", { length: 64 }).notNull(),
+    // Campos de invalidação (Issue #53)
+    invalida: boolean("invalida").notNull().default(false),
+    motivoInvalidacao: text("motivo_invalidacao"),
+    invalidadaPor: varchar("invalidada_por", { length: 255 }),
+    invalidadaEm: timestamp("invalidada_em", { withTimezone: true }),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -841,6 +846,7 @@ export const alertaAvaliacao = pgTable(
     nota: integer("nota").notNull(),
     comentarioOs: text("comentario_os"),
     status: varchar("status", { length: 16 }).default("PENDENTE").notNull(),
+    resolvidoEm: timestamp("resolvido_em", { withTimezone: true }),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -853,7 +859,7 @@ export const alertaAvaliacao = pgTable(
   }),
 );
 
-export const alertaAvaliacaoRelations = relations(alertaAvaliacao, ({ one }) => ({
+export const alertaAvaliacaoRelations = relations(alertaAvaliacao, ({ one, many }) => ({
   os: one(ordemServico, {
     fields: [alertaAvaliacao.osId],
     references: [ordemServico.id],
@@ -864,6 +870,45 @@ export const alertaAvaliacaoRelations = relations(alertaAvaliacao, ({ one }) => 
   }),
   tecnico: one(membro, {
     fields: [alertaAvaliacao.tecnicoId],
+    references: [membro.id],
+  }),
+  tratativas: many(tratativa),
+}));
+
+// ============================================================
+// Tratativa de Avaliação (Issue #53)
+// ============================================================
+
+export const tratativa = pgTable("tratativa", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  alertaAvaliacaoId: uuid("alerta_avaliacao_id")
+    .notNull()
+    .references(() => alertaAvaliacao.id, { onDelete: "cascade" }),
+  osId: uuid("os_id")
+    .notNull()
+    .references(() => ordemServico.id, { onDelete: "restrict" }),
+  tipo: varchar("tipo", { length: 32 }).notNull(), // LIGOU | DESCONTO | OS_CORRECAO | OUTRO
+  descricao: text("descricao").notNull(),
+  responsavelId: uuid("responsavel_id").references(() => membro.id, {
+    onDelete: "set null",
+  }),
+  data: timestamp("data", { withTimezone: true }).notNull(),
+  criadoEm: timestamp("criado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const tratativaRelations = relations(tratativa, ({ one }) => ({
+  alerta: one(alertaAvaliacao, {
+    fields: [tratativa.alertaAvaliacaoId],
+    references: [alertaAvaliacao.id],
+  }),
+  os: one(ordemServico, {
+    fields: [tratativa.osId],
+    references: [ordemServico.id],
+  }),
+  responsavel: one(membro, {
+    fields: [tratativa.responsavelId],
     references: [membro.id],
   }),
 }));
