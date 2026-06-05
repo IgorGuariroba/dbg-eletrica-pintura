@@ -46,7 +46,7 @@ export function RankingTecnicos({ ranking }: RankingTecnicosProps) {
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1 text-sm font-semibold text-foreground">
                   {item.media != null ? item.media.toFixed(1) : "—"}
-                  <span className="text-amber-500">★</span>
+                  <span className="text-rating">★</span>
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {item.total} {item.total === 1 ? "avaliação" : "avaliações"}
