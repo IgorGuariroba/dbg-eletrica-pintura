@@ -8,6 +8,10 @@ config({ path: ".env.local" });
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const PREFIXO_WPP = "5511955502";
+// Relógio fixo dentro da janela 8h–20h (São Paulo); sem isso, o WhatsApp é
+// enfileirado fora do horário comercial e o gateway nunca é chamado, tornando
+// estes testes flaky por hora do dia (CI noturno enfileira em vez de enviar).
+const AGORA = new Date("2026-06-05T15:00:00-03:00");
 
 function fakeGateway(): GatewayWhatsApp & {
   chamadas: { destinatario: string; template: string; variaveis: Record<string, string> }[];
@@ -118,6 +122,7 @@ describe.skipIf(!hasDb)("Disparo de Pedido de Avaliação (Bloco B)", () => {
     await despacharEventoOs(os.id, "PAGA", {
       gateway,
       enviarEmail: mockEnviarEmail,
+      agora: AGORA,
     });
 
     const minhas = gateway.chamadas.filter((c) => c.destinatario === destinatario);
@@ -152,6 +157,7 @@ describe.skipIf(!hasDb)("Disparo de Pedido de Avaliação (Bloco B)", () => {
     await despacharEventoOs(prev.os.id, "CONCLUIDA", {
       gateway,
       enviarEmail: mockEnviarEmail,
+      agora: AGORA,
     });
 
     const prevWpp = gateway.chamadas.filter((c) => c.destinatario === wppPrev);
@@ -163,6 +169,7 @@ describe.skipIf(!hasDb)("Disparo de Pedido de Avaliação (Bloco B)", () => {
     await despacharEventoOs(norm.os.id, "CONCLUIDA", {
       gateway,
       enviarEmail: mockEnviarEmail,
+      agora: AGORA,
     });
 
     const normWpp = gateway.chamadas.filter((c) => c.destinatario === wppNorm);
@@ -185,12 +192,14 @@ describe.skipIf(!hasDb)("Disparo de Pedido de Avaliação (Bloco B)", () => {
     await despacharEventoOs(os.id, "PAGA", {
       gateway,
       enviarEmail: mockEnviarEmail,
+      agora: AGORA,
     });
 
     // Second call (should NOT trigger)
     await despacharEventoOs(os.id, "PAGA", {
       gateway,
       enviarEmail: mockEnviarEmail,
+      agora: AGORA,
     });
 
     const minhas = gateway.chamadas.filter((c) => c.destinatario === destinatario);
