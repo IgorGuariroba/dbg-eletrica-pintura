@@ -3,13 +3,13 @@ import { eq } from "drizzle-orm";
 import { ordemServico, solicitacao, cliente } from "@/db/schema";
 import { enviarTemplate } from "@/notificacao/enviar-template";
 import { criarTemplateRepo, normalizarWhatsapp, ordenarVariaveis } from "@/notificacao/templates";
-import { notificarMudancaEstadoOs } from "@/notificacao/notificador";
+import { criarEmailService, renderizarEmailReavaliacao } from "@/notificacao/email-service";
 import { whatsappConfigurado } from "@/notificacao/whatsapp-gateway";
 
 /**
  * Envia o convite de reavaliação ao cliente via WhatsApp + e-mail.
  * Usado pelo resolverTratativa após marcar o alerta como RESOLVIDO.
- * O link aponta para /s/{token}/reavaliar (não /avaliar).
+ * O link aponta especificamente para /s/{token}/reavaliar (não /avaliar).
  */
 export async function enviarReavaliacaoPorOsId(osId: string): Promise<void> {
   // 1. Carregar OS + solicitação + cliente
@@ -36,7 +36,7 @@ export async function enviarReavaliacaoPorOsId(osId: string): Promise<void> {
   }
 
   const [cli] = await db
-    .select({ nome: cliente.nome, whatsapp: cliente.whatsapp })
+    .select({ nome: cliente.nome, whatsapp: cliente.whatsapp, email: cliente.email })
     .from(cliente)
     .where(eq(cliente.id, sol.clienteId))
     .limit(1);
@@ -47,9 +47,10 @@ export async function enviarReavaliacaoPorOsId(osId: string): Promise<void> {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  // Link de reavaliação: /reavaliar (não /avaliar)
   const linkReavaliacao = `${siteUrl}/s/${sol.token}/reavaliar`;
 
-  // 2. WhatsApp (se configurado)
+  // 2. WhatsApp (se configurado) — template reavaliacao_pedido
   const destinatario = normalizarWhatsapp(cli.whatsapp);
   if (destinatario && whatsappConfigurado()) {
     const repo = criarTemplateRepo();
@@ -60,8 +61,21 @@ export async function enviarReavaliacaoPorOsId(osId: string): Promise<void> {
     await enviarTemplate({ destinatario, template: "reavaliacao_pedido", variaveis });
   }
 
-  // 3. E-mail (via notificador, estado fictício PEDIDO_AVALIACAO é reutilizado
-  //    para obter os dados — o e-mail de reavaliação compartilha o mesmo template
-  //    de pedido de avaliação com link diferente)
-  await notificarMudancaEstadoOs(osId, "PEDIDO_AVALIACAO");
+  // 3. E-mail — usa template dedicado PedidoReavaliacaoEmail com urlReavaliacao
+  //    apontando diretamente para /reavaliar (não /avaliar)
+  if (cli.email) {
+    const html = await renderizarEmailReavaliacao({
+      clienteNome: cli.nome,
+      urlReavaliacao: linkReavaliacao,
+    });
+
+    const emailService = criarEmailService();
+    await emailService.enviar({
+      para: cli.email,
+      assunto: "Sua opinião importa — como foi após nossa tratativa?",
+      html,
+    });
+  } else {
+    console.log(`[reavaliacao] cliente ${cli.nome} sem e-mail — skip e-mail`);
+  }
 }

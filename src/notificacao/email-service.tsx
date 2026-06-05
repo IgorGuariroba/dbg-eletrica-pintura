@@ -344,6 +344,57 @@ export async function renderizarEmailPedidoAvaliacao(props: PedidoAvaliacaoEmail
   return await render(comp);
 }
 
+// ----------------------------------------------------------------
+// Template de Reavaliação (Issue #53) — link /reavaliar
+// ----------------------------------------------------------------
+export interface PedidoReavaliacaoEmailProps {
+  clienteNome: string;
+  urlReavaliacao: string;
+}
+
+export const PedidoReavaliacaoEmail: React.FC<PedidoReavaliacaoEmailProps> = ({
+  clienteNome,
+  urlReavaliacao,
+}) => (
+  <Html>
+    <Head />
+    <Body style={{ fontFamily: "sans-serif", backgroundColor: CORES.mutedBg, color: CORES.texto, padding: "20px" }}>
+      <Container style={{ backgroundColor: CORES.fundo, padding: "20px", borderRadius: "8px", border: `1px solid ${CORES.borda}` }}>
+        <Heading style={{ color: CORES.primaria, fontSize: "20px", marginBottom: "15px" }}>Olá, {clienteNome}!</Heading>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5" }}>
+          Após nossa tratativa, gostaríamos de saber se sua experiência melhorou. Sua opinião nos ajuda a continuar evoluindo.
+        </Text>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5", marginTop: "20px" }}>
+          Acesse o link abaixo para reavaliar o atendimento:
+        </Text>
+        <Link
+          href={urlReavaliacao}
+          style={{
+            display: "inline-block",
+            backgroundColor: CORES.primaria,
+            color: CORES.primariaTexto,
+            padding: "10px 20px",
+            borderRadius: "6px",
+            textDecoration: "none",
+            fontWeight: "bold",
+            marginTop: "10px",
+          }}
+        >
+          Reavaliar Atendimento
+        </Link>
+        <Text style={{ fontSize: "11px", color: CORES.mutedTexto, marginTop: "30px", borderTop: `1px solid ${CORES.borda}`, paddingTop: "10px" }}>
+          Este é um e-mail automático enviado por DBG Elétrica e Pintura. Por favor, não responda a este e-mail.
+        </Text>
+      </Container>
+    </Body>
+  </Html>
+);
+
+export async function renderizarEmailReavaliacao(props: PedidoReavaliacaoEmailProps): Promise<string> {
+  const comp = React.createElement(PedidoReavaliacaoEmail, props);
+  return await render(comp);
+}
+
 // ============================================================
 // 3. Fábrica do EmailService (Resend / Mock)
 // ============================================================
