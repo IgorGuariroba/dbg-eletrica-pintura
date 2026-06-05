@@ -56,5 +56,12 @@ export async function finalizarAvaliacao(
     }
   }
 
+  // Reavaliação positiva (≥ 4★) pós-tratativa: fecha o ciclo marcando o alerta
+  // resolvido como REAVALIADO. No-op para primeiras avaliações altas (sem alerta).
+  const aprovados = payload.avaliacoes.filter((a) => a.nota >= NOTA_MINIMA_QUALIFICACAO);
+  for (const a of aprovados) {
+    await deps.alertaRepo.marcarReavaliado(a.osId);
+  }
+
   return { qualificada, googleReviewUrl };
 }

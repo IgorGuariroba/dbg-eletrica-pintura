@@ -251,4 +251,60 @@ describe.skipIf(!hasDb)("Orquestrador finalizarAvaliacao (Bloco D)", () => {
       googleReviewUrl: null,
     });
   });
+
+  it("D4: reavaliação >= 4★ marca alerta RESOLVIDO como REAVALIADO", async () => {
+    const token = `tok-test-d4-${Math.random().toString(36).slice(2, 10)}`;
+    const { os, sol, tecnicoId } = await seedContexto({ token, comTecnico: true });
+
+    // Alerta já passou por tratativa (status RESOLVIDO).
+    await db.insert(schema.alertaAvaliacao).values({
+      osId: os.id,
+      solicitacaoId: sol.id,
+      tecnicoId,
+      nota: 2,
+      status: "RESOLVIDO",
+      resolvidoEm: new Date(),
+    });
+
+    const avaliacaoRepo = criarAvaliacaoRepoDrizzle(db);
+    const alertaRepo = criarAlertaAvaliacaoRepoDrizzle(db);
+    const configRepo = criarOperacaoConfigRepoDrizzle(db);
+
+    await finalizarAvaliacao(
+      token,
+      { avaliacoes: [{ osId: os.id, nota: 5, comentarioOs: "Resolvido, obrigado" }] },
+      { ip: "127.0.0.1" },
+      { avaliacaoRepo, alertaRepo, configRepo },
+    );
+
+    const [alerta] = await db
+      .select()
+      .from(schema.alertaAvaliacao)
+      .where(eq(schema.alertaAvaliacao.osId, os.id));
+
+    expect(alerta.status).toBe("REAVALIADO");
+  });
+
+  it("D5: primeira avaliação >= 4★ sem alerta não cria nem marca nada", async () => {
+    const token = `tok-test-d5-${Math.random().toString(36).slice(2, 10)}`;
+    const { os } = await seedContexto({ token, comTecnico: true });
+
+    const avaliacaoRepo = criarAvaliacaoRepoDrizzle(db);
+    const alertaRepo = criarAlertaAvaliacaoRepoDrizzle(db);
+    const configRepo = criarOperacaoConfigRepoDrizzle(db);
+
+    await finalizarAvaliacao(
+      token,
+      { avaliacoes: [{ osId: os.id, nota: 5, comentarioOs: "Ótimo" }] },
+      { ip: "127.0.0.1" },
+      { avaliacaoRepo, alertaRepo, configRepo },
+    );
+
+    const alertas = await db
+      .select()
+      .from(schema.alertaAvaliacao)
+      .where(eq(schema.alertaAvaliacao.osId, os.id));
+
+    expect(alertas).toHaveLength(0);
+  });
 });
