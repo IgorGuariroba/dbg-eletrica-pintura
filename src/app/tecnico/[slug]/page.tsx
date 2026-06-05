@@ -2,11 +2,12 @@ import { notFound } from "next/navigation";
 import { db } from "@/db/client";
 import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
 import { criarPortfolioRepoDrizzle } from "@/marketing/portfolio-repo-drizzle";
+import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo-drizzle";
 import { urlPublicaFoto } from "@/marketing/copiador-r2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, UserCheck } from "lucide-react";
+import { ShieldCheck, Star, UserCheck } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -33,7 +34,10 @@ export default async function TecnicoPerfilPage({ params }: Props) {
     notFound();
   }
 
-  const trabalhos = await carregarTrabalhos(tecnico.id);
+  const [trabalhos, notaMedia] = await Promise.all([
+    carregarTrabalhos(tecnico.id),
+    criarNotaTecnicoRepoDrizzle(db).obterNotaMedia(tecnico.id),
+  ]);
   const inicial = tecnico.nome.charAt(0).toUpperCase();
 
   return (
@@ -52,6 +56,17 @@ export default async function TecnicoPerfilPage({ params }: Props) {
             <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
               {tecnico.nome}
             </CardTitle>
+            {notaMedia && notaMedia.total > 0 && (
+              <div className="flex items-center justify-center gap-1 pt-1">
+                <Star className="size-4 fill-primary text-primary" aria-hidden />
+                <span className="text-sm font-semibold text-foreground">
+                  {notaMedia.media !== null ? notaMedia.media.toFixed(1) : "—"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  ({notaMedia.total} avaliação{notaMedia.total !== 1 ? "ões" : ""})
+                </span>
+              </div>
+            )}
             <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
               {tecnico.especialidades.map((esp) => (
                 <Badge key={esp} variant="secondary" className="text-xs uppercase tracking-wider font-semibold">
