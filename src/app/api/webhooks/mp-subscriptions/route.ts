@@ -45,6 +45,20 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "assinatura inválida" }, { status: 401 });
   }
 
+  // Chave de idempotência: o `id` da notificação do MP — estável por evento e
+  // reusado nas retentativas da MESMA notificação. Vem no corpo (v2) ou no query
+  // `id` (v1). NÃO cair para `x-request-id` (muda a cada entrega → retry seria
+  // reprocessado) nem para `data.id` (= preapproval → colapsaria todos os
+  // eventos da assinatura). Sem id estável, não há como garantir idempotência:
+  // 400 faz o MP reentregar.
+  const notificationId = body?.id ?? url.searchParams.get("id");
+  if (notificationId == null || notificationId === "") {
+    return NextResponse.json(
+      { error: "notificação sem id" },
+      { status: 400 },
+    );
+  }
+
   const recurso = await criarGatewayMercadoPagoAssinatura().buscarAssinatura(
     String(dataId),
   );
@@ -54,11 +68,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ignorado: true });
   }
 
-  // Chave de idempotência: id da notificação (estável por evento), caindo para
-  // o x-request-id (único por entrega). NÃO usar `data.id` (= preapproval) como
-  // fallback — colapsaria todos os eventos da mesma assinatura num só, fazendo
-  // transições posteriores (ex.: cancelled após authorized) parecerem duplicadas.
-  const eventId = String(body?.id ?? requestId);
+  const eventId = String(notificationId);
   const { aplicado } = await processarEventoAssinatura(
     { eventId, preapprovalIdMp: String(dataId), tipo },
     { repo: criarAssinaturaRepoDrizzle(db) },

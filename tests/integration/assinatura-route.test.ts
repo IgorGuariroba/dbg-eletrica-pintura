@@ -162,6 +162,33 @@ describe.skipIf(!hasDb)("POST /api/webhooks/mp-subscriptions", () => {
     }
   });
 
+  it("notificação sem id (idempotência insegura) retorna 400", async () => {
+    const preapproval = await seedAssinatura();
+    buscarAssinatura.mockResolvedValue({ id: preapproval, status: "authorized" });
+    const ts = "1700000000";
+    const reqSemId = new Request(
+      "https://dbg.test/api/webhooks/mp-subscriptions",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-signature": assinar(preapproval, "req-noid", ts),
+          "x-request-id": "req-noid",
+        },
+        // Sem `id` no corpo e sem query `id`.
+        body: JSON.stringify({
+          type: "subscription_preapproval",
+          data: { id: preapproval },
+        }),
+      },
+    );
+
+    const res = await POST(reqSemId);
+
+    expect(res.status).toBe(400);
+    expect(await statusDe(preapproval)).toBe("PENDENTE");
+  });
+
   it("evento authorized retorna 200 e marca a assinatura ATIVA", async () => {
     const preapproval = await seedAssinatura();
     buscarAssinatura.mockResolvedValue({ id: preapproval, status: "authorized" });
