@@ -190,6 +190,13 @@
       "when": 1780691543508,
       "tag": "0026_remarkable_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1780858795710,
+      "tag": "0027_living_firebird",
+      "breakpoints": true
     }
   ]
 }

@@ -28,6 +28,9 @@ export default async function setup() {
     servico,
     solicitacao,
     garantiaChamado,
+    assinatura,
+    assinaturaEvento,
+    plano,
   } = await import("@/db/schema");
   const { like, or, inArray } = await import("drizzle-orm");
 
@@ -60,6 +63,14 @@ export default async function setup() {
 
   // Catálogo de teste ("Srv ...") — só após remover itens de orçamento acima.
   await db.delete(servico).where(like(servico.nome, "Srv %"));
+
+  // Assinaturas de teste: `assinatura` referencia cliente E plano (FK restrict),
+  // então apagar antes deles. `assinatura_evento` não tem FK (preapproval "pre-").
+  await db
+    .delete(assinaturaEvento)
+    .where(like(assinaturaEvento.preapprovalIdMp, "pre-%"));
+  await db.delete(assinatura).where(like(assinatura.preapprovalIdMp, "pre-%"));
+  await db.delete(plano).where(like(plano.nome, "Plano %"));
 
   // Clientes semeados ("Cli ", "Teste ", "A ", "A novo ").
   await db
