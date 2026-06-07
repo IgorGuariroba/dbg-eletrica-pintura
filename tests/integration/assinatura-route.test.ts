@@ -145,6 +145,23 @@ describe.skipIf(!hasDb)("POST /api/webhooks/mp-subscriptions", () => {
     expect(res.status).toBe(401);
   });
 
+  it("sem MP_WEBHOOK_SECRET configurado retorna 401 (fail-closed)", async () => {
+    vi.stubEnv("MP_WEBHOOK_SECRET", "");
+    try {
+      const res = await POST(
+        req({
+          notificationId: "notif-noscrt",
+          preapprovalId: "pre-x",
+          requestId: "req-x",
+          xSignature: "ts=1700000000,v1=deadbeef",
+        }),
+      );
+      expect(res.status).toBe(401);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("evento authorized retorna 200 e marca a assinatura ATIVA", async () => {
     const preapproval = await seedAssinatura();
     buscarAssinatura.mockResolvedValue({ id: preapproval, status: "authorized" });

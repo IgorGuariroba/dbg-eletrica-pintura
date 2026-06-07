@@ -22,7 +22,16 @@ export async function POST(request: Request): Promise<NextResponse> {
   };
   const dataId = url.searchParams.get("data.id") ?? body?.data?.id;
   const requestId = request.headers.get("x-request-id") ?? "";
-  const secret = process.env.MP_WEBHOOK_SECRET ?? "";
+
+  // Fail-closed: sem segredo configurado não há como validar a origem. Aceitar
+  // (HMAC com chave vazia) abriria a porta para notificações forjadas.
+  const secret = process.env.MP_WEBHOOK_SECRET;
+  if (!secret) {
+    return NextResponse.json(
+      { error: "webhook não configurado" },
+      { status: 401 },
+    );
+  }
 
   const ok =
     dataId != null &&
