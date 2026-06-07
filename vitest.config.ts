@@ -48,6 +48,8 @@ export default defineConfig({
         "src/cliente/vinculacao-repo.ts",
         "src/pagamento/pagamento-repo.ts",
         "src/pagamento/gateway.ts",
+        "src/assinatura/assinatura-repo.ts",
+        "src/assinatura/gateway.ts",
         "src/portal/historico-repo.ts",
         "src/catalogo/servico-repo.ts",
         "src/operacao/config-repo.ts",
@@ -64,6 +66,7 @@ export default defineConfig({
         // Adapters de I/O externo (SDKs Mercado Pago / R2-S3): fronteira,
         // testados via e2e/integração, não unit.
         "src/pagamento/mercadopago-client.ts",
+        "src/assinatura/mercadopago-assinatura.ts",
         "src/catalogo/r2-client.ts",
         "src/marketing/copiador-r2.ts",
         // Orquestração de sync offline do PWA: usa APIs de browser
