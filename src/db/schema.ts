@@ -913,5 +913,83 @@ export const tratativaRelations = relations(tratativa, ({ one }) => ({
   }),
 }));
 
+// ============================================================
+// Assinatura (Fase 5 — recorrência via Mercado Pago Subscriptions)
+// ============================================================
+
+// Status normalizado a partir dos eventos do MP (ADR-0006: inadimplência
+// delegada ao MP; o sistema só reflete o estado).
+export const statusAssinaturaEnum = pgEnum("status_assinatura", [
+  "PENDENTE", // pre-approval criado, aguardando 1ª autorização
+  "ATIVA", // authorized / payment_recovered
+  "PAUSADA", // paused
+  "CANCELADA", // cancelled
+  "INADIMPLENTE", // payment_failed (antes de o MP cancelar de vez)
+]);
+
+// Plano mínimo (FK alvo). CRUD completo (benefícios, % desconto, UI) é o #56.
+export const plano = pgTable("plano", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  nome: varchar("nome", { length: 120 }).notNull(),
+  preco: decimal("preco", { precision: 10, scale: 2 }).notNull(),
+  // preApprovalPlanId do MP (template de cobrança). Nullable: o plano pode
+  // existir no DBG antes de ser espelhado no MP (#56 preenche).
+  preapprovalPlanIdMp: varchar("preapproval_plan_id_mp", { length: 64 }),
+  ativo: boolean("ativo").notNull().default(true),
+  criadoEm: timestamp("criado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const assinatura = pgTable(
+  "assinatura",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clienteId: uuid("cliente_id")
+      .notNull()
+      .references(() => cliente.id, { onDelete: "restrict" }),
+    planoId: uuid("plano_id")
+      .notNull()
+      .references(() => plano.id, { onDelete: "restrict" }),
+    status: statusAssinaturaEnum("status").notNull().default("PENDENTE"),
+    // preapproval_id do MP — 1 pre-approval = 1 assinatura.
+    preapprovalIdMp: varchar("preapproval_id_mp", { length: 64 }),
+    inicio: timestamp("inicio", { withTimezone: true }),
+    fimCicloAtual: timestamp("fim_ciclo_atual", { withTimezone: true }),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    canceladoEm: timestamp("cancelado_em", { withTimezone: true }),
+    motivoCancelamento: text("motivo_cancelamento"),
+  },
+  (t) => ({
+    preapprovalUq: uniqueIndex("assinatura_preapproval_uq").on(
+      t.preapprovalIdMp,
+    ),
+  }),
+);
+
+// Idempotência de eventos de webhook (espelha o truque da tabela `pagamento`):
+// event_id como PK + onConflictDoNothing → mesmo evento 2x persiste 1x.
+export const assinaturaEvento = pgTable("assinatura_evento", {
+  eventId: varchar("event_id", { length: 80 }).primaryKey(),
+  preapprovalIdMp: varchar("preapproval_id_mp", { length: 64 }).notNull(),
+  tipo: varchar("tipo", { length: 40 }).notNull(),
+  recebidoEm: timestamp("recebido_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const assinaturaRelations = relations(assinatura, ({ one }) => ({
+  cliente: one(cliente, {
+    fields: [assinatura.clienteId],
+    references: [cliente.id],
+  }),
+  plano: one(plano, {
+    fields: [assinatura.planoId],
+    references: [plano.id],
+  }),
+}));
+
 
 

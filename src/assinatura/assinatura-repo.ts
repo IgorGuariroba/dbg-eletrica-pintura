@@ -1,0 +1,45 @@
+/** Status normalizado da assinatura (espelha `statusAssinaturaEnum`). */
+export type StatusAssinatura =
+  | "PENDENTE"
+  | "ATIVA"
+  | "PAUSADA"
+  | "CANCELADA"
+  | "INADIMPLENTE";
+
+/** Evento de webhook a registrar para idempotência. */
+export interface RegistroEventoAssinatura {
+  eventId: string;
+  preapprovalIdMp: string;
+  tipo: string;
+}
+
+/** Campos atualizáveis ao aplicar um evento ao estado da assinatura. */
+export interface PatchAssinatura {
+  status: StatusAssinatura;
+  inicio?: Date;
+  fimCicloAtual?: Date;
+  canceladoEm?: Date;
+  motivoCancelamento?: string;
+}
+
+/** Dados para criar a linha de assinatura no estado inicial. */
+export interface NovaAssinatura {
+  clienteId: string;
+  planoId: string;
+  preapprovalIdMp: string;
+}
+
+export interface AssinaturaRepo {
+  /** Cria a assinatura (status default PENDENTE). Retorna o id gerado. */
+  criar(a: NovaAssinatura): Promise<{ id: string }>;
+  /**
+   * Registra o evento de webhook. Idempotente pela PK `event_id`:
+   * retorna `true` se inseriu agora, `false` se já existia (evento duplicado).
+   */
+  registrarEvento(e: RegistroEventoAssinatura): Promise<boolean>;
+  /** Aplica o patch de estado à assinatura identificada pelo preapproval. */
+  atualizarStatus(
+    preapprovalIdMp: string,
+    patch: PatchAssinatura,
+  ): Promise<void>;
+}
