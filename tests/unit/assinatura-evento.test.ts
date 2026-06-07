@@ -9,7 +9,7 @@ import { processarEventoAssinatura } from "@/assinatura/processar-evento";
  * Fake em memória do repositório: observa o último patch aplicado por
  * preapproval_id e registra event_ids vistos (idempotência).
  */
-function fakeRepo() {
+function fakeRepo(statusAnterior?: PatchAssinatura["status"]) {
   const patches = new Map<string, PatchAssinatura>();
   const eventos = new Set<string>();
   const repo: AssinaturaRepo = {
@@ -23,6 +23,9 @@ function fakeRepo() {
     },
     async atualizarStatus(preapprovalId, patch) {
       patches.set(preapprovalId, patch);
+    },
+    async statusAtual() {
+      return statusAnterior ?? null;
     },
   };
   const status = {
@@ -108,6 +111,46 @@ describe("processarEventoAssinatura", () => {
     );
 
     expect(status.get("pre-1")).toBe("PENDENTE");
+  });
+
+  it("authorized na 1ª ativação (anterior PENDENTE) envia boas-vindas", async () => {
+    const { repo } = fakeRepo("PENDENTE");
+    const enviados: string[] = [];
+
+    await processarEventoAssinatura(
+      { eventId: "evt-bv1", preapprovalIdMp: "pre-1", tipo: "authorized" },
+      { repo, enviarBoasVindas: async (id) => void enviados.push(id) },
+    );
+
+    expect(enviados).toEqual(["pre-1"]);
+  });
+
+  it("authorized recorrente (anterior ATIVA) não reenvia boas-vindas", async () => {
+    const { repo } = fakeRepo("ATIVA");
+    const enviados: string[] = [];
+
+    await processarEventoAssinatura(
+      { eventId: "evt-bv2", preapprovalIdMp: "pre-1", tipo: "authorized" },
+      { repo, enviarBoasVindas: async (id) => void enviados.push(id) },
+    );
+
+    expect(enviados).toHaveLength(0);
+  });
+
+  it("payment_recovered não dispara boas-vindas", async () => {
+    const { repo } = fakeRepo("INADIMPLENTE");
+    const enviados: string[] = [];
+
+    await processarEventoAssinatura(
+      {
+        eventId: "evt-bv3",
+        preapprovalIdMp: "pre-1",
+        tipo: "payment_recovered",
+      },
+      { repo, enviarBoasVindas: async (id) => void enviados.push(id) },
+    );
+
+    expect(enviados).toHaveLength(0);
   });
 
   it("evento duplicado (mesmo event_id) não reaplica", async () => {

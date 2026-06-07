@@ -9,10 +9,12 @@ import {
   ClipboardList,
   DollarSign,
   ImageIcon,
+  Layers,
   LayoutDashboard,
   Settings,
   Star,
   Users,
+  UserCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,6 +41,18 @@ const ITENS: Item[] = [
   { label: "Catálogo", href: "/admin/catalogo", icon: Boxes, modulo: "CATALOGO" },
   { label: "Equipe", href: "/admin/equipe", icon: Users, modulo: "EQUIPE" },
   { label: "Financeiro", href: "/admin/financeiro" as Route, icon: DollarSign, modulo: "FINANCEIRO" },
+  {
+    label: "Planos",
+    href: "/admin/financeiro/planos" as Route,
+    icon: Layers,
+    modulo: "FINANCEIRO",
+  },
+  {
+    label: "Assinantes",
+    href: "/admin/financeiro/assinantes" as Route,
+    icon: UserCheck,
+    modulo: "FINANCEIRO",
+  },
   {
     label: "Portfólio",
     href: "/admin/marketing/portfolio" as Route,

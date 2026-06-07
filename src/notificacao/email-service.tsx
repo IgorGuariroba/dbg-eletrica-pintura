@@ -345,6 +345,55 @@ export async function renderizarEmailPedidoAvaliacao(props: PedidoAvaliacaoEmail
 }
 
 // ----------------------------------------------------------------
+// Template de Boas-vindas de Assinatura (Issue #56) — enviado quando a
+// assinatura é ativada (webhook authorized, 1ª vez).
+// ----------------------------------------------------------------
+export interface BoasVindasEmailProps {
+  clienteNome: string;
+  planoNome: string;
+  beneficios: string[];
+  /** Data da próxima cobrança (já formatada, ex: "07/07/2026"). */
+  proximaCobranca: string;
+}
+
+export const BoasVindasEmail: React.FC<BoasVindasEmailProps> = ({
+  clienteNome,
+  planoNome,
+  beneficios,
+  proximaCobranca,
+}) => (
+  <Html>
+    <Head />
+    <Body style={{ fontFamily: "sans-serif", backgroundColor: CORES.mutedBg, color: CORES.texto, padding: "20px" }}>
+      <Container style={{ backgroundColor: CORES.fundo, padding: "20px", borderRadius: "8px", border: `1px solid ${CORES.borda}` }}>
+        <Heading style={{ color: CORES.primaria, fontSize: "20px", marginBottom: "15px" }}>
+          Bem-vindo(a) ao plano {planoNome}, {clienteNome}!
+        </Heading>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5" }}>
+          Sua assinatura foi ativada com sucesso. A partir de agora você conta com os seguintes benefícios:
+        </Text>
+        <ul style={{ fontSize: "14px", lineHeight: "1.6", paddingLeft: "20px" }}>
+          {beneficios.map((b) => (
+            <li key={b}>{b}</li>
+          ))}
+        </ul>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5", marginTop: "20px" }}>
+          Sua próxima cobrança está prevista para <strong>{proximaCobranca}</strong>.
+        </Text>
+        <Text style={{ fontSize: "11px", color: CORES.mutedTexto, marginTop: "30px", borderTop: `1px solid ${CORES.borda}`, paddingTop: "10px" }}>
+          Este é um e-mail automático enviado por DBG Elétrica e Pintura. Por favor, não responda a este e-mail.
+        </Text>
+      </Container>
+    </Body>
+  </Html>
+);
+
+export async function renderizarEmailBoasVindas(props: BoasVindasEmailProps): Promise<string> {
+  const comp = React.createElement(BoasVindasEmail, props);
+  return await render(comp);
+}
+
+// ----------------------------------------------------------------
 // Template de Reavaliação (Issue #53) — link /reavaliar
 // ----------------------------------------------------------------
 export interface PedidoReavaliacaoEmailProps {

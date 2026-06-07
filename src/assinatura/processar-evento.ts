@@ -40,6 +40,12 @@ export interface ProcessarEventoDeps {
    * slice #58; aqui só expomos o ponto de extensão (default no-op).
    */
   notificarFalha?: (preapprovalIdMp: string) => void;
+  /**
+   * Envio do e-mail de boas-vindas. Disparado só na 1ª ativação da assinatura
+   * (PENDENTE → ATIVA via `authorized`), nunca em cobranças recorrentes nem na
+   * recuperação de inadimplência (`payment_recovered`).
+   */
+  enviarBoasVindas?: (preapprovalIdMp: string) => Promise<void>;
 }
 
 export interface ProcessarEventoResultado {
@@ -63,6 +69,14 @@ export async function processarEventoAssinatura(
   });
   if (!inserido) return { aplicado: false };
 
+  // Boas-vindas só na 1ª ativação: lê o status anterior antes de aplicar o
+  // patch. `authorized` recorrente (anterior já ATIVA) não reenvia; recuperação
+  // de inadimplência chega como `payment_recovered` (tipo diferente), excluída.
+  const primeiraAtivacao =
+    evento.tipo === "authorized" &&
+    deps.enviarBoasVindas != null &&
+    (await deps.repo.statusAtual?.(evento.preapprovalIdMp)) === "PENDENTE";
+
   const patch: PatchAssinatura = { status: STATUS_POR_TIPO[evento.tipo] };
   if (evento.tipo === "cancelled") {
     patch.canceladoEm = agora;
@@ -72,6 +86,9 @@ export async function processarEventoAssinatura(
   await deps.repo.atualizarStatus(evento.preapprovalIdMp, patch);
   if (evento.tipo === "payment_failed") {
     deps.notificarFalha?.(evento.preapprovalIdMp);
+  }
+  if (primeiraAtivacao) {
+    await deps.enviarBoasVindas?.(evento.preapprovalIdMp);
   }
   return { aplicado: true };
 }

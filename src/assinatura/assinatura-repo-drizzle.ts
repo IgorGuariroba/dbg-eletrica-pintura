@@ -44,5 +44,14 @@ export function criarAssinaturaRepoDrizzle(db: DB): AssinaturaRepo {
         })
         .where(eq(assinatura.preapprovalIdMp, preapprovalIdMp));
     },
+
+    async statusAtual(preapprovalIdMp) {
+      const [row] = await db
+        .select({ status: assinatura.status })
+        .from(assinatura)
+        .where(eq(assinatura.preapprovalIdMp, preapprovalIdMp))
+        .limit(1);
+      return row?.status ?? null;
+    },
   };
 }

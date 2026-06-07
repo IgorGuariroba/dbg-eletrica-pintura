@@ -32,6 +32,11 @@ export interface NovoOrcamento {
   itens: ItemPersistir[];
   totalMaoDeObra: string;
   totalDeslocamento: string;
+  /** Desconto de plano congelado no ato (assinante ativo). Default "0". */
+  descontoPlano?: string;
+  /** Percentual do desconto aplicado. Default "0". */
+  percentualDescontoPlano?: string;
+  /** Já líquido do desconto de plano, se houver. */
   total: string;
   validoAte: Date;
 }
@@ -41,6 +46,12 @@ export interface OrcamentoRepo {
   carregarOsParaOrcamento(osId: string): Promise<OsParaOrcamento | null>;
   /** Preços autoritativos dos serviços informados. */
   buscarPrecosServicos(ids: string[]): Promise<ServicoPreco[]>;
+  /**
+   * Percentual de desconto do plano do cliente da OS, **somente** se houver
+   * assinatura ATIVA. Retorna "0" caso contrário. Opcional: repositórios que
+   * não conhecem assinatura (ex.: testes legados) são tratados como "0".
+   */
+  buscarPercentualDescontoAssinante?(osId: string): Promise<string>;
   /**
    * Persiste orçamento + itens e transita a OS NOVA → ORÇADA de forma atômica
    * (só vence se a OS ainda está NOVA e atribuída ao técnico). Retorna o id do
