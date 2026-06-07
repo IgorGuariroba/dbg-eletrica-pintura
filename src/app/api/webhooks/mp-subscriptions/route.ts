@@ -45,8 +45,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ignorado: true });
   }
 
-  // Id da notificação como chave de idempotência; cai para request-id/data.id.
-  const eventId = String(body?.id ?? requestId ?? dataId);
+  // Chave de idempotência: id da notificação (estável por evento), caindo para
+  // o x-request-id (único por entrega). NÃO usar `data.id` (= preapproval) como
+  // fallback — colapsaria todos os eventos da mesma assinatura num só, fazendo
+  // transições posteriores (ex.: cancelled após authorized) parecerem duplicadas.
+  const eventId = String(body?.id ?? requestId);
   const { aplicado } = await processarEventoAssinatura(
     { eventId, preapprovalIdMp: String(dataId), tipo },
     { repo: criarAssinaturaRepoDrizzle(db) },

@@ -163,6 +163,36 @@ describe.skipIf(!hasDb)("POST /api/webhooks/mp-subscriptions", () => {
     expect(await statusDe(preapproval)).toBe("ATIVA");
   });
 
+  it("eventos distintos na mesma assinatura aplicam ambos (não colapsam)", async () => {
+    const preapproval = await seedAssinatura();
+    const ts = "1700000000";
+
+    buscarAssinatura.mockResolvedValue({ id: preapproval, status: "authorized" });
+    await POST(
+      req({
+        notificationId: "notif-a1",
+        preapprovalId: preapproval,
+        requestId: "req-a1",
+        xSignature: assinar(preapproval, "req-a1", ts),
+      }),
+    );
+    expect(await statusDe(preapproval)).toBe("ATIVA");
+
+    // Mesmo preapproval, evento (notificação) diferente: deve aplicar.
+    buscarAssinatura.mockResolvedValue({ id: preapproval, status: "cancelled" });
+    const res = await POST(
+      req({
+        notificationId: "notif-a2",
+        preapprovalId: preapproval,
+        requestId: "req-a2",
+        xSignature: assinar(preapproval, "req-a2", ts),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(await statusDe(preapproval)).toBe("CANCELADA");
+  });
+
   it("notificação duplicada (mesmo id) aplica efeito uma única vez", async () => {
     const preapproval = await seedAssinatura();
     buscarAssinatura.mockResolvedValue({ id: preapproval, status: "authorized" });
