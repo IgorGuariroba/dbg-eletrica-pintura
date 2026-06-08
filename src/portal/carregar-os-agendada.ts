@@ -5,7 +5,7 @@ import { db } from "@/db/client";
 import { ordemServico, solicitacao, cliente } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { exigirPortal } from "@/portal/guard";
-import { dentroDaJanelaCliente } from "@/operacao/reagendamento";
+import { dentroDaJanelaCliente } from "@/operacao/agendamento";
 import { urlWhatsApp } from "@/lib/contato";
 
 export interface OsAgendadaPortal {

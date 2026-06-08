@@ -16,7 +16,7 @@ import { carregarSolicitacaoDoCliente, fotosOsR2Port, montarDocumentosPortalOs, 
 import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { formatBRL } from "@/lib/utils";
 import { LABEL_CATEGORIA, VARIANTE_ESTADO, dataCurta } from "@/portal/ui-helpers";
-import { dentroDaJanelaCliente } from "@/operacao/reagendamento";
+import { dentroDaJanelaCliente } from "@/operacao/agendamento";
 import { criarGarantiaRepoDrizzle } from "@/operacao/garantia/garantia-repo-drizzle";
 import { avaliarAcionamentoGarantia } from "@/operacao/garantia/avaliar-acionamento";
 import { AcionarGarantiaBotao } from "@/components/shared/acionar-garantia-botao";
