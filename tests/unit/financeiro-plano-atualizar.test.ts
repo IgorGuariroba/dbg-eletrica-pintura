@@ -11,6 +11,7 @@ function planoFixo(over: Partial<Plano> = {}): Plano {
   return {
     id: "pln-1",
     nome: "Conforto",
+    slug: "conforto",
     preco: "149.90",
     beneficios: null,
     percentualDesconto: "10",
@@ -33,6 +34,9 @@ function fakeRepo() {
     async atualizar(_id, mudancas) {
       mudancasRecebidas.push(mudancas);
       atual = { ...atual, ...mudancas };
+      return atual;
+    },
+    async buscarPorSlug() {
       return atual;
     },
     async toggleAtivo() {

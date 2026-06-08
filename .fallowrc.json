@@ -4,7 +4,8 @@
     "src/app/sw.ts",
     "scripts/*.ts",
     "configure-r2-cors.js",
-    "src/db/migrate-slugs.ts"
+    "src/db/migrate-slugs.ts",
+    "src/db/migrate-slugs-plano.ts"
   ],
   "ignoreDependencies": ["shadcn"],
   "ignoreExportsUsedInFile": true,

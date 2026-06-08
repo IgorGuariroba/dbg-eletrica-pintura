@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { Check, Loader2, MapPin, MessageCircle, Navigation } from "lucide-react";
+import { Check, CreditCard, Loader2, MapPin, MessageCircle, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -231,6 +231,19 @@ export function RastreamentoView({ osId }: { osId: string }) {
           })}
         >
           Ir para execução
+        </Link>
+      ) : null}
+
+      {detalhe.estado === "CONCLUIDA" ? (
+        <Link
+          href={`/campo/os/${osId}/assinatura` as Route}
+          className={buttonVariants({
+            variant: "outline",
+            className: "w-full",
+          })}
+        >
+          <CreditCard className="size-4" aria-hidden />
+          Oferecer plano de assinatura
         </Link>
       ) : null}
     </div>

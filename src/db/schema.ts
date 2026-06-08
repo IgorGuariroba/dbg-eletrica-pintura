@@ -944,6 +944,9 @@ export const statusAssinaturaEnum = pgEnum("status_assinatura", [
 export const plano = pgTable("plano", {
   id: uuid("id").defaultRandom().primaryKey(),
   nome: varchar("nome", { length: 120 }).notNull(),
+  // Slug kebab-case p/ a landing pública /assinar/{slug} (QR impresso/cartão).
+  // Nullable: planos pré-existentes ao slice #57 são migrados por script.
+  slug: varchar("slug", { length: 255 }),
   preco: decimal("preco", { precision: 10, scale: 2 }).notNull(),
   // Texto livre dos benefícios (uma linha por benefício, exibido em /planos).
   beneficios: text("beneficios"),
@@ -964,7 +967,9 @@ export const plano = pgTable("plano", {
   criadoEm: timestamp("criado_em", { withTimezone: true })
     .defaultNow()
     .notNull(),
-});
+}, (t) => ({
+  slugUq: uniqueIndex("plano_slug_uq").on(t.slug),
+}));
 
 export const assinatura = pgTable(
   "assinatura",
