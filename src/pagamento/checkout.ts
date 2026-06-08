@@ -102,7 +102,7 @@ export function montarCheckoutConsolidado(
   let somaCents = 0;
 
   for (const o of ordens) {
-    if (podeCobrar(o.estado) && !o.pago) {
+    if (podeCobrar(o.estado)) {
       pagaveis.push({ osId: o.osId, total: o.total, categoria: o.categoria });
       somaCents += Math.round(parseFloat(o.total) * 100);
     } else if (o.estado === "PAGA" || o.pago) {
