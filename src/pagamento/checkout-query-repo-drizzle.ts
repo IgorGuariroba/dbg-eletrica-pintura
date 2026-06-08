@@ -8,6 +8,7 @@ import {
 } from "@/db/schema";
 import type { PagamentoCheckoutRepo, SolicitacaoCheckoutView } from "./checkout-query-repo";
 import type { OrdemCheckout } from "./checkout";
+import { ESTADOS_ENTREGUES } from "@/operacao/estado-predicados";
 
 export function criarPagamentoCheckoutRepoDrizzle(db: DB): PagamentoCheckoutRepo {
   return {
@@ -41,7 +42,7 @@ export function criarPagamentoCheckoutRepoDrizzle(db: DB): PagamentoCheckoutRepo
         .where(
           and(
             eq(ordemServico.solicitacaoId, sol.id),
-            inArray(ordemServico.estado, ["CONCLUIDA", "PAGA"])
+            inArray(ordemServico.estado, ESTADOS_ENTREGUES)
           )
         );
 

@@ -3,6 +3,7 @@ import { ordemServico, pagamento, orcamento, garantiaChamado } from "@/db/schema
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import type { GarantiaRepo } from "./garantia-repo";
 import { avaliarAcionamentoGarantia } from "./avaliar-acionamento";
+import { foiEntregue } from "../estado-predicados";
 
 export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
   async function carregarPagamento(osId: string) {
@@ -269,7 +270,7 @@ export function criarGarantiaRepoDrizzle(dbRaw: typeof db): GarantiaRepo {
       const agora = new Date();
       for (const osId of osIds) {
         const os = osMap.get(osId);
-        if (!os || (os.estado !== "CONCLUIDA" && os.estado !== "PAGA")) {
+        if (!os || !foiEntregue(os.estado)) {
           result.set(osId, { podeAcionar: false });
           continue;
         }

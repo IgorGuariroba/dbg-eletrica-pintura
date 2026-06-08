@@ -5,6 +5,7 @@ import { criarPagamentoCheckoutRepoDrizzle } from "@/pagamento/checkout-query-re
 import { criarGatewayMercadoPago } from "@/pagamento/mercadopago-client";
 import { criarPreferenciaCheckoutPro, montarCheckoutConsolidado } from "@/pagamento/checkout";
 import { rotularCategoria } from "@/operacao/rotulo-estado";
+import { podeCobrar } from "@/operacao/estado-predicados";
 
 export async function pagarOsAction(token: string, osId: string) {
   const repo = criarPagamentoCheckoutRepoDrizzle(db);
@@ -19,7 +20,7 @@ export async function pagarOsAction(token: string, osId: string) {
     return { erro: "Ordem de serviço não encontrada ou não pertence a esta solicitação" };
   }
 
-  if (os.estado !== "CONCLUIDA") {
+  if (!podeCobrar(os.estado)) {
     return { erro: "Apenas ordens de serviço no estado CONCLUIDA podem ser pagas" };
   }
 

@@ -9,6 +9,7 @@ import { criarCobrancaPix, criarPreferenciaCheckoutPro } from "@/pagamento/check
 import { registrarPagamentoManual } from "@/pagamento/registrar-manual";
 import { criarPagamentoRepoDrizzle } from "@/pagamento/pagamento-repo-drizzle";
 import { criarTransicaoRepoDrizzle } from "@/operacao/transicao-repo-drizzle";
+import { podeCobrar } from "@/operacao/estado-predicados";
 import { urlWhatsApp } from "@/lib/contato";
 
 export interface AcaoState {
@@ -36,7 +37,7 @@ export async function gerarPixAction(osId: string): Promise<AcaoState> {
     if (!os) {
       return { erro: "Ordem de serviço não encontrada" };
     }
-    if (os.estado !== "CONCLUIDA") {
+    if (!podeCobrar(os.estado)) {
       return { erro: "Apenas ordens de serviço no estado CONCLUIDA podem ser pagas" };
     }
 
@@ -88,7 +89,7 @@ export async function gerarLinkAction(osId: string): Promise<AcaoState> {
     if (!os) {
       return { erro: "Ordem de serviço não encontrada" };
     }
-    if (os.estado !== "CONCLUIDA") {
+    if (!podeCobrar(os.estado)) {
       return { erro: "Apenas ordens de serviço no estado CONCLUIDA podem ser pagas" };
     }
 
