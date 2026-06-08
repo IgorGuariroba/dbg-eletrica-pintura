@@ -66,4 +66,23 @@ describe.skipIf(!hasDb)("criarPlanoRepoDrizzle", () => {
     });
     expect(atualizado?.percentualDesconto).toBe("25.00");
   });
+
+  it("buscarPorId, listarTodos e definirPreapprovalPlanIdMp", async () => {
+    const ativo = await repo.inserir(nova({ ativo: true }));
+    const inativo = await repo.inserir(nova({ ativo: false }));
+    planoIds.push(ativo.id, inativo.id);
+
+    const achado = await repo.buscarPorId(ativo.id);
+    expect(achado?.id).toBe(ativo.id);
+    expect(await repo.buscarPorId("00000000-0000-0000-0000-000000000000")).toBeNull();
+
+    const todos = await repo.listarTodos();
+    const ids = todos.map((p) => p.id);
+    expect(ids).toContain(ativo.id);
+    expect(ids).toContain(inativo.id);
+
+    await repo.definirPreapprovalPlanIdMp(ativo.id, "plan-mp-xyz");
+    const depois = await repo.buscarPorId(ativo.id);
+    expect(depois?.preapprovalPlanIdMp).toBe("plan-mp-xyz");
+  });
 });
