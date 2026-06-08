@@ -34,8 +34,19 @@ function beneficiosDe(texto: string | null): string[] {
     .filter((l) => l.length > 0);
 }
 
+async function carregarPlanos() {
+  try {
+    return await criarPlanoRepoDrizzle(db).listarAtivos();
+  } catch (err) {
+    // SSG/ISR: o build pode rodar sem DB acessível — degrada para lista vazia
+    // (revalida quando o DB volta), em vez de quebrar o prerender.
+    console.error("Erro ao carregar planos:", err);
+    return [];
+  }
+}
+
 export default async function PlanosPage() {
-  const planos = await criarPlanoRepoDrizzle(db).listarAtivos();
+  const planos = await carregarPlanos();
 
   return (
     <div className="flex min-h-dvh flex-col">
