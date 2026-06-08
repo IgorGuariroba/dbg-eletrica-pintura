@@ -1,5 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
-import { criarAgendamentoService, OsNaoAgendavelError, SlotIndisponivelError, ForaDaJanelaError, NaoAtribuidoError, MotivoObrigatorioError } from "@/operacao/agendamento";
+import {
+  criarAgendamentoService,
+  dentroDaJanelaCliente,
+  OsInexistenteError,
+  OsNaoAgendavelError,
+  SlotNaoEncontradoError,
+  SlotIndisponivelError,
+  ForaDaJanelaError,
+  NaoAtribuidoError,
+  MotivoObrigatorioError,
+  CancelamentoEmExecucaoError,
+} from "@/operacao/agendamento";
 import type { AgendamentoRepo, AgendamentoDadosOs } from "@/operacao/agendamento-repo";
 import type { TecnicoAgendavel } from "@/operacao/slots";
 import type { HorarioComercial } from "@/operacao/horario-comercial";
@@ -416,5 +427,341 @@ describe("AgendamentoService - reagendarCliente", () => {
     ).rejects.toThrow(ForaDaJanelaError);
 
     vi.useRealTimers();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Cobertura de branches de erro e métodos administrativos/técnicos faltantes.
+// ---------------------------------------------------------------------------
+
+/** Constrói um AgendamentoDadosOs com defaults sãos para o caminho via buscarOs. */
+function osDados(over: Partial<AgendamentoDadosOs> = {}): AgendamentoDadosOs {
+  return {
+    id: "os-1",
+    estado: "AGENDADA",
+    categoria: "ELETRICA",
+    tecnicoId: "tec-1",
+    agendadoPara: new Date("2026-06-10T11:00:00Z"),
+    clienteAssinante: false,
+    clienteWhatsapp: "5511999999999",
+    ...over,
+  };
+}
+
+describe("dentroDaJanelaCliente (helper)", () => {
+  it("retorna true exatamente no limite de 24h (<=)", () => {
+    const agora = new Date("2026-06-01T00:00:00Z");
+    const em24h = new Date("2026-06-02T00:00:00Z");
+    expect(dentroDaJanelaCliente(em24h, agora)).toBe(true);
+  });
+
+  it("retorna false com mais de 24h de folga", () => {
+    const agora = new Date("2026-06-01T00:00:00Z");
+    const em24hMais1ms = new Date("2026-06-02T00:00:00.001Z");
+    expect(dentroDaJanelaCliente(em24hMais1ms, agora)).toBe(false);
+  });
+});
+
+describe("AgendamentoService - obterSlotsCliente (erros)", () => {
+  it("lança OsInexistenteError quando o token/OS não resolve", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(service.obterSlotsCliente("tok-invalido", "os-1")).rejects.toThrow(
+      OsInexistenteError
+    );
+  });
+
+  it("lança OsNaoAgendavelError quando a OS não está APROVADA", async () => {
+    const repo = criarFakeRepo({
+      buscarOsComToken: vi.fn(async () => osDados({ estado: "AGENDADA" })),
+    });
+    const service = criarAgendamentoService(repo);
+    await expect(service.obterSlotsCliente("tok-valid", "os-1")).rejects.toThrow(
+      OsNaoAgendavelError
+    );
+  });
+});
+
+describe("AgendamentoService - agendarCliente (erros)", () => {
+  it("lança OsInexistenteError quando o token/OS não resolve", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(
+      service.agendarCliente("tok-invalido", "os-1", new Date())
+    ).rejects.toThrow(OsInexistenteError);
+  });
+
+  it("lança OsNaoAgendavelError quando a OS não está APROVADA", async () => {
+    const repo = criarFakeRepo({
+      buscarOsComToken: vi.fn(async () => osDados({ estado: "AGENDADA" })),
+    });
+    const service = criarAgendamentoService(repo);
+    await expect(
+      service.agendarCliente("tok-valid", "os-1", new Date())
+    ).rejects.toThrow(OsNaoAgendavelError);
+  });
+
+  it("lança SlotNaoEncontradoError quando o horário pedido não existe na grade", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T00:00:00.000Z"));
+    // Horário arbitrário fora de qualquer slot calculado.
+    await expect(
+      service.agendarCliente("tok-valid", "os-1", new Date("2026-06-01T03:00:00.000Z"))
+    ).rejects.toThrow(SlotNaoEncontradoError);
+    vi.useRealTimers();
+  });
+});
+
+describe("AgendamentoService - cancelarCliente (erros)", () => {
+  it("lança OsInexistenteError quando o token/OS não resolve", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(
+      service.cancelarCliente("tok-invalido", "os-1", "5511999999999")
+    ).rejects.toThrow(OsInexistenteError);
+  });
+
+  it("lança OsNaoAgendavelError quando a OS não está AGENDADA", async () => {
+    const repo = criarFakeRepo({
+      buscarOsComToken: vi.fn(async () => osDados({ estado: "APROVADA" })),
+    });
+    const service = criarAgendamentoService(repo);
+    await expect(
+      service.cancelarCliente("tok-valid", "os-1", "5511999999999")
+    ).rejects.toThrow(OsNaoAgendavelError);
+  });
+
+  it("permite cancelar sem agendadoPara definido (sem barreira de janela)", async () => {
+    const repo = criarFakeRepo({
+      buscarOsComToken: vi.fn(async () => osDados({ estado: "AGENDADA", agendadoPara: null })),
+    });
+    const service = criarAgendamentoService(repo);
+    await service.cancelarCliente("tok-valid", "os-1", "5511999999999");
+    expect(repo.liberarAgendamento).toHaveBeenCalledWith(
+      "os-1",
+      "APROVADA",
+      expect.objectContaining({ estadoNovo: "APROVADA" })
+    );
+  });
+});
+
+describe("AgendamentoService - reagendarCliente (erros)", () => {
+  it("lança OsInexistenteError quando o token/OS não resolve", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(
+      service.reagendarCliente("tok-invalido", "os-1", "5511999999999", new Date())
+    ).rejects.toThrow(OsInexistenteError);
+  });
+
+  it("lança OsNaoAgendavelError quando a OS não está AGENDADA", async () => {
+    const repo = criarFakeRepo({
+      buscarOsComToken: vi.fn(async () => osDados({ estado: "APROVADA" })),
+    });
+    const service = criarAgendamentoService(repo);
+    await expect(
+      service.reagendarCliente("tok-valid", "os-1", "5511999999999", new Date())
+    ).rejects.toThrow(OsNaoAgendavelError);
+  });
+
+  it("lança SlotNaoEncontradoError quando o novo horário não existe na grade", async () => {
+    const agora = new Date("2026-06-01T12:00:00Z");
+    const repo = criarFakeRepo({
+      buscarOsComToken: vi.fn(async () =>
+        osDados({ estado: "AGENDADA", agendadoPara: new Date("2026-06-05T11:00:00Z") })
+      ),
+    });
+    const service = criarAgendamentoService(repo);
+    vi.useFakeTimers();
+    vi.setSystemTime(agora);
+    await expect(
+      service.reagendarCliente("tok-valid", "os-1", "5511999999999", new Date("2026-06-01T03:00:00Z"))
+    ).rejects.toThrow(SlotNaoEncontradoError);
+    vi.useRealTimers();
+  });
+});
+
+describe("AgendamentoService - reagendarTecnico (erros e estados)", () => {
+  it("lança OsInexistenteError quando a OS não existe", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(
+      service.reagendarTecnico("os-x", "tec-1", "t@dbg.com.br", new Date(), null)
+    ).rejects.toThrow(OsInexistenteError);
+  });
+
+  it("lança OsNaoAgendavelError em estado não reagendável (EM_EXECUCAO)", async () => {
+    const repo = criarFakeRepo({
+      buscarOs: vi.fn(async () => osDados({ estado: "EM_EXECUCAO" })),
+    });
+    const service = criarAgendamentoService(repo);
+    await expect(
+      service.reagendarTecnico("os-1", "tec-1", "t@dbg.com.br", new Date(), null)
+    ).rejects.toThrow(OsNaoAgendavelError);
+  });
+
+  it("reagenda OS AGENDADA sem exigir motivo", async () => {
+    const repo = criarFakeRepo({
+      buscarOs: vi.fn(async () => osDados({ estado: "AGENDADA" })),
+    });
+    const service = criarAgendamentoService(repo);
+    const novoSlot = new Date("2026-06-12T10:00:00Z");
+    await service.reagendarTecnico("os-1", "tec-1", "t@dbg.com.br", novoSlot, null);
+    expect(repo.salvarAgendamento).toHaveBeenCalledWith(
+      "os-1",
+      novoSlot,
+      "tec-1",
+      expect.objectContaining({ estadoAnterior: "AGENDADA", estadoNovo: "AGENDADA", motivo: null })
+    );
+  });
+});
+
+describe("AgendamentoService - cancelarTecnico", () => {
+  it("lança OsInexistenteError quando a OS não existe", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(
+      service.cancelarTecnico("os-x", "tec-1", "t@dbg.com.br", "Motivo suficientemente longo")
+    ).rejects.toThrow(OsInexistenteError);
+  });
+
+  it("lança NaoAtribuidoError quando o técnico não é o atribuído", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ tecnicoId: "tec-1" })) });
+    const service = criarAgendamentoService(repo);
+    await expect(
+      service.cancelarTecnico("os-1", "tec-outro", "t@dbg.com.br", "Motivo suficientemente longo")
+    ).rejects.toThrow(NaoAtribuidoError);
+  });
+
+  it("lança CancelamentoEmExecucaoError quando a OS está EM_EXECUCAO", async () => {
+    const repo = criarFakeRepo({
+      buscarOs: vi.fn(async () => osDados({ estado: "EM_EXECUCAO", tecnicoId: "tec-1" })),
+    });
+    const service = criarAgendamentoService(repo);
+    await expect(
+      service.cancelarTecnico("os-1", "tec-1", "t@dbg.com.br", "Motivo suficientemente longo")
+    ).rejects.toThrow(CancelamentoEmExecucaoError);
+  });
+
+  it("lança MotivoObrigatorioError quando o motivo tem menos de 10 caracteres", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ tecnicoId: "tec-1" })) });
+    const service = criarAgendamentoService(repo);
+    await expect(
+      service.cancelarTecnico("os-1", "tec-1", "t@dbg.com.br", "curto")
+    ).rejects.toThrow(MotivoObrigatorioError);
+  });
+
+  it("libera para AGENDADA quando havia agendadoPara", async () => {
+    const repo = criarFakeRepo({
+      buscarOs: vi.fn(async () =>
+        osDados({ estado: "AGENDADA", tecnicoId: "tec-1", agendadoPara: new Date("2026-06-10T11:00:00Z") })
+      ),
+    });
+    const service = criarAgendamentoService(repo);
+    await service.cancelarTecnico("os-1", "tec-1", "t@dbg.com.br", "Motivo suficientemente longo");
+    expect(repo.liberarAgendamento).toHaveBeenCalledWith(
+      "os-1",
+      "AGENDADA",
+      expect.objectContaining({ estadoNovo: "AGENDADA", motivo: "Motivo suficientemente longo" })
+    );
+  });
+
+  it("libera para ORCADA quando não havia agendadoPara", async () => {
+    const repo = criarFakeRepo({
+      buscarOs: vi.fn(async () => osDados({ estado: "AGENDADA", tecnicoId: "tec-1", agendadoPara: null })),
+    });
+    const service = criarAgendamentoService(repo);
+    await service.cancelarTecnico("os-1", "tec-1", "t@dbg.com.br", "Motivo suficientemente longo");
+    expect(repo.liberarAgendamento).toHaveBeenCalledWith(
+      "os-1",
+      "ORCADA",
+      expect.objectContaining({ estadoNovo: "ORCADA" })
+    );
+  });
+});
+
+describe("AgendamentoService - reagendarAdmin (erros e fallback de técnico)", () => {
+  it("lança OsInexistenteError quando a OS não existe", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(
+      service.reagendarAdmin("os-x", "admin@dbg.com.br", new Date())
+    ).rejects.toThrow(OsInexistenteError);
+  });
+
+  it("lança Error quando não há técnico atribuído nem fornecido", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ tecnicoId: null })) });
+    const service = criarAgendamentoService(repo);
+    await expect(
+      service.reagendarAdmin("os-1", "admin@dbg.com.br", new Date())
+    ).rejects.toThrow("Técnico não atribuído e nenhum fornecido");
+  });
+
+  it("reaproveita o técnico já atribuído quando nenhum é fornecido", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ tecnicoId: "tec-1" })) });
+    const service = criarAgendamentoService(repo);
+    const novoSlot = new Date("2026-06-12T10:00:00Z");
+    await service.reagendarAdmin("os-1", "admin@dbg.com.br", novoSlot);
+    expect(repo.salvarAgendamento).toHaveBeenCalledWith(
+      "os-1",
+      novoSlot,
+      "tec-1",
+      expect.objectContaining({ motivo: "Reagendamento administrativo" })
+    );
+  });
+});
+
+describe("AgendamentoService - cancelarAdmin (erros e default de motivo)", () => {
+  it("lança OsInexistenteError quando a OS não existe", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(
+      service.cancelarAdmin("os-x", "admin@dbg.com.br")
+    ).rejects.toThrow(OsInexistenteError);
+  });
+
+  it("usa motivo padrão administrativo quando nenhum é informado", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "AGENDADA" })) });
+    const service = criarAgendamentoService(repo);
+    await service.cancelarAdmin("os-1", "admin@dbg.com.br");
+    expect(repo.liberarAgendamento).toHaveBeenCalledWith(
+      "os-1",
+      "APROVADA",
+      expect.objectContaining({ motivo: "Cancelamento administrativo" })
+    );
+  });
+});
+
+describe("AgendamentoService - cancelarLoteAdmin", () => {
+  it("lança MotivoObrigatorioError quando o motivo tem menos de 10 caracteres", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(
+      service.cancelarLoteAdmin(["os-1"], "admin@dbg.com.br", "curto")
+    ).rejects.toThrow(MotivoObrigatorioError);
+  });
+
+  it("agrega resultados por OS: sucesso, não encontrada, estado inválido e erro do repo", async () => {
+    const buscarOs = vi.fn(async (osId: string) => {
+      if (osId === "os-ok") return osDados({ id: "os-ok", estado: "AGENDADA" });
+      if (osId === "os-concluida") return osDados({ id: "os-concluida", estado: "CONCLUIDA" });
+      if (osId === "os-explode") return osDados({ id: "os-explode", estado: "APROVADA" });
+      return null; // os-fantasma
+    });
+    const liberarAgendamento = vi.fn(async (osId: string) => {
+      if (osId === "os-explode") throw new Error("falha no banco");
+    });
+    const repo = criarFakeRepo({ buscarOs, liberarAgendamento });
+    const service = criarAgendamentoService(repo);
+
+    const res = await service.cancelarLoteAdmin(
+      ["os-ok", "os-fantasma", "os-concluida", "os-explode"],
+      "admin@dbg.com.br",
+      "Cancelamento em lote administrativo"
+    );
+
+    expect(res).toEqual([
+      { osId: "os-ok", ok: true },
+      { osId: "os-fantasma", ok: false, erro: "OS não encontrada" },
+      { osId: "os-concluida", ok: false, erro: "OS no estado CONCLUIDA não pode ser cancelada" },
+      { osId: "os-explode", ok: false, erro: "falha no banco" },
+    ]);
+    expect(liberarAgendamento).toHaveBeenCalledWith(
+      "os-ok",
+      "CANCELADA",
+      expect.objectContaining({ estadoNovo: "CANCELADA" })
+    );
   });
 });
