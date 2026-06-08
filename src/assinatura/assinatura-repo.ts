@@ -48,4 +48,10 @@ export interface AssinaturaRepo {
    * repositórios/fakes que não precisam disso são tratados como `null`.
    */
   statusAtual?(preapprovalIdMp: string): Promise<StatusAssinatura | null>;
+  /**
+   * `true` se o cliente já tem uma assinatura ATIVA (ou PENDENTE) deste plano —
+   * evita criar pre-approval duplicado (cobrança dupla) ao reassinar. Opcional:
+   * fakes que não exercitam esse caminho são tratados como "não tem".
+   */
+  assinaturaAtivaDe?(clienteId: string, planoId: string): Promise<boolean>;
 }

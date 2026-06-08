@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { DB } from "@/db/client";
 import { assinatura, assinaturaEvento } from "@/db/schema";
 import type { AssinaturaRepo } from "./assinatura-repo";
@@ -52,6 +52,23 @@ export function criarAssinaturaRepoDrizzle(db: DB): AssinaturaRepo {
         .where(eq(assinatura.preapprovalIdMp, preapprovalIdMp))
         .limit(1);
       return row?.status ?? null;
+    },
+
+    async assinaturaAtivaDe(clienteId, planoId) {
+      // PENDENTE conta: a 1ª autorização ainda pode chegar pelo webhook; abrir
+      // outro pre-approval em paralelo arriscaria cobrança dupla.
+      const [row] = await db
+        .select({ id: assinatura.id })
+        .from(assinatura)
+        .where(
+          and(
+            eq(assinatura.clienteId, clienteId),
+            eq(assinatura.planoId, planoId),
+            inArray(assinatura.status, ["PENDENTE", "ATIVA"]),
+          ),
+        )
+        .limit(1);
+      return Boolean(row);
     },
   };
 }
