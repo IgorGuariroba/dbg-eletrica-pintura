@@ -5,6 +5,8 @@ import { db } from "@/db/client";
 import { exigirPortal } from "@/portal/guard";
 import { listarHistoricoCliente } from "@/portal/historico";
 import { criarHistoricoRepoDrizzle } from "@/portal/historico-repo-drizzle";
+import { listarAssinaturasCliente } from "@/assinatura/listar-assinaturas-cliente";
+import { MinhasAssinaturas } from "@/features/assinatura/components/minhas-assinaturas";
 import { rotularEstadoCliente } from "@/operacao/rotulo-estado";
 import { formatBRL } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,6 +42,7 @@ export default async function PortalPage({
     criarHistoricoRepoDrizzle(db),
   );
   const totalPages = Math.max(1, Math.ceil(historico.total / limit));
+  const assinaturas = await listarAssinaturasCliente(user.whatsapp!, db);
 
   return (
     <main className="container mx-auto max-w-5xl px-4 py-8 md:py-12">
@@ -57,6 +60,12 @@ export default async function PortalPage({
           <div className="text-muted-foreground">solicitações</div>
         </div>
       </div>
+
+      {assinaturas.length > 0 && (
+        <div className="mb-8">
+          <MinhasAssinaturas assinaturas={assinaturas} />
+        </div>
+      )}
 
       {historico.itens.length === 0 ? (
         <Card>

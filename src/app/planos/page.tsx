@@ -123,18 +123,27 @@ export default async function PlanosPage() {
                       </ul>
                     </CardContent>
                     <CardFooter>
-                      <Link
-                        href={
-                          urlWhatsApp(
-                            `Olá! Tenho interesse no plano ${p.nome}.`,
-                          ) as Route
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={buttonVariants({ className: "w-full" })}
-                      >
-                        Assinar {p.nome}
-                      </Link>
+                      {p.slug ? (
+                        <Link
+                          href={`/assinar/${p.slug}` as Route}
+                          className={buttonVariants({ className: "w-full" })}
+                        >
+                          Assinar {p.nome}
+                        </Link>
+                      ) : (
+                        <Link
+                          href={
+                            urlWhatsApp(
+                              `Olá! Tenho interesse no plano ${p.nome}.`,
+                            ) as Route
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={buttonVariants({ className: "w-full" })}
+                        >
+                          Assinar {p.nome}
+                        </Link>
+                      )}
                     </CardFooter>
                   </Card>
                 );
