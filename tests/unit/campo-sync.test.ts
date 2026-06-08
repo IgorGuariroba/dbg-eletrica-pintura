@@ -390,6 +390,87 @@ describe("processarItemSync — Detecção de Conflitos", () => {
     });
   });
 
+  it("sem conflito, processa CHECKLIST salvando resultados e subindo fotos", async () => {
+    const queryResult = {
+      limit: vi.fn().mockImplementation(async () => [
+        {
+          tecnicoEmail: "original@dbg.com",
+          estado: "EM_EXECUCAO",
+          tipo: "PREVENTIVA",
+        },
+      ]),
+    };
+    const dbMock = {
+      select: vi.fn().mockReturnThis(),
+      from: vi.fn().mockReturnThis(),
+      leftJoin: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnValue(queryResult),
+    } as any;
+
+    const mockUpload = {
+      enviar: vi
+        .fn()
+        .mockResolvedValue({ url: "os/os-abc/checklist/i2/foto.jpg" }),
+    };
+    const mockRepo = { salvarResultados: vi.fn(), listarPorOs: vi.fn() };
+
+    const item = {
+      id: 11,
+      tipo: "CHECKLIST",
+      payload: {
+        osId: "os-abc",
+        resultados: [
+          {
+            itemId: "i1",
+            descricaoSnapshot: "Disjuntores",
+            status: "OK",
+            observacao: "ok",
+            temFoto: false,
+          },
+          {
+            itemId: "i2",
+            descricaoSnapshot: "Tomadas",
+            status: "PROBLEMA",
+            observacao: "queimada",
+            temFoto: true,
+            dataUrl: "data:image/jpeg;base64,YWJj",
+          },
+        ],
+      },
+      criadoEm: new Date().toISOString(),
+    };
+
+    const res = await processarItemSync(dbMock, item, "original@dbg.com", {
+      uploadFotoChecklist: mockUpload,
+      checklistResultadoRepo: mockRepo as any,
+    });
+
+    expect(res.conflito).toBe(false);
+    expect(mockUpload.enviar).toHaveBeenCalledWith({
+      osId: "os-abc",
+      itemId: "i2",
+      dataUrl: "data:image/jpeg;base64,YWJj",
+    });
+    expect(mockRepo.salvarResultados).toHaveBeenCalledWith([
+      {
+        osId: "os-abc",
+        itemId: "i1",
+        descricaoSnapshot: "Disjuntores",
+        status: "OK",
+        observacao: "ok",
+        fotoUrl: null,
+      },
+      {
+        osId: "os-abc",
+        itemId: "i2",
+        descricaoSnapshot: "Tomadas",
+        status: "PROBLEMA",
+        observacao: "queimada",
+        fotoUrl: "os/os-abc/checklist/i2/foto.jpg",
+      },
+    ]);
+  });
+
   it("processa SOLICITACAO_EXPRESS com sucesso chamando criarComOrdens", async () => {
     // Para esta action, o servidor busca o membro Id a partir do e-mail do técnico
     const queryResult = {

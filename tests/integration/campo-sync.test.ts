@@ -280,6 +280,68 @@ describe.skipIf(!hasDb)("processarItemSync Integration Tests", () => {
     expect(meta.materiais[0].observacao).toBe("ligações");
   });
 
+  it("processa CHECKLIST gravando os_checklist_resultado por item no banco", async () => {
+    const email = `tec-chk-${Math.random().toString(36).slice(2, 6)}@dbg.test`;
+    const tecId = await seedMembro("Técnico Checklist", email);
+    const osId = await seedOs("EM_EXECUCAO", tecId);
+
+    const fakeUpload = {
+      enviar: async ({ itemId }: { itemId: string }) => ({
+        url: `os/${osId}/checklist/${itemId}/foto.jpg`,
+      }),
+    };
+
+    const item = {
+      tipo: "CHECKLIST",
+      payload: {
+        osId,
+        resultados: [
+          {
+            itemId: "11111111-1111-1111-1111-111111111111",
+            descricaoSnapshot: "Verificar disjuntores",
+            status: "OK",
+            observacao: "ok",
+            temFoto: false,
+          },
+          {
+            itemId: "22222222-2222-2222-2222-222222222222",
+            descricaoSnapshot: "Testar tomadas",
+            status: "PROBLEMA",
+            observacao: "tomada queimada",
+            temFoto: true,
+            dataUrl: "data:image/jpeg;base64,YWJj",
+          },
+        ],
+      },
+      criadoEm: new Date().toISOString(),
+    };
+
+    const res = await processarItemSync(dbRaw, item, email, {
+      uploadFotoChecklist: fakeUpload,
+    });
+    expect(res.conflito).toBe(false);
+
+    const { eq, asc } = await import("drizzle-orm");
+    const linhas = await dbRaw
+      .select()
+      .from(schema.osChecklistResultado)
+      .where(eq(schema.osChecklistResultado.osId, osId))
+      .orderBy(asc(schema.osChecklistResultado.descricaoSnapshot));
+
+    expect(linhas).toHaveLength(2);
+    expect(linhas[0]).toMatchObject({
+      descricaoSnapshot: "Testar tomadas",
+      status: "PROBLEMA",
+      observacao: "tomada queimada",
+      fotoUrl: `os/${osId}/checklist/22222222-2222-2222-2222-222222222222/foto.jpg`,
+    });
+    expect(linhas[1]).toMatchObject({
+      descricaoSnapshot: "Verificar disjuntores",
+      status: "OK",
+      fotoUrl: null,
+    });
+  });
+
   it("processa item sync PAGAMENTO_MANUAL e transita OS para PAGA", async () => {
     const email = "tecnico-sync-pg@dbg.test";
     const tecId = await seedMembro("Técnico Sync PG", email);

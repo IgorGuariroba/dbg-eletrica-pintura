@@ -12,10 +12,13 @@ import { criarTransicaoRepoDrizzle } from "@/operacao/transicao-repo-drizzle";
 import {
   uploadFotoOsR2,
   type UploadFotoOs,
+  type UploadFotoChecklist,
   uploadAssinaturaOsR2,
+  uploadFotoChecklistR2,
 } from "@/operacao/r2-privado";
 import type { UploadAssinatura } from "@/operacao/aprovacao-presencial";
 import type { PortfolioRepo } from "@/marketing/portfolio-repo";
+import type { ChecklistResultadoRepo } from "@/operacao/checklist-resultado-repo";
 
 export interface SyncItem {
   id?: number;
@@ -33,6 +36,8 @@ export interface SyncOptions {
   uploadFoto?: UploadFotoOs;
   uploadAssinatura?: UploadAssinatura;
   portfolioRepo?: PortfolioRepo;
+  uploadFotoChecklist?: UploadFotoChecklist;
+  checklistResultadoRepo?: ChecklistResultadoRepo;
 }
 
 export async function processarItemSync(
@@ -207,6 +212,42 @@ export async function processarItemSync(
         { precoLitro: config.precoLitro, kmPorLitro: config.kmPorLitro },
         criarComplementarRepoDrizzle(db)
       );
+    } else if (item.tipo === "CHECKLIST") {
+      const uploadService =
+        options?.uploadFotoChecklist ?? uploadFotoChecklistR2();
+      const repo =
+        options?.checklistResultadoRepo ??
+        (
+          await import("@/operacao/checklist-resultado-repo-drizzle")
+        ).criarChecklistResultadoRepoDrizzle(db);
+
+      const linhas = [];
+      for (const r of payload.resultados as Array<{
+        itemId: string;
+        descricaoSnapshot: string;
+        status: "OK" | "PROBLEMA" | "NA";
+        observacao: string | null;
+        dataUrl?: string;
+      }>) {
+        let fotoUrl: string | null = null;
+        if (r.dataUrl) {
+          const { url } = await uploadService.enviar({
+            osId,
+            itemId: r.itemId,
+            dataUrl: r.dataUrl,
+          });
+          fotoUrl = url;
+        }
+        linhas.push({
+          osId,
+          itemId: r.itemId,
+          descricaoSnapshot: r.descricaoSnapshot,
+          status: r.status,
+          observacao: r.observacao ?? null,
+          fotoUrl,
+        });
+      }
+      await repo.salvarResultados(linhas);
     } else if (item.tipo === "PAGAMENTO_MANUAL") {
       const { registrarPagamentoManual } = await import("@/pagamento/registrar-manual");
       const { criarPagamentoRepoDrizzle } = await import("@/pagamento/pagamento-repo-drizzle");
