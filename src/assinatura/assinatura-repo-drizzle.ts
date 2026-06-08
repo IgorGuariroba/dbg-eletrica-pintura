@@ -54,6 +54,75 @@ export function criarAssinaturaRepoDrizzle(db: DB): AssinaturaRepo {
       return row?.status ?? null;
     },
 
+    async carregarPorPreapproval(preapprovalIdMp) {
+      const [row] = await db
+        .select({
+          id: assinatura.id,
+          clienteId: assinatura.clienteId,
+          planoId: assinatura.planoId,
+          status: assinatura.status,
+          fimCicloAtual: assinatura.fimCicloAtual,
+          planoPendenteId: assinatura.planoPendenteId,
+          cancelamentoPendente: assinatura.cancelamentoPendente,
+          dataEfetivacao: assinatura.dataEfetivacao,
+        })
+        .from(assinatura)
+        .where(eq(assinatura.preapprovalIdMp, preapprovalIdMp))
+        .limit(1);
+      return row ?? null;
+    },
+
+    async marcarCancelamentoPendente(preapprovalIdMp, dados) {
+      await db
+        .update(assinatura)
+        .set({
+          cancelamentoPendente: true,
+          dataEfetivacao: dados.dataEfetivacao,
+          motivoCancelamento: dados.motivo,
+        })
+        .where(eq(assinatura.preapprovalIdMp, preapprovalIdMp));
+    },
+
+    async marcarDowngradePendente(preapprovalIdMp, dados) {
+      await db
+        .update(assinatura)
+        .set({
+          planoPendenteId: dados.planoPendenteId,
+          dataEfetivacao: dados.dataEfetivacao,
+        })
+        .where(eq(assinatura.preapprovalIdMp, preapprovalIdMp));
+    },
+
+    async efetivarCancelamento(preapprovalIdMp, em) {
+      await db
+        .update(assinatura)
+        .set({
+          status: "CANCELADA",
+          canceladoEm: em,
+          cancelamentoPendente: false,
+          dataEfetivacao: null,
+        })
+        .where(eq(assinatura.preapprovalIdMp, preapprovalIdMp));
+    },
+
+    async efetivarDowngrade(preapprovalIdMp, novoPlanoId) {
+      await db
+        .update(assinatura)
+        .set({
+          planoId: novoPlanoId,
+          planoPendenteId: null,
+          dataEfetivacao: null,
+        })
+        .where(eq(assinatura.preapprovalIdMp, preapprovalIdMp));
+    },
+
+    async trocarPlano(preapprovalIdMp, novoPlanoId) {
+      await db
+        .update(assinatura)
+        .set({ planoId: novoPlanoId })
+        .where(eq(assinatura.preapprovalIdMp, preapprovalIdMp));
+    },
+
     async assinaturaAtivaDe(clienteId, planoId) {
       // PENDENTE conta: a 1ª autorização ainda pode chegar pelo webhook; abrir
       // outro pre-approval em paralelo arriscaria cobrança dupla.

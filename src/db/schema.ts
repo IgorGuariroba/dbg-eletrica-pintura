@@ -227,6 +227,11 @@ export const ordemServico = pgTable("ordem_servico", {
   tecnicoId: uuid("tecnico_id").references(() => membro.id, {
     onDelete: "set null",
   }),
+  // OS Preventiva originada de uma assinatura (slice #58). Permite o batch de
+  // cancelamento das preventivas futuras quando a assinatura é encerrada.
+  assinaturaId: uuid("assinatura_id").references(() => assinatura.id, {
+    onDelete: "set null",
+  }),
   prazoGarantiaMeses: integer("prazo_garantia_meses"),
   agendadoPara: timestamp("agendado_para", { withTimezone: true }),
   metadados: jsonb("metadados")
@@ -991,6 +996,17 @@ export const assinatura = pgTable(
       .notNull(),
     canceladoEm: timestamp("cancelado_em", { withTimezone: true }),
     motivoCancelamento: text("motivo_cancelamento"),
+    // Gestão da assinatura (slice #58). Pendências efetivadas no fim do ciclo.
+    // Plano-alvo de um downgrade agendado (troca no fim do ciclo).
+    planoPendenteId: uuid("plano_pendente_id").references(() => plano.id, {
+      onDelete: "set null",
+    }),
+    // `true` enquanto há cancelamento agendado p/ o fim do ciclo (status segue ATIVA).
+    cancelamentoPendente: boolean("cancelamento_pendente")
+      .notNull()
+      .default(false),
+    // Quando a pendência (downgrade/cancelamento) deve ser efetivada (= fim do ciclo).
+    dataEfetivacao: timestamp("data_efetivacao", { withTimezone: true }),
   },
   (t) => ({
     preapprovalUq: uniqueIndex("assinatura_preapproval_uq").on(

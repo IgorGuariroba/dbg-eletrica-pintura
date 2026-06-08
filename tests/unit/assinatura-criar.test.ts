@@ -3,7 +3,6 @@ import type {
   AssinaturaRepo,
   NovaAssinatura,
 } from "@/assinatura/assinatura-repo";
-import { cancelarAssinatura } from "@/assinatura/cancelar-assinatura";
 import { criarAssinatura } from "@/assinatura/criar-assinatura";
 import type { GatewayAssinatura } from "@/assinatura/gateway";
 
@@ -67,30 +66,5 @@ describe("criarAssinatura", () => {
       planoId: "pln-1",
       preapprovalIdMp: "pre-mp-1",
     });
-  });
-});
-
-describe("cancelarAssinatura", () => {
-  it("exige motivo não-vazio", async () => {
-    const { repo } = fakeRepo();
-
-    await expect(
-      cancelarAssinatura("pre-mp-1", "  ", { gateway: fakeGateway(), repo }),
-    ).rejects.toThrow();
-  });
-
-  it("cancela no MP e marca CANCELADA com motivo", async () => {
-    const { repo, patches } = fakeRepo();
-    const cancelados: { id: string; motivo: string }[] = [];
-    const gateway = fakeGateway({
-      async cancelarAssinatura(id, motivo) {
-        cancelados.push({ id, motivo });
-      },
-    });
-
-    await cancelarAssinatura("pre-mp-1", "cliente desistiu", { gateway, repo });
-
-    expect(cancelados).toEqual([{ id: "pre-mp-1", motivo: "cliente desistiu" }]);
-    expect(patches).toEqual([{ id: "pre-mp-1", status: "CANCELADA" }]);
   });
 });

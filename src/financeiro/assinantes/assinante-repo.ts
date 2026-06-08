@@ -3,6 +3,8 @@ import type { StatusAssinatura } from "@/assinatura/assinatura-repo";
 /** Item da lista de assinantes do admin Financeiro. */
 export interface AssinanteListItem {
   assinaturaId: string;
+  /** preapproval_id do MP — chave das ações de gestão (pausa). */
+  preapprovalIdMp: string | null;
   clienteNome: string;
   planoNome: string;
   status: StatusAssinatura;

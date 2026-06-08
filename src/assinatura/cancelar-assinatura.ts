@@ -2,8 +2,14 @@ import type { AssinaturaRepo } from "./assinatura-repo";
 import type { GatewayAssinatura } from "./gateway";
 
 export interface CancelarAssinaturaDeps {
-  gateway: GatewayAssinatura;
+  gateway: Pick<GatewayAssinatura, "cancelarAssinatura">;
   repo: AssinaturaRepo;
+  /**
+   * Cancela as preventivas agendadas para depois do fim do ciclo. Injetável
+   * (default no fluxo de produção liga ao `PreventivaRepo`). Sem ela, o
+   * cancelamento só encerra a cobrança e agenda a efetivação.
+   */
+  cancelarPreventivas?: (assinaturaId: string, fimCiclo: Date) => Promise<void>;
 }
 
 export class MotivoCancelamentoObrigatorioError extends Error {
@@ -14,23 +20,41 @@ export class MotivoCancelamentoObrigatorioError extends Error {
   }
 }
 
+export class AssinaturaNaoEncontradaError extends Error {
+  readonly status = 404;
+  constructor() {
+    super("Assinatura não encontrada");
+    this.name = "AssinaturaNaoEncontradaError";
+  }
+}
+
 /**
- * Cancela a assinatura no Mercado Pago e reflete CANCELADA no banco. O motivo
- * é obrigatório (gestão/auditoria). O cancelamento de preventivas futuras é do
- * slice #58 — aqui só encerramos a cobrança.
+ * Cancela a assinatura com efeito no FIM do ciclo pago (slice #58): encerra a
+ * cobrança recorrente no Mercado Pago imediatamente, agenda a efetivação do
+ * status CANCELADA para `fim_ciclo_atual` (a troca de status acontece depois,
+ * via webhook) e cancela já as preventivas agendadas para DEPOIS do ciclo. As
+ * preventivas dentro do ciclo pago seguem acontecendo. Motivo é obrigatório.
  */
 export async function cancelarAssinatura(
-  preapprovalIdMp: string,
-  motivo: string,
+  input: { preapprovalIdMp: string; motivo: string },
   deps: CancelarAssinaturaDeps,
   agora: Date = new Date(),
 ): Promise<void> {
-  if (!motivo.trim()) throw new MotivoCancelamentoObrigatorioError();
+  const motivo = input.motivo.trim();
+  if (!motivo) throw new MotivoCancelamentoObrigatorioError();
 
-  await deps.gateway.cancelarAssinatura(preapprovalIdMp, motivo);
-  await deps.repo.atualizarStatus(preapprovalIdMp, {
-    status: "CANCELADA",
-    canceladoEm: agora,
-    motivoCancelamento: motivo,
+  const assinatura = await deps.repo.carregarPorPreapproval?.(
+    input.preapprovalIdMp,
+  );
+  if (!assinatura) throw new AssinaturaNaoEncontradaError();
+
+  // Sem ciclo conhecido (assinatura nunca ativada), efetiva já.
+  const fimCiclo = assinatura.fimCicloAtual ?? agora;
+
+  await deps.gateway.cancelarAssinatura(input.preapprovalIdMp, motivo);
+  await deps.repo.marcarCancelamentoPendente?.(input.preapprovalIdMp, {
+    motivo,
+    dataEfetivacao: fimCiclo,
   });
+  await deps.cancelarPreventivas?.(assinatura.id, fimCiclo);
 }
