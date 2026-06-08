@@ -253,7 +253,9 @@ export function ChecklistEditor({
                   <TableCell className="text-right tabular-nums text-muted-foreground">
                     {i.ordem}
                   </TableCell>
-                  <TableCell className="font-medium">{i.descricao}</TableCell>
+                  <TableCell className="font-medium whitespace-normal break-words">
+                    {i.descricao}
+                  </TableCell>
                   <TableCell>
                     {i.exigeFoto ? (
                       <Badge variant="secondary">
