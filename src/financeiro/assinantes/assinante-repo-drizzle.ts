@@ -20,6 +20,7 @@ export function criarAssinanteRepoDrizzle(db: DB): AssinanteRepo {
       const rows = await db
         .select({
           assinaturaId: assinatura.id,
+          preapprovalIdMp: assinatura.preapprovalIdMp,
           clienteNome: cliente.nome,
           planoNome: plano.nome,
           status: assinatura.status,
@@ -35,6 +36,7 @@ export function criarAssinanteRepoDrizzle(db: DB): AssinanteRepo {
 
       return rows.map((r) => ({
         assinaturaId: r.assinaturaId,
+        preapprovalIdMp: r.preapprovalIdMp,
         clienteNome: r.clienteNome,
         planoNome: r.planoNome,
         status: r.status,

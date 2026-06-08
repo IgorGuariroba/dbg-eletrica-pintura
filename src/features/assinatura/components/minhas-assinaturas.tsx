@@ -1,7 +1,10 @@
+import Link from "next/link";
+import type { Route } from "next";
 import { CreditCard } from "lucide-react";
 import type { AssinaturaCliente } from "@/assinatura/listar-assinaturas-cliente";
 import type { StatusAssinatura } from "@/assinatura/assinatura-repo";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -62,6 +65,12 @@ export function MinhasAssinaturas({ assinaturas }: Props) {
             </Badge>
           </div>
         ))}
+        <Link
+          href={"/portal/assinatura" as Route}
+          className={buttonVariants({ variant: "outline", className: "w-full" })}
+        >
+          Gerenciar assinatura
+        </Link>
       </CardContent>
     </Card>
   );

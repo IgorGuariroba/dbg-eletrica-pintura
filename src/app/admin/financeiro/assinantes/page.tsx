@@ -1,8 +1,9 @@
-import { Users } from "lucide-react";
+import { AlertTriangle, Users } from "lucide-react";
 import { db } from "@/db/client";
 import { criarAssinanteRepoDrizzle } from "@/financeiro/assinantes/assinante-repo-drizzle";
 import { criarPlanoRepoDrizzle } from "@/financeiro/planos/plano-repo-drizzle";
 import { Badge } from "@/components/ui/badge";
+import { AssinanteRowActions } from "./row-actions";
 import {
   Table,
   TableBody,
@@ -65,6 +66,10 @@ export default async function AssinantesPage({
     criarPlanoRepoDrizzle(db).listarTodos(),
   ]);
 
+  const inadimplentes = assinantes.filter(
+    (a) => a.status === "INADIMPLENTE",
+  ).length;
+
   return (
     <div className="max-w-6xl space-y-6">
       <div>
@@ -73,6 +78,21 @@ export default async function AssinantesPage({
           {assinantes.length} assinante{assinantes.length === 1 ? "" : "s"}
         </p>
       </div>
+
+      {inadimplentes > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
+          <AlertTriangle className="size-5 shrink-0 text-destructive" />
+          <p>
+            <span className="font-semibold text-destructive">
+              {inadimplentes} assinante{inadimplentes === 1 ? "" : "s"} com
+              pagamento pendente.
+            </span>{" "}
+            <span className="text-muted-foreground">
+              O cliente já foi notificado para atualizar o método de pagamento.
+            </span>
+          </p>
+        </div>
+      )}
 
       <FiltrosAssinantes
         planos={planos.map((p) => ({ id: p.id, nome: p.nome }))}
@@ -96,6 +116,7 @@ export default async function AssinantesPage({
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor mensal</TableHead>
                   <TableHead>Próxima preventiva</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -115,6 +136,16 @@ export default async function AssinantesPage({
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {fmtData(a.proximaPreventiva)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {a.status === "ATIVA" && a.preapprovalIdMp ? (
+                        <AssinanteRowActions
+                          preapprovalIdMp={a.preapprovalIdMp}
+                          clienteNome={a.clienteNome}
+                        />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -144,6 +175,14 @@ export default async function AssinantesPage({
                     Preventiva: {fmtData(a.proximaPreventiva)}
                   </span>
                 </div>
+                {a.status === "ATIVA" && a.preapprovalIdMp && (
+                  <div className="flex justify-end pt-1">
+                    <AssinanteRowActions
+                      preapprovalIdMp={a.preapprovalIdMp}
+                      clienteNome={a.clienteNome}
+                    />
+                  </div>
+                )}
               </li>
             ))}
           </ul>

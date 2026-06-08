@@ -1,10 +1,14 @@
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { criarAssinaturaRepoDrizzle } from "@/assinatura/assinatura-repo-drizzle";
+import { efetivarPendencias } from "@/assinatura/efetivar-pendencias";
 import { derivarTipoEvento } from "@/assinatura/evento-webhook";
 import { enviarBoasVindas } from "@/assinatura/enviar-boas-vindas";
 import { criarGatewayMercadoPagoAssinatura } from "@/assinatura/mercadopago-assinatura";
+import { notificarFalhaPagamento } from "@/assinatura/notificar-falha-pagamento";
 import { processarEventoAssinatura } from "@/assinatura/processar-evento";
 import { db } from "@/db/client";
+import { plano } from "@/db/schema";
 import { validarAssinatura } from "@/pagamento/webhook";
 
 /**
@@ -81,8 +85,30 @@ export async function POST(request: Request): Promise<NextResponse> {
           obterProximaCobranca: async () => recurso.nextPaymentDate,
         });
       },
+      // Falha de pagamento (slice #58): WhatsApp + e-mail com link MP. A
+      // idempotência (1 falha = 1 notificação) vem de `assinatura_evento`:
+      // só notifica quando o evento foi aplicado pela 1ª vez.
+      notificarFalha: (preapprovalIdMp) => {
+        void notificarFalhaPagamento(preapprovalIdMp);
+      },
     },
   );
+
+  // Efetivação no fim do ciclo (slice #58): qualquer webhook desta assinatura
+  // tenta aplicar a pendência agendada (downgrade/cancelamento) se a
+  // `data_efetivacao` já chegou. Idempotente — no-op fora da janela.
+  await efetivarPendencias(String(dataId), {
+    repo: criarAssinaturaRepoDrizzle(db),
+    gatewayAssinatura: criarGatewayMercadoPagoAssinatura(),
+    obterPrecoPlano: async (planoId) => {
+      const [row] = await db
+        .select({ preco: plano.preco })
+        .from(plano)
+        .where(eq(plano.id, planoId))
+        .limit(1);
+      return row ? Number(row.preco) : 0;
+    },
+  });
 
   return NextResponse.json({ ok: true, aplicado });
 }

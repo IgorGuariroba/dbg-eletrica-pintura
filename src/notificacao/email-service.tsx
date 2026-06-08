@@ -444,6 +444,61 @@ export async function renderizarEmailReavaliacao(props: PedidoReavaliacaoEmailPr
   return await render(comp);
 }
 
+// ----------------------------------------------------------------
+// Template de Falha de Pagamento de Assinatura (Issue #58) — webhook
+// payment_failed → link para o cliente atualizar o método de pagamento no MP.
+// ----------------------------------------------------------------
+export interface FalhaPagamentoEmailProps {
+  clienteNome: string;
+  planoNome: string;
+  /** URL do Mercado Pago para atualizar o método de pagamento. */
+  linkAtualizacao: string;
+}
+
+export const FalhaPagamentoEmail: React.FC<FalhaPagamentoEmailProps> = ({
+  clienteNome,
+  planoNome,
+  linkAtualizacao,
+}) => (
+  <Html>
+    <Head />
+    <Body style={{ fontFamily: "sans-serif", backgroundColor: CORES.mutedBg, color: CORES.texto, padding: "20px" }}>
+      <Container style={{ backgroundColor: CORES.fundo, padding: "20px", borderRadius: "8px", border: `1px solid ${CORES.borda}` }}>
+        <Heading style={{ color: CORES.primaria, fontSize: "20px", marginBottom: "15px" }}>Olá, {clienteNome}!</Heading>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5" }}>
+          Não conseguimos processar a cobrança da sua assinatura do plano <strong>{planoNome}</strong>.
+        </Text>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5", marginTop: "10px" }}>
+          Para manter os benefícios ativos, atualize o seu método de pagamento de forma rápida e segura:
+        </Text>
+        <Link
+          href={linkAtualizacao}
+          style={{
+            display: "inline-block",
+            backgroundColor: CORES.primaria,
+            color: CORES.primariaTexto,
+            padding: "10px 20px",
+            borderRadius: "6px",
+            textDecoration: "none",
+            fontWeight: "bold",
+            marginTop: "10px",
+          }}
+        >
+          Atualizar Pagamento
+        </Link>
+        <Text style={{ fontSize: "11px", color: CORES.mutedTexto, marginTop: "30px", borderTop: `1px solid ${CORES.borda}`, paddingTop: "10px" }}>
+          Este é um e-mail automático enviado por DBG Elétrica e Pintura. Por favor, não responda a este e-mail.
+        </Text>
+      </Container>
+    </Body>
+  </Html>
+);
+
+export async function renderizarEmailFalhaPagamento(props: FalhaPagamentoEmailProps): Promise<string> {
+  const comp = React.createElement(FalhaPagamentoEmail, props);
+  return await render(comp);
+}
+
 // ============================================================
 // 3. Fábrica do EmailService (Resend / Mock)
 // ============================================================
