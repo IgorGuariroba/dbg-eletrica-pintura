@@ -49,6 +49,23 @@ export async function sincronizarFilaOffline(): Promise<void> {
           await db.fila_sync.delete(item.id!);
           continue;
         }
+      } else if (item.tipo === "CHECKLIST" && Array.isArray(payload.resultados)) {
+        // Hidrata as fotos de cada item do checklist (blob local -> dataUrl).
+        try {
+          for (const r of payload.resultados) {
+            if (!r.temFoto) continue;
+            const local = await db.checklist_local.get([payload.osId, r.itemId]);
+            if (local?.fotoBlob) {
+              r.dataUrl = await blobToDataUrl(local.fotoBlob);
+            }
+          }
+        } catch (e) {
+          console.error("Erro ao hidratar fotos do checklist:", e);
+          await db.fila_sync.update(item.id!, {
+            tentativas: item.tentativas + 1,
+          });
+          continue;
+        }
       }
       itemsToSync.push({
         id: item.id,
@@ -88,15 +105,28 @@ export async function sincronizarFilaOffline(): Promise<void> {
 
         if (result.success) {
           // Sucesso ou conflito resolvido/arquivado no servidor -> remove da fila local
-          await db.transaction("rw", db.fila_sync, db.fotos_pendentes, async () => {
-            await db.fila_sync.delete(localItem.id!);
-            if (localItem.tipo === "FOTO") {
-              const payload = localItem.payload as any;
-              if (payload.fotoId) {
-                await db.fotos_pendentes.delete(payload.fotoId);
+          await db.transaction(
+            "rw",
+            db.fila_sync,
+            db.fotos_pendentes,
+            db.checklist_local,
+            async () => {
+              await db.fila_sync.delete(localItem.id!);
+              if (localItem.tipo === "FOTO") {
+                const payload = localItem.payload as any;
+                if (payload.fotoId) {
+                  await db.fotos_pendentes.delete(payload.fotoId);
+                }
+              } else if (localItem.tipo === "CHECKLIST") {
+                // Resultados sincronizados: limpa o rascunho local da OS.
+                const payload = localItem.payload as any;
+                await db.checklist_local
+                  .where("osId")
+                  .equals(payload.osId)
+                  .delete();
               }
-            }
-          });
+            },
+          );
         } else {
           // Erro lógico retornado pelo servidor -> incrementa tentativa
           await db.fila_sync.update(localItem.id!, {

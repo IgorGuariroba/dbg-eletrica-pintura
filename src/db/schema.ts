@@ -64,6 +64,12 @@ export const statusFotoPortfolioEnum = pgEnum("status_foto_portfolio", [
 
 export const tipoFotoEnum = pgEnum("tipo_foto", ["ANTES", "DEPOIS"]);
 
+export const statusChecklistEnum = pgEnum("status_checklist", [
+  "OK",
+  "PROBLEMA",
+  "NA",
+]);
+
 export const moduloEnum = pgEnum("modulo", [
   "OPERACAO",
   "FINANCEIRO",
@@ -167,6 +173,31 @@ export const servico = pgTable("servico", {
 });
 
 // ============================================================
+// Checklist Preventivo (template por Categoria)
+// ============================================================
+
+export const checklistPreventivoItem = pgTable(
+  "checklist_preventivo_item",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    categoria: categoriaServicoEnum("categoria").notNull(),
+    ordem: integer("ordem").notNull(),
+    descricao: varchar("descricao", { length: 300 }).notNull(),
+    exigeFoto: boolean("exige_foto").notNull().default(false),
+    ativo: boolean("ativo").notNull().default(true),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    categoriaOrdemIdx: index("checklist_item_categoria_ordem_idx").on(
+      t.categoria,
+      t.ordem,
+    ),
+  }),
+);
+
+// ============================================================
 // Solicitação
 // ============================================================
 
@@ -265,6 +296,36 @@ export const ordemServico = pgTable("ordem_servico", {
     .on(t.tecnicoId, t.agendadoPara)
     .where(sql`estado IN ('AGENDADA', 'A_CAMINHO', 'NO_LOCAL', 'EM_EXECUCAO')`),
 }));
+
+// ============================================================
+// Resultado do Checklist Preventivo (preenchido pelo técnico na OS)
+// ============================================================
+
+export const osChecklistResultado = pgTable(
+  "os_checklist_resultado",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    osId: uuid("os_id")
+      .notNull()
+      .references(() => ordemServico.id, { onDelete: "cascade" }),
+    // Sem FK rígida: o item do template pode ser editado/removido no Catálogo
+    // depois. A descrição é congelada num snapshot para preservar o histórico.
+    itemId: uuid("item_id").notNull(),
+    descricaoSnapshot: varchar("descricao_snapshot", { length: 300 }).notNull(),
+    status: statusChecklistEnum("status").notNull(),
+    observacao: text("observacao"),
+    fotoUrl: text("foto_url"),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    osItemUq: uniqueIndex("os_checklist_resultado_os_item_uq").on(
+      t.osId,
+      t.itemId,
+    ),
+  }),
+);
 
 // ============================================================
 // Orçamento

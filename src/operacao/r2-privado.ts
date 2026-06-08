@@ -98,6 +98,40 @@ export function uploadFotoOsR2(): UploadFotoOs {
   };
 }
 
+export interface UploadFotoChecklist {
+  enviar(input: {
+    osId: string;
+    itemId: string;
+    dataUrl: string;
+  }): Promise<{ url: string }>;
+}
+
+/** Chave da foto de checklist no R2: `os/{id}/checklist/{itemId}/{uuid}.jpg`. */
+export function montarChaveFotoChecklist(osId: string, itemId: string): string {
+  return `os/${osId}/checklist/${itemId}/${randomUUID()}.jpg`;
+}
+
+export function uploadFotoChecklistR2(): UploadFotoChecklist {
+  return {
+    async enviar({ osId, itemId, dataUrl }) {
+      const virgula = dataUrl.indexOf(",");
+      if (virgula < 0) throw new Error("data URL de foto inválido");
+      const corpo = Buffer.from(dataUrl.slice(virgula + 1), "base64");
+      const key = montarChaveFotoChecklist(osId, itemId);
+      const { client, bucket } = init();
+      await client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          Body: corpo,
+          ContentType: "image/jpeg",
+        }),
+      );
+      return { url: key };
+    },
+  };
+}
+
 /**
  * Envio server-side da assinatura manuscrita (data URL base64 → PNG no R2).
  * Server-side em vez de presigned: o PWA pode replayar no sync offline sem
