@@ -213,6 +213,41 @@ describe("montarOrcamento", () => {
     ).rejects.toBeInstanceOf(OrcamentoInvalidoError);
   });
 
+  it("assinante ativo recebe desconto do plano no total", async () => {
+    let recebido: import("@/operacao/orcamento-repo").NovoOrcamento | undefined;
+    const repo = repoFake({
+      buscarPercentualDescontoAssinante: vi.fn(async () => "10"),
+      criarParaOs: vi.fn(async (d) => {
+        recebido = d;
+        return { id: "orc-1" };
+      }),
+    });
+    await montarOrcamento(
+      input({ itens: [{ servicoId: "srv-1", quantidade: "2" }], km: 20 }),
+      tecnico,
+      config,
+      repo,
+    );
+    // bruto 212.00, 10% = desconto 21.20, líquido 190.80
+    expect(recebido?.percentualDescontoPlano).toBe("10");
+    expect(recebido?.descontoPlano).toBe("21.20");
+    expect(recebido?.total).toBe("190.80");
+  });
+
+  it("não-assinante: orçamento sem desconto", async () => {
+    let recebido: import("@/operacao/orcamento-repo").NovoOrcamento | undefined;
+    const repo = repoFake({
+      buscarPercentualDescontoAssinante: vi.fn(async () => "0"),
+      criarParaOs: vi.fn(async (d) => {
+        recebido = d;
+        return { id: "orc-1" };
+      }),
+    });
+    await montarOrcamento(input({ km: 20 }), tecnico, config, repo);
+    expect(recebido?.descontoPlano).toBe("0.00");
+    expect(recebido?.total).toBe("212.00");
+  });
+
   it("soma quantidades de itens com o mesmo serviço", async () => {
     let recebido: import("@/operacao/orcamento-repo").NovoOrcamento | undefined;
     const repo = repoFake({

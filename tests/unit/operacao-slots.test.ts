@@ -235,3 +235,32 @@ describe("calcularSlotsDisponiveis - Ciclo 1 (Tracer Bullet)", () => {
     expect(slots[3].inicio).toEqual(new Date("2026-06-01T12:00:00Z"));
   });
 });
+
+describe("calcularSlotsDisponiveis - prioridade de assinante (#56)", () => {
+  const base = {
+    inicio: new Date("2026-06-01T00:00:00Z"),
+    fim: new Date("2026-06-01T23:59:59Z"),
+    categoria: "ELETRICA" as const,
+    horarioComercial: { seg: { inicio: "08:00", fim: "18:00" } },
+    tecnicos: [
+      {
+        id: "tec-1",
+        especialidades: ["ELETRICA" as const],
+        disponibilidade: { seg: { inicio: "08:00", fim: "18:00" } },
+        ocupacoes: [],
+      },
+    ],
+  };
+
+  it("marca os slots com prioridade quando o cliente é assinante", () => {
+    const slots = calcularSlotsDisponiveis({ ...base, assinante: true });
+    expect(slots.length).toBeGreaterThan(0);
+    expect(slots.every((s) => s.prioridade === true)).toBe(true);
+  });
+
+  it("não marca prioridade para não-assinante", () => {
+    const slots = calcularSlotsDisponiveis({ ...base });
+    expect(slots.length).toBeGreaterThan(0);
+    expect(slots.every((s) => !s.prioridade)).toBe(true);
+  });
+});

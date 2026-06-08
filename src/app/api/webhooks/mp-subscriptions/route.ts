@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { criarAssinaturaRepoDrizzle } from "@/assinatura/assinatura-repo-drizzle";
 import { derivarTipoEvento } from "@/assinatura/evento-webhook";
+import { enviarBoasVindas } from "@/assinatura/enviar-boas-vindas";
 import { criarGatewayMercadoPagoAssinatura } from "@/assinatura/mercadopago-assinatura";
 import { processarEventoAssinatura } from "@/assinatura/processar-evento";
 import { db } from "@/db/client";
@@ -71,7 +72,16 @@ export async function POST(request: Request): Promise<NextResponse> {
   const eventId = String(notificationId);
   const { aplicado } = await processarEventoAssinatura(
     { eventId, preapprovalIdMp: String(dataId), tipo },
-    { repo: criarAssinaturaRepoDrizzle(db) },
+    {
+      repo: criarAssinaturaRepoDrizzle(db),
+      // Boas-vindas só na 1ª ativação (gate em processarEventoAssinatura).
+      // Reaproveita o `next_payment_date` já consultado acima.
+      enviarBoasVindas: async (preapprovalIdMp) => {
+        await enviarBoasVindas(preapprovalIdMp, {
+          obterProximaCobranca: async () => recurso.nextPaymentDate,
+        });
+      },
+    },
   );
 
   return NextResponse.json({ ok: true, aplicado });

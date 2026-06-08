@@ -1,7 +1,16 @@
 import { randomBytes } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
 import type { DB } from "@/db/client";
-import { orcamento, orcamentoItem, ordemServico, servico } from "@/db/schema";
+import {
+  assinatura,
+  cliente,
+  orcamento,
+  orcamentoItem,
+  ordemServico,
+  plano,
+  servico,
+  solicitacao,
+} from "@/db/schema";
 import type {
   NovoOrcamento,
   OrcamentoRepo,
@@ -39,6 +48,27 @@ export function criarOrcamentoRepoDrizzle(db: DB): OrcamentoRepo {
       return linhas;
     },
 
+    async buscarPercentualDescontoAssinante(osId): Promise<string> {
+      // OS → solicitação → cliente → assinatura ATIVA → plano. Só assinatura
+      // ATIVA conta; PENDENTE/PAUSADA/CANCELADA/INADIMPLENTE não descontam.
+      const [row] = await db
+        .select({ percentual: plano.percentualDesconto })
+        .from(ordemServico)
+        .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
+        .innerJoin(cliente, eq(solicitacao.clienteId, cliente.id))
+        .innerJoin(
+          assinatura,
+          and(
+            eq(assinatura.clienteId, cliente.id),
+            eq(assinatura.status, "ATIVA"),
+          ),
+        )
+        .innerJoin(plano, eq(assinatura.planoId, plano.id))
+        .where(eq(ordemServico.id, osId))
+        .limit(1);
+      return row?.percentual ?? "0";
+    },
+
     async criarParaOs(dados: NovoOrcamento): Promise<{ id: string } | null> {
       // Neon HTTP não tem transação multi-statement. Insere primeiro, depois
       // tenta o UPDATE-portão atômico (só passa se OS ainda NOVA e do técnico).
@@ -52,6 +82,8 @@ export function criarOrcamentoRepoDrizzle(db: DB): OrcamentoRepo {
           totalMaterial: "0",
           totalMaoDeObra: dados.totalMaoDeObra,
           totalDeslocamento: dados.totalDeslocamento,
+          descontoPlano: dados.descontoPlano ?? "0",
+          percentualDescontoPlano: dados.percentualDescontoPlano ?? "0",
           total: dados.total,
           validoAte: dados.validoAte,
         })

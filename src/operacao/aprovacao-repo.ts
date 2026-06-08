@@ -11,6 +11,8 @@ export interface ItemView {
 export interface OrcamentoView {
   totalMaoDeObra: string;
   totalDeslocamento: string;
+  descontoPlano: string;
+  percentualDescontoPlano: string;
   total: string;
   validoAte: Date;
 }

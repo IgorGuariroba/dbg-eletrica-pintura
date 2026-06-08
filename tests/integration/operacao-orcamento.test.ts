@@ -14,6 +14,34 @@ describe.skipIf(!hasDb)("Orçamento Drizzle", () => {
   let solicitacaoIds: string[] = [];
   let membroIds: string[] = [];
   let servicoIds: string[] = [];
+  let planoIds: string[] = [];
+  let assinaturaPreapprovals: string[] = [];
+
+  async function seedAssinatura(
+    clienteId: string,
+    status: "ATIVA" | "PAUSADA" | "CANCELADA",
+    percentualDesconto: string,
+  ) {
+    const r = Math.random().toString(36).slice(2, 10);
+    const [pln] = await dbRaw
+      .insert(schema.plano)
+      .values({ nome: `Plano ${r}`, preco: "99.90", percentualDesconto })
+      .returning();
+    const preapproval = `pre-${r}`;
+    await dbRaw.insert(schema.assinatura).values({
+      clienteId,
+      planoId: pln.id,
+      preapprovalIdMp: preapproval,
+      status,
+    });
+    planoIds.push(pln.id);
+    assinaturaPreapprovals.push(preapproval);
+  }
+
+  async function seedOsComCliente(tecnicoId: string) {
+    const osId = await seedOsAtribuida(tecnicoId);
+    return { osId, clienteId: clienteIds[clienteIds.length - 1] };
+  }
 
   async function seedTecnico() {
     const r = Math.random().toString(36).slice(2, 10);
@@ -102,10 +130,24 @@ describe.skipIf(!hasDb)("Orçamento Drizzle", () => {
     solicitacaoIds = [];
     membroIds = [];
     servicoIds = [];
+    planoIds = [];
+    assinaturaPreapprovals = [];
   });
 
   afterAll(async () => {
     const { inArray } = await import("drizzle-orm");
+    if (assinaturaPreapprovals.length) {
+      await dbRaw
+        .delete(schema.assinatura)
+        .where(
+          inArray(schema.assinatura.preapprovalIdMp, assinaturaPreapprovals),
+        );
+    }
+    if (planoIds.length) {
+      await dbRaw
+        .delete(schema.plano)
+        .where(inArray(schema.plano.id, planoIds));
+    }
     if (solicitacaoIds.length) {
       const osRows = await dbRaw
         .select({ id: schema.ordemServico.id })
@@ -178,6 +220,54 @@ describe.skipIf(!hasDb)("Orçamento Drizzle", () => {
       .where(eq(schema.orcamentoItem.orcamentoId, r.id));
     expect(itens).toHaveLength(1);
     expect(Number(itens[0].subtotal)).toBe(200);
+  });
+
+  it("assinante ATIVA recebe desconto do plano no orçamento", async () => {
+    const tec = await seedTecnico();
+    const srv = await seedServico("ELETRICA", "100");
+    const { osId, clienteId } = await seedOsComCliente(tec);
+    await seedAssinatura(clienteId, "ATIVA", "10");
+
+    const r = await montar(
+      { osId, itens: [{ servicoId: srv, quantidade: "2" }], km: 20 },
+      { membroId: tec, isTecnico: true },
+      { precoLitro: "6", kmPorLitro: "10" },
+      orcRepo,
+    );
+
+    const { eq } = await import("drizzle-orm");
+    const [orc] = await dbRaw
+      .select()
+      .from(schema.orcamento)
+      .where(eq(schema.orcamento.id, r.id))
+      .limit(1);
+    // bruto 212 → 10% desconto 21.20 → líquido 190.80
+    expect(Number(orc.descontoPlano)).toBe(21.2);
+    expect(Number(orc.percentualDescontoPlano)).toBe(10);
+    expect(Number(orc.total)).toBe(190.8);
+  });
+
+  it("assinatura PAUSADA não desconta o orçamento", async () => {
+    const tec = await seedTecnico();
+    const srv = await seedServico("ELETRICA", "100");
+    const { osId, clienteId } = await seedOsComCliente(tec);
+    await seedAssinatura(clienteId, "PAUSADA", "10");
+
+    const r = await montar(
+      { osId, itens: [{ servicoId: srv, quantidade: "2" }], km: 20 },
+      { membroId: tec, isTecnico: true },
+      { precoLitro: "6", kmPorLitro: "10" },
+      orcRepo,
+    );
+
+    const { eq } = await import("drizzle-orm");
+    const [orc] = await dbRaw
+      .select()
+      .from(schema.orcamento)
+      .where(eq(schema.orcamento.id, r.id))
+      .limit(1);
+    expect(Number(orc.descontoPlano)).toBe(0);
+    expect(Number(orc.total)).toBe(212);
   });
 
   it("segundo orçamento na mesma OS é barrado (estado já não é NOVA)", async () => {

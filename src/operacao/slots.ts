@@ -12,6 +12,12 @@ export interface SlotDisponivel {
   inicio: Date;
   duracaoMin: number;
   tecnicoId: string;
+  /**
+   * Slot ofertado a cliente com assinatura ativa (#56). A flag é o ponto de
+   * extensão para precedência de assinante; o desempate concorrente na reserva
+   * (FCFS) fica deferido — ver ADR de prioridade de agendamento.
+   */
+  prioridade?: boolean;
 }
 
 const DIAS: DiaSemana[] = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
@@ -40,6 +46,7 @@ export function calcularSlotsDisponiveis(input: {
     horarioComercial,
     tecnicos,
     duracaoMin = 60,
+    assinante = false,
   } = input;
 
   const slots: SlotDisponivel[] = [];
@@ -114,6 +121,7 @@ export function calcularSlotsDisponiveis(input: {
               inicio: new Date(slotTime.getTime()),
               duracaoMin,
               tecnicoId: tecnico.id,
+              ...(assinante ? { prioridade: true } : {}),
             });
           }
         }

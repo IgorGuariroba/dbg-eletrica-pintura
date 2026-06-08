@@ -67,6 +67,7 @@ export default defineConfig({
         // testados via e2e/integração, não unit.
         "src/pagamento/mercadopago-client.ts",
         "src/assinatura/mercadopago-assinatura.ts",
+        "src/financeiro/planos/mercadopago-plano.ts",
         "src/catalogo/r2-client.ts",
         "src/marketing/copiador-r2.ts",
         // Orquestração de sync offline do PWA: usa APIs de browser

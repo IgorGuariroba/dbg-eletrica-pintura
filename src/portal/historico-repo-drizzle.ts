@@ -71,6 +71,8 @@ export function criarHistoricoRepoDrizzle(db: DB): HistoricoRepo {
             osId: orcamento.osId,
             total: orcamento.total,
             totalDeslocamento: orcamento.totalDeslocamento,
+            descontoPlano: orcamento.descontoPlano,
+            percentualDescontoPlano: orcamento.percentualDescontoPlano,
             validoAte: orcamento.validoAte,
             criadoEm: orcamento.criadoEm,
           })
@@ -132,6 +134,8 @@ export function criarHistoricoRepoDrizzle(db: DB): HistoricoRepo {
           ? {
               total: orc.total,
               totalDeslocamento: orc.totalDeslocamento,
+              descontoPlano: orc.descontoPlano,
+              percentualDescontoPlano: orc.percentualDescontoPlano,
               validoAte: orc.validoAte,
               itens: itensPorOrcamento.get(orc.id) ?? [],
             }

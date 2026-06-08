@@ -42,4 +42,10 @@ export interface AssinaturaRepo {
     preapprovalIdMp: string,
     patch: PatchAssinatura,
   ): Promise<void>;
+  /**
+   * Status atual da assinatura antes de aplicar um evento. Usado para detectar a
+   * 1ª ativação (PENDENTE → ATIVA) e disparar boas-vindas só uma vez. Opcional:
+   * repositórios/fakes que não precisam disso são tratados como `null`.
+   */
+  statusAtual?(preapprovalIdMp: string): Promise<StatusAssinatura | null>;
 }

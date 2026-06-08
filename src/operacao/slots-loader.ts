@@ -11,6 +11,8 @@ export interface ListarSlotsInput {
   fim: Date;
   categoria: Categoria;
   duracaoMin?: number;
+  /** Cliente com assinatura ativa → slots marcados com prioridade (#56). */
+  assinante?: boolean;
 }
 
 export interface SlotsLoaderDeps {
@@ -22,7 +24,7 @@ export async function listarSlotsDisponiveis(
   input: ListarSlotsInput,
   deps: SlotsLoaderDeps
 ): Promise<SlotDisponivel[]> {
-  const { inicio, fim, categoria, duracaoMin } = input;
+  const { inicio, fim, categoria, duracaoMin, assinante } = input;
 
   // 1. Carrega todos os membros ativos que são técnicos com a especialidade desejada no banco
   const matchingTecnicos = await db
@@ -90,5 +92,6 @@ export async function listarSlotsDisponiveis(
     horarioComercial,
     tecnicos: tecnicosAgendaveis,
     duracaoMin,
+    assinante,
   });
 }

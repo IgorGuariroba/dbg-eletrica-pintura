@@ -197,6 +197,16 @@ export default async function AcompanhamentoPage({
                         <span>Deslocamento</span>
                         <span>{formatBRL(os.orcamento.totalDeslocamento)}</span>
                       </div>
+                      {Number(os.orcamento.descontoPlano) > 0 && (
+                        <div className="flex justify-between text-primary">
+                          <span>
+                            Desconto plano (
+                            {Number(os.orcamento.percentualDescontoPlano).toFixed(0)}
+                            %)
+                          </span>
+                          <span>- {formatBRL(os.orcamento.descontoPlano)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-base font-bold">
                         <span>Total</span>
                         <span className="text-primary">{formatBRL(os.orcamento.total)}</span>

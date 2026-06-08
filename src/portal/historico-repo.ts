@@ -20,6 +20,8 @@ export interface OsHistorico {
   orcamento: {
     total: string;
     totalDeslocamento: string;
+    descontoPlano: string;
+    percentualDescontoPlano: string;
     validoAte: Date;
     itens: ItemView[];
   } | null;

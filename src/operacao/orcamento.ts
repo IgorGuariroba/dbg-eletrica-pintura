@@ -5,6 +5,7 @@ import type {
   ServicoPreco,
 } from "./orcamento-repo";
 import { calcularDeslocamento } from "./deslocamento-calculo";
+import { aplicarDescontoPlano } from "./desconto-plano";
 import {
   EstadoInvalidoError,
   ItensObrigatorioError,
@@ -132,6 +133,16 @@ export async function montarOrcamento(
     repo,
   );
 
+  // Desconto de plano: aplica o percentual do plano se o cliente da OS tem
+  // assinatura ATIVA (regra de "ATIVA" mora na query do repo). Congela o valor
+  // no orçamento — histórico imutável mesmo se a assinatura mudar depois.
+  const percentual =
+    (await repo.buscarPercentualDescontoAssinante?.(os.id)) ?? "0";
+  const { desconto, totalLiquido } = aplicarDescontoPlano(
+    calc.total,
+    percentual,
+  );
+
   const validoAte = new Date(Date.now() + VALIDADE_DIAS * 24 * 60 * 60 * 1000);
 
   const criado = await repo.criarParaOs({
@@ -140,7 +151,9 @@ export async function montarOrcamento(
     itens: calc.itens,
     totalMaoDeObra: calc.totalMaoDeObra,
     totalDeslocamento: calc.totalDeslocamento,
-    total: calc.total,
+    descontoPlano: desconto,
+    percentualDescontoPlano: percentual,
+    total: totalLiquido,
     validoAte,
   });
   if (!criado) throw new OsIndisponivelError();

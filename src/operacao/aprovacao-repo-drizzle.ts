@@ -79,6 +79,8 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
               osId: orcamento.osId,
               totalMaoDeObra: orcamento.totalMaoDeObra,
               totalDeslocamento: orcamento.totalDeslocamento,
+              descontoPlano: orcamento.descontoPlano,
+              percentualDescontoPlano: orcamento.percentualDescontoPlano,
               total: orcamento.total,
               validoAte: orcamento.validoAte,
               criadoEm: orcamento.criadoEm,
@@ -127,6 +129,8 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
             ? {
                 totalMaoDeObra: orc.totalMaoDeObra,
                 totalDeslocamento: orc.totalDeslocamento,
+                descontoPlano: orc.descontoPlano,
+                percentualDescontoPlano: orc.percentualDescontoPlano,
                 total: orc.total,
                 validoAte: orc.validoAte,
                 itens: itensPorOrc.get(orc.id) ?? [],

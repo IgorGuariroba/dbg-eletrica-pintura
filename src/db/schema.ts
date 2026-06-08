@@ -280,6 +280,17 @@ export const orcamento = pgTable("orcamento", {
   totalDeslocamento: decimal("total_deslocamento", { precision: 10, scale: 2 })
     .notNull()
     .default("0"),
+  // Desconto de plano congelado no ato (assinante ativo). `total` já é líquido;
+  // estas colunas preservam o histórico mesmo se o plano/assinatura mudar depois.
+  descontoPlano: decimal("desconto_plano", { precision: 10, scale: 2 })
+    .notNull()
+    .default("0"),
+  percentualDescontoPlano: decimal("percentual_desconto_plano", {
+    precision: 5,
+    scale: 2,
+  })
+    .notNull()
+    .default("0"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull().default("0"),
   validoAte: timestamp("valido_ate", { withTimezone: true }).notNull(),
   aprovadoEm: timestamp("aprovado_em", { withTimezone: true }),
@@ -927,13 +938,27 @@ export const statusAssinaturaEnum = pgEnum("status_assinatura", [
   "INADIMPLENTE", // payment_failed (antes de o MP cancelar de vez)
 ]);
 
-// Plano mínimo (FK alvo). CRUD completo (benefícios, % desconto, UI) é o #56.
+// Plano de assinatura (recorrência). CRUD completo no #56: benefícios,
+// % desconto aplicado em todo orçamento de assinante ativo, nº de preventivas
+// anuais e prioridade de agendamento.
 export const plano = pgTable("plano", {
   id: uuid("id").defaultRandom().primaryKey(),
   nome: varchar("nome", { length: 120 }).notNull(),
   preco: decimal("preco", { precision: 10, scale: 2 }).notNull(),
+  // Texto livre dos benefícios (uma linha por benefício, exibido em /planos).
+  beneficios: text("beneficios"),
+  // Desconto (%) aplicado ao total do orçamento de cliente com assinatura ativa.
+  percentualDesconto: decimal("percentual_desconto", { precision: 5, scale: 2 })
+    .notNull()
+    .default("0"),
+  // Visitas preventivas inclusas por ano (ex.: Básico 2, Conforto/Premium 4).
+  preventivasPorAno: integer("preventivas_por_ano").notNull().default(0),
+  // Assinante deste plano tem prioridade na oferta de slots de agendamento.
+  prioridadeAgendamento: boolean("prioridade_agendamento")
+    .notNull()
+    .default(false),
   // preApprovalPlanId do MP (template de cobrança). Nullable: o plano pode
-  // existir no DBG antes de ser espelhado no MP (#56 preenche).
+  // existir no DBG antes de ser espelhado no MP (#56 publica e preenche).
   preapprovalPlanIdMp: varchar("preapproval_plan_id_mp", { length: 64 }),
   ativo: boolean("ativo").notNull().default(true),
   criadoEm: timestamp("criado_em", { withTimezone: true })
