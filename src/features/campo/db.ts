@@ -46,6 +46,17 @@ export interface MaterialConsumido {
   criadoEm: string;
 }
 
+/** Resposta de um item do checklist preventivo, preenchida offline. */
+export interface RespostaChecklistLocal {
+  osId: string;
+  itemId: string;
+  status: "OK" | "PROBLEMA" | "NA";
+  observacao?: string;
+  /** Foto do item (quando exigida ou anexada pelo técnico). */
+  fotoBlob?: Blob;
+  atualizadoEm: string;
+}
+
 /** Ação de negócio feita offline aguardando sincronização com o servidor. */
 export interface FilaSync {
   id?: number;
@@ -60,6 +71,7 @@ export class CampoDB extends Dexie {
   fotos_pendentes!: Table<FotoPendente, number>;
   notas_servico!: Table<NotaServico, string>;
   materiais!: Table<MaterialConsumido, number>;
+  checklist_local!: Table<RespostaChecklistLocal, [string, string]>;
   fila_sync!: Table<FilaSync, number>;
 
   constructor(name = "dbg-campo") {
@@ -74,6 +86,10 @@ export class CampoDB extends Dexie {
       fotos_pendentes: "++id, osId, tipo, [osId+tipo]",
       notas_servico: "osId",
       materiais: "++id, osId",
+    });
+    this.version(3).stores({
+      // PK composta [osId+itemId]: uma resposta por item de checklist por OS.
+      checklist_local: "[osId+itemId], osId",
     });
   }
 }
