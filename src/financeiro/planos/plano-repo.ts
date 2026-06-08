@@ -12,6 +12,8 @@ export interface NovoPlano {
 /** Plano persistido. */
 export interface Plano extends NovoPlano {
   id: string;
+  /** Slug kebab-case p/ a landing pública /assinar/{slug}. */
+  slug: string | null;
   preapprovalPlanIdMp: string | null;
   criadoEm: Date;
 }
@@ -32,6 +34,8 @@ export interface PlanoRepo {
   atualizar(id: string, mudancas: AtualizacaoPlano): Promise<Plano | null>;
   toggleAtivo(id: string): Promise<Plano | null>;
   buscarPorId(id: string): Promise<Plano | null>;
+  /** Busca por slug, p/ a landing pública `/assinar/{slug}`. */
+  buscarPorSlug(slug: string): Promise<Plano | null>;
   /** Planos ativos, p/ a página pública `/planos`. */
   listarAtivos(): Promise<Plano[]>;
   /** Todos os planos (ativos e inativos), p/ o admin Financeiro. */

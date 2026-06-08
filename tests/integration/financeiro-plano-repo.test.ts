@@ -67,6 +67,35 @@ describe.skipIf(!hasDb)("criarPlanoRepoDrizzle", () => {
     expect(atualizado?.percentualDesconto).toBe("25.00");
   });
 
+  it("gera slug do nome no inserir e permite buscarPorSlug", async () => {
+    const p = await repo.inserir(nova({ nome: "Plano Conforto Premium" }));
+    planoIds.push(p.id);
+
+    expect(p.slug).toBe("plano-conforto-premium");
+
+    const achado = await repo.buscarPorSlug("plano-conforto-premium");
+    expect(achado?.id).toBe(p.id);
+    expect(await repo.buscarPorSlug("inexistente-xyz")).toBeNull();
+  });
+
+  it("resolve colisão de slug com sufixo numérico", async () => {
+    const a = await repo.inserir(nova({ nome: "Plano Colisao" }));
+    const b = await repo.inserir(nova({ nome: "Plano Colisao" }));
+    planoIds.push(a.id, b.id);
+
+    expect(a.slug).toBe("plano-colisao");
+    expect(b.slug).toBe("plano-colisao-1");
+  });
+
+  it("atualizar com novo nome regenera o slug", async () => {
+    const p = await repo.inserir(nova({ nome: "Nome Antigo" }));
+    planoIds.push(p.id);
+    expect(p.slug).toBe("nome-antigo");
+
+    const atualizado = await repo.atualizar(p.id, { nome: "Nome Novo" });
+    expect(atualizado?.slug).toBe("nome-novo");
+  });
+
   it("buscarPorId, listarTodos e definirPreapprovalPlanIdMp", async () => {
     const ativo = await repo.inserir(nova({ ativo: true }));
     const inativo = await repo.inserir(nova({ ativo: false }));

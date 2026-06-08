@@ -13,6 +13,7 @@ function fakeRepo() {
       inseridos.push(novo);
       return {
         id: "pln-1",
+        slug: "pln-1",
         preapprovalPlanIdMp: null,
         criadoEm: new Date("2026-01-01T00:00:00Z"),
         ...novo,
@@ -25,6 +26,9 @@ function fakeRepo() {
       return null;
     },
     async buscarPorId() {
+      return null;
+    },
+    async buscarPorSlug() {
       return null;
     },
     async listarAtivos() {

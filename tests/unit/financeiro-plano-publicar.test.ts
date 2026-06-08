@@ -7,6 +7,7 @@ function planoFixo(over: Partial<Plano> = {}): Plano {
   return {
     id: "pln-1",
     nome: "Conforto",
+    slug: "conforto",
     preco: "149.90",
     beneficios: null,
     percentualDesconto: "10",
@@ -32,6 +33,9 @@ function fakeRepo(plano: Plano) {
       return plano;
     },
     async buscarPorId() {
+      return plano;
+    },
+    async buscarPorSlug() {
       return plano;
     },
     async listarAtivos() {
