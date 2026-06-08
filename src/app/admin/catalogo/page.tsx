@@ -70,9 +70,17 @@ export default async function CatalogoPage({
             {total === 1 ? "" : "s"}
           </p>
         </div>
-        <Link href="/admin/catalogo/novo" className={buttonVariants()}>
-          Novo serviço
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={"/admin/catalogo/checklist/ELETRICA" as Route}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Checklist preventivo
+          </Link>
+          <Link href="/admin/catalogo/novo" className={buttonVariants()}>
+            Novo serviço
+          </Link>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
