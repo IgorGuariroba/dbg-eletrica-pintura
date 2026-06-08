@@ -13,7 +13,16 @@ export function criarGatewayMercadoPagoPlano(): GatewayPlanoMP {
   }
   const client = new MercadoPagoConfig({ accessToken });
   const preapprovalPlan = new PreApprovalPlan(client);
-  const backUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  // `back_url` é persistida no template do MP e usada como retorno do checkout
+  // do plano — precisa ser uma URL pública real. Fail-closed: sem
+  // NEXT_PUBLIC_SITE_URL não publicamos um plano apontando para localhost.
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!site) {
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL não configurada — necessária para a back_url do plano",
+    );
+  }
+  const backUrl = `${site}/planos`;
 
   return {
     async criarPlanoCobranca(req) {
