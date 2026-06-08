@@ -6,6 +6,8 @@ import type {
   ResultadoChecklist,
 } from "./checklist-resultado-repo";
 
+// Consumido via dynamic import em src/features/campo/sync.ts (branch CHECKLIST).
+// fallow-ignore-next-line unused-export
 export function criarChecklistResultadoRepoDrizzle(
   db: DB,
 ): ChecklistResultadoRepo {

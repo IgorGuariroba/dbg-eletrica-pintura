@@ -206,12 +206,9 @@ function ItemCard({
   onObservacao: (texto: string) => void;
   onFoto: (arquivo: File | undefined) => void;
 }) {
-  const inputFoto = useRef<HTMLInputElement>(null);
   const status = resposta?.status;
   const ehProblema = status === "PROBLEMA";
-  const fotoObrigatoria =
-    status !== "NA" && (item.exigeFoto || ehProblema);
-  const fotoPendente = fotoObrigatoria && !resposta?.temFoto;
+  const fotoObrigatoria = status !== "NA" && (item.exigeFoto || ehProblema);
 
   return (
     <li>
@@ -230,30 +227,7 @@ function ItemCard({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-2">
-            {(Object.keys(STATUS_META) as StatusChecklist[]).map((s) => {
-              const Icon = STATUS_META[s].icon;
-              const ativo = status === s;
-              const variante =
-                ativo && s === "PROBLEMA"
-                  ? "destructive"
-                  : ativo
-                    ? "default"
-                    : "outline";
-              return (
-                <Button
-                  key={s}
-                  variant={variante}
-                  aria-pressed={ativo}
-                  className="h-11"
-                  onClick={() => onMarcar(s)}
-                >
-                  <Icon className="size-4" aria-hidden />
-                  {STATUS_META[s].label}
-                </Button>
-              );
-            })}
-          </div>
+          <StatusSelector selecionado={status} onMarcar={onMarcar} />
 
           {status && (
             <Textarea
@@ -265,38 +239,91 @@ function ItemCard({
           )}
 
           {fotoObrigatoria && (
-            <div className="space-y-2">
-              {previewBlob ? (
-                <FotoPreview blob={previewBlob} />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Foto obrigatória para este item.
-                </p>
-              )}
-              <Input
-                ref={inputFoto}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => {
-                  onFoto(e.target.files?.[0]);
-                  e.target.value = "";
-                }}
-              />
-              <Button
-                variant={fotoPendente ? "default" : "outline"}
-                className="w-full"
-                onClick={() => inputFoto.current?.click()}
-              >
-                <Camera className="size-4" aria-hidden />
-                {previewBlob ? "Trocar foto" : "Tirar foto"}
-              </Button>
-            </div>
+            <FotoSection
+              previewBlob={previewBlob}
+              temFoto={resposta?.temFoto ?? false}
+              onFoto={onFoto}
+            />
           )}
         </CardContent>
       </Card>
     </li>
+  );
+}
+
+function FotoSection({
+  previewBlob,
+  temFoto,
+  onFoto,
+}: {
+  previewBlob: Blob | undefined;
+  temFoto: boolean;
+  onFoto: (arquivo: File | undefined) => void;
+}) {
+  const inputFoto = useRef<HTMLInputElement>(null);
+  return (
+    <div className="space-y-2">
+      {previewBlob ? (
+        <FotoPreview blob={previewBlob} />
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Foto obrigatória para este item.
+        </p>
+      )}
+      <Input
+        ref={inputFoto}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          onFoto(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      <Button
+        variant={temFoto ? "outline" : "default"}
+        className="w-full"
+        onClick={() => inputFoto.current?.click()}
+      >
+        <Camera className="size-4" aria-hidden />
+        {previewBlob ? "Trocar foto" : "Tirar foto"}
+      </Button>
+    </div>
+  );
+}
+
+function StatusSelector({
+  selecionado,
+  onMarcar,
+}: {
+  selecionado: StatusChecklist | undefined;
+  onMarcar: (s: StatusChecklist) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {(Object.keys(STATUS_META) as StatusChecklist[]).map((s) => {
+        const Icon = STATUS_META[s].icon;
+        const ativo = selecionado === s;
+        const variante = !ativo
+          ? "outline"
+          : s === "PROBLEMA"
+            ? "destructive"
+            : "default";
+        return (
+          <Button
+            key={s}
+            variant={variante}
+            aria-pressed={ativo}
+            className="h-11"
+            onClick={() => onMarcar(s)}
+          >
+            <Icon className="size-4" aria-hidden />
+            {STATUS_META[s].label}
+          </Button>
+        );
+      })}
+    </div>
   );
 }
 
