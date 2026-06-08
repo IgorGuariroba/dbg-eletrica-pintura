@@ -1,4 +1,6 @@
 import type { GatewayPagamento } from "./gateway";
+import type { EstadoOs } from "@/operacao/orcamento-repo";
+import { podeCobrar } from "@/operacao/estado-predicados";
 
 export interface ItemCheckout {
   titulo: string;
@@ -79,7 +81,7 @@ export async function criarCobrancaPix(
 export interface OrdemCheckout {
   osId: string;
   categoria: string;
-  estado: string;
+  estado: EstadoOs;
   total: string;
   pago: boolean;
 }
@@ -100,7 +102,7 @@ export function montarCheckoutConsolidado(
   let somaCents = 0;
 
   for (const o of ordens) {
-    if (o.estado === "CONCLUIDA" && !o.pago) {
+    if (podeCobrar(o.estado)) {
       pagaveis.push({ osId: o.osId, total: o.total, categoria: o.categoria });
       somaCents += Math.round(parseFloat(o.total) * 100);
     } else if (o.estado === "PAGA" || o.pago) {

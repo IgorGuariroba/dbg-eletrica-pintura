@@ -49,6 +49,12 @@ Garantia: PAGA → GARANTIA_ABERTA → nova OS tipo GARANTIA.
 Express: pula AGENDADA, A_CAMINHO, NO_LOCAL.
 Reagendamento: AGENDADA → AGENDADA (transição, não estado).
 
+**Predicados de estado** (elegibilidade pontual, sem transição — `estado-predicados.ts`):
+- **Pagável**: OS pode iniciar cobrança. `estado === CONCLUÍDA` (PAGA já está paga). Gate de Pix/link/checkout/pagamento manual.
+- **Entregue**: serviço entregue ao cliente. `CONCLUÍDA | PAGA`. Base para acionar garantia e listar ordens do checkout.
+
+Como `PAGA` é estado próprio, "Pagável" não precisa de flag de pagamento separada — `pago` é derivado de `estado === PAGA`.
+
 ### Tipos de OS
 
 | Tipo | Origem | Custo | Particularidade |

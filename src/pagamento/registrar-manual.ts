@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { processarPagamento, type ProcessarDeps } from "./processar-pagamento";
+import { podeCobrar } from "@/operacao/estado-predicados";
 
 /** Métodos aceitos no pagamento manual registrado pelo técnico no PWA. */
 export type MetodoPagamentoManual =
@@ -56,7 +57,7 @@ export async function registrarPagamentoManual(
     if (!ctx) {
       return { ok: false, erro: "Ordem de serviço não encontrada" };
     }
-    if (ctx.estado !== "CONCLUIDA") {
+    if (!podeCobrar(ctx.estado)) {
       return {
         ok: false,
         erro: "Apenas ordens de serviço no estado CONCLUIDA podem ser pagas",
