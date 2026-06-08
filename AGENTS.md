@@ -391,8 +391,8 @@ A arquitetura do projeto atual está saudável e não exige uma refatoração em
 ## 12. Referências Importantes
 
 Para entender o domínio de negócios e a estrutura visual:
-* **Regras de Negócio e Domínio:** Veja o arquivo [CONTEXT.md](./CONTEXT.md).
-* **Guia Visual e Tokens de Design:** Veja o arquivo [design-system.html](./design-system.html).
+* **Regras de Negócio e Domínio:** Veja o `CONTEXT.md` de cada bounded context em `src/<contexto>/CONTEXT.md` (linguagem ubíqua daquele domínio).
+* **Tokens de Design:** Veja [src/app/globals.css](./src/app/globals.css) (fonte de verdade de cores, fontes e espaçamentos).
 
 ---
 
