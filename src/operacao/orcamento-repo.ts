@@ -53,6 +53,11 @@ export interface OrcamentoRepo {
    */
   buscarPercentualDescontoAssinante?(osId: string): Promise<string>;
   /**
+   * Obtém a validade configurada do orçamento em dias. Se não implementado,
+   * utiliza o padrão do sistema (7 dias).
+   */
+  obterValidadeDias?(): Promise<number>;
+  /**
    * Persiste orçamento + itens e transita a OS NOVA → ORÇADA de forma atômica
    * (só vence se a OS ainda está NOVA e atribuída ao técnico). Retorna o id do
    * orçamento criado ou null se a OS já não estava disponível.

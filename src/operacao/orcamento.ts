@@ -143,7 +143,8 @@ export async function montarOrcamento(
     percentual,
   );
 
-  const validoAte = new Date(Date.now() + VALIDADE_DIAS * 24 * 60 * 60 * 1000);
+  const diasValidade = repo.obterValidadeDias ? await repo.obterValidadeDias() : VALIDADE_DIAS;
+  const validoAte = new Date(Date.now() + diasValidade * 24 * 60 * 60 * 1000);
 
   const criado = await repo.criarParaOs({
     osId: os.id,

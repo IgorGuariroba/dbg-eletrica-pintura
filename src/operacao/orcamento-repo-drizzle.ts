@@ -69,6 +69,12 @@ export function criarOrcamentoRepoDrizzle(db: DB): OrcamentoRepo {
       return row?.percentual ?? "0";
     },
 
+    async obterValidadeDias(): Promise<number> {
+      const { criarConfigRemarketingRepoDrizzle } = await import("@/marketing/remarketing/config-repo-drizzle");
+      const configRepo = criarConfigRemarketingRepoDrizzle(db);
+      return configRepo.obterValidadeDias();
+    },
+
     async criarParaOs(dados: NovoOrcamento): Promise<{ id: string } | null> {
       // Neon HTTP não tem transação multi-statement. Insere primeiro, depois
       // tenta o UPDATE-portão atômico (só passa se OS ainda NOVA e do técnico).

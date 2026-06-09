@@ -502,6 +502,62 @@ export const FalhaPagamentoEmail: React.FC<FalhaPagamentoEmailProps> = ({
   </Html>
 );
 
+export interface RemarketingEmailProps {
+  clienteNome: string;
+  titulo: string;
+  corpo: string;
+  ctaText?: string;
+  ctaUrl?: string;
+}
+
+export const RemarketingEmail: React.FC<RemarketingEmailProps> = ({
+  clienteNome,
+  titulo,
+  corpo,
+  ctaText,
+  ctaUrl,
+}) => (
+  <Html>
+    <Head />
+    <Body style={{ fontFamily: "sans-serif", backgroundColor: CORES.mutedBg, color: CORES.texto, padding: "20px" }}>
+      <Container style={{ backgroundColor: CORES.fundo, padding: "20px", borderRadius: "8px", border: `1px solid ${CORES.borda}` }}>
+        <Heading style={{ color: CORES.primaria, fontSize: "20px", marginBottom: "15px" }}>{titulo}</Heading>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5" }}>
+          Olá, {clienteNome}!
+        </Text>
+        <Text style={{ fontSize: "14px", lineHeight: "1.5", whiteSpace: "pre-line" }}>
+          {corpo}
+        </Text>
+        {ctaText && ctaUrl && (
+          <Link
+            href={ctaUrl}
+            style={{
+              display: "inline-block",
+              backgroundColor: CORES.primaria,
+              color: CORES.primariaTexto,
+              padding: "10px 20px",
+              borderRadius: "6px",
+              textDecoration: "none",
+              fontWeight: "bold",
+              marginTop: "20px",
+            }}
+          >
+            {ctaText}
+          </Link>
+        )}
+        <Text style={{ fontSize: "11px", color: CORES.mutedTexto, marginTop: "30px", borderTop: `1px solid ${CORES.borda}`, paddingTop: "10px" }}>
+          Este é um e-mail automático enviado por DBG Elétrica e Pintura. Por favor, não responda a este e-mail.
+        </Text>
+      </Container>
+    </Body>
+  </Html>
+);
+
+export async function renderizarEmailRemarketing(props: RemarketingEmailProps): Promise<string> {
+  const comp = React.createElement(RemarketingEmail, props);
+  return await render(comp);
+}
+
 export async function renderizarEmailFalhaPagamento(props: FalhaPagamentoEmailProps): Promise<string> {
   const comp = React.createElement(FalhaPagamentoEmail, props);
   return await render(comp);
