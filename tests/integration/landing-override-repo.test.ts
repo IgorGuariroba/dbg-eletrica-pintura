@@ -41,9 +41,22 @@ describe.skipIf(!hasDb)("LandingOverrideRepo Drizzle", () => {
         .where(inArray(schema.servico.id, servicoIds));
     }
     if (solicitacaoIds.length) {
-      await dbRaw
-        .delete(schema.ordemServico)
-        .where(inArray(schema.ordemServico.solicitacaoId, solicitacaoIds));
+      // avaliacao referencia OS (FK restrict) → apagar avaliações primeiro.
+      const oss = await dbRaw
+        .select({ id: schema.ordemServico.id })
+        .from(schema.ordemServico)
+        .where(
+          inArray(schema.ordemServico.solicitacaoId, solicitacaoIds),
+        );
+      const osIds = oss.map((o) => o.id);
+      if (osIds.length) {
+        await dbRaw
+          .delete(schema.avaliacao)
+          .where(inArray(schema.avaliacao.osId, osIds));
+        await dbRaw
+          .delete(schema.ordemServico)
+          .where(inArray(schema.ordemServico.id, osIds));
+      }
       await dbRaw
         .delete(schema.solicitacao)
         .where(inArray(schema.solicitacao.id, solicitacaoIds));
