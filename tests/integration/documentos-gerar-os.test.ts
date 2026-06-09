@@ -280,7 +280,7 @@ describe.skipIf(!hasDb)("gerarDocumentosOs (#48)", () => {
     expect(email.chamadas[0].anexos).toHaveLength(1);
   });
 
-  it("OS Preventiva não gera certificado nem fatura", async () => {
+  it("OS Preventiva não gera certificado nem fatura (só relatório)", async () => {
     const base = await seedOsPaga();
     const preventiva = await seedOsFilha({
       solId: base.sol.id,
@@ -298,7 +298,7 @@ describe.skipIf(!hasDb)("gerarDocumentosOs (#48)", () => {
 
     expect(res.fatura).toBeUndefined();
     expect(res.certificado).toBeUndefined();
-    expect(arm.objetos.size).toBe(0);
-    expect(email.chamadas).toHaveLength(0);
+    // Preventiva concluída gera o relatório de inspeção (sem fatura/certificado).
+    expect(res.relatorio).toBeDefined();
   });
 });

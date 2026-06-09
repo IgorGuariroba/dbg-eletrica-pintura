@@ -166,6 +166,8 @@ export interface DocumentosEmailProps {
   faturaUrl?: string | null;
   /** URL assinada do certificado de garantia, se gerado. */
   certificadoUrl?: string | null;
+  /** URL assinada do relatório de inspeção (preventiva), se gerado. */
+  relatorioUrl?: string | null;
 }
 
 export const DocumentosEmail: React.FC<DocumentosEmailProps> = ({
@@ -174,6 +176,7 @@ export const DocumentosEmail: React.FC<DocumentosEmailProps> = ({
   urlPortal,
   faturaUrl,
   certificadoUrl,
+  relatorioUrl,
 }) => (
   <Html>
     <Head />
@@ -191,6 +194,11 @@ export const DocumentosEmail: React.FC<DocumentosEmailProps> = ({
         {certificadoUrl ? (
           <Text style={{ fontSize: "14px", margin: "6px 0" }}>
             <Link href={certificadoUrl} style={{ color: CORES.primaria }}>Certificado de garantia</Link>
+          </Text>
+        ) : null}
+        {relatorioUrl ? (
+          <Text style={{ fontSize: "14px", margin: "6px 0" }}>
+            <Link href={relatorioUrl} style={{ color: CORES.primaria }}>Relatório de inspeção</Link>
           </Text>
         ) : null}
         <Text style={{ fontSize: "14px", lineHeight: "1.5", marginTop: "20px" }}>

@@ -41,3 +41,13 @@ export function avaliarConclusao(
   }
   return { pode: faltam.length === 0, faltam };
 }
+
+/**
+ * Há algum item marcado como PROBLEMA? Decide se o PWA oferece, ao concluir, a
+ * criação de um Orçamento Complementar para tratar o que a inspeção encontrou.
+ */
+export function temItensProblema(
+  respostas: Record<string, RespostaChecklist>,
+): boolean {
+  return Object.values(respostas).some((r) => r.status === "PROBLEMA");
+}

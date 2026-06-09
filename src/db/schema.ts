@@ -1022,6 +1022,12 @@ export const plano = pgTable("plano", {
     .default("0"),
   // Visitas preventivas inclusas por ano (ex.: Básico 2, Conforto/Premium 4).
   preventivasPorAno: integer("preventivas_por_ano").notNull().default(0),
+  // Categorias inspecionadas na preventiva: o cron gera 1 OS PREVENTIVA por
+  // categoria (cada uma com seu checklist e técnico especialista).
+  categoriasPreventiva: jsonb("categorias_preventiva")
+    .$type<(typeof categoriaServicoEnum.enumValues)[number][]>()
+    .notNull()
+    .default(sql`'["ELETRICA","PINTURA"]'::jsonb`),
   // Assinante deste plano tem prioridade na oferta de slots de agendamento.
   prioridadeAgendamento: boolean("prioridade_agendamento")
     .notNull()

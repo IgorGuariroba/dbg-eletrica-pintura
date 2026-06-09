@@ -1,6 +1,6 @@
 import { config as loadEnv } from "dotenv";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import type { PlanoRepo } from "@/financeiro/planos/plano-repo";
+import type { Categoria, PlanoRepo } from "@/financeiro/planos/plano-repo";
 
 loadEnv({ path: ".env.local" });
 
@@ -19,6 +19,7 @@ describe.skipIf(!hasDb)("criarPlanoRepoDrizzle", () => {
       beneficios: null,
       percentualDesconto: "10",
       preventivasPorAno: 2,
+      categoriasPreventiva: ["ELETRICA", "PINTURA"] as Categoria[],
       prioridadeAgendamento: false,
       ativo: true,
       ...over,

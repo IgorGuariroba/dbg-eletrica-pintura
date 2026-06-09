@@ -24,6 +24,7 @@ import {
 import { sincronizarFilaOffline } from "@/features/campo/sync-runner";
 import {
   avaliarConclusao,
+  temItensProblema,
   type RespostaChecklist,
   type StatusChecklist,
 } from "@/operacao/checklist-conclusao";
@@ -123,16 +124,29 @@ export function ChecklistView({
     }
   }
 
-  const conclusao = useMemo(() => {
-    const respostasRegra: Record<string, RespostaChecklist> = {};
-    for (const [itemId, r] of Object.entries(respostas)) {
-      respostasRegra[itemId] = { status: r.status, temFoto: r.temFoto };
+  const respostasRegra = useMemo(() => {
+    const r: Record<string, RespostaChecklist> = {};
+    for (const [itemId, resp] of Object.entries(respostas)) {
+      r[itemId] = { status: resp.status, temFoto: resp.temFoto };
     }
-    return avaliarConclusao(
-      itens.map((i) => ({ id: i.id, exigeFoto: i.exigeFoto })),
-      respostasRegra,
-    );
-  }, [respostas, itens]);
+    return r;
+  }, [respostas]);
+
+  const conclusao = useMemo(
+    () =>
+      avaliarConclusao(
+        itens.map((i) => ({ id: i.id, exigeFoto: i.exigeFoto })),
+        respostasRegra,
+      ),
+    [respostasRegra, itens],
+  );
+
+  // Itens com PROBLEMA habilitam o atalho para abrir um Orçamento Complementar
+  // (#27) — feito ainda com a OS EM_EXECUÇÃO, antes de concluir o checklist.
+  const haProblema = useMemo(
+    () => temItensProblema(respostasRegra),
+    [respostasRegra],
+  );
 
   if (carregando) {
     return (
@@ -176,6 +190,33 @@ export function ChecklistView({
             />
           ))}
         </ul>
+      )}
+
+      {haProblema && (
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CircleAlert className="size-4 text-destructive" aria-hidden />
+              Itens com problema encontrados
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Deseja criar um Orçamento Complementar para tratar o que a inspeção
+              encontrou?
+            </p>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={finalizando}
+              onClick={() =>
+                router.push(`/campo/os/${osId}/complementar/nova`)
+              }
+            >
+              Criar Orçamento Complementar
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       <Button

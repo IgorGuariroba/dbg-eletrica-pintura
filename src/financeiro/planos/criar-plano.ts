@@ -1,11 +1,15 @@
 import { z } from "zod";
 import type { NovoPlano, Plano, PlanoRepo } from "./plano-repo";
 import {
+  categoriasPreventivaSchema,
   nomePlanoSchema,
   percentualDescontoSchema,
   precoPlanoSchema,
   preventivasPorAnoSchema,
 } from "./validacao";
+
+/** Default de negócio: a DBG é "Elétrica e Pintura". */
+const CATEGORIAS_PREVENTIVA_PADRAO = ["ELETRICA", "PINTURA"] as const;
 
 export const novoPlanoSchema = z.object({
   nome: nomePlanoSchema,
@@ -13,6 +17,7 @@ export const novoPlanoSchema = z.object({
   beneficios: z.string().trim().nullish(),
   percentualDesconto: percentualDescontoSchema,
   preventivasPorAno: preventivasPorAnoSchema,
+  categoriasPreventiva: categoriasPreventivaSchema.optional(),
   prioridadeAgendamento: z.boolean().optional(),
   ativo: z.boolean().optional(),
 });
@@ -30,6 +35,8 @@ export async function criarPlano(
     beneficios: parsed.beneficios ?? null,
     percentualDesconto: parsed.percentualDesconto,
     preventivasPorAno: parsed.preventivasPorAno,
+    categoriasPreventiva:
+      parsed.categoriasPreventiva ?? [...CATEGORIAS_PREVENTIVA_PADRAO],
     prioridadeAgendamento: parsed.prioridadeAgendamento ?? false,
     ativo: parsed.ativo ?? true,
   };

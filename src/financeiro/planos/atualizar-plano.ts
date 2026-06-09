@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { AtualizacaoPlano, Plano, PlanoRepo } from "./plano-repo";
 import {
+  categoriasPreventivaSchema,
   nomePlanoSchema,
   percentualDescontoSchema,
   precoPlanoSchema,
@@ -13,6 +14,7 @@ export const atualizacaoPlanoSchema = z.object({
   beneficios: z.string().trim().nullable().optional(),
   percentualDesconto: percentualDescontoSchema.optional(),
   preventivasPorAno: preventivasPorAnoSchema.optional(),
+  categoriasPreventiva: categoriasPreventivaSchema.optional(),
   prioridadeAgendamento: z.boolean().optional(),
   ativo: z.boolean().optional(),
 });

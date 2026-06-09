@@ -40,6 +40,23 @@ describe("montarDocumentosPortalOs", () => {
     expect(urlAssinada).not.toHaveBeenCalled();
   });
 
+  it("PREVENTIVA concluída: relatório de inspeção disponível com URL assinada", async () => {
+    const urlAssinada = vi.fn(async (c: string) => `https://r2/${c}`);
+
+    const views = await montarDocumentosPortalOs({
+      osId: "os-4",
+      tipo: "PREVENTIVA",
+      estado: "CONCLUIDA",
+      urlAssinada,
+    });
+    const por = porTipo(views);
+
+    expect(por.RELATORIO_INSPECAO.estado).toBe("DISPONIVEL");
+    expect(por.RELATORIO_INSPECAO.url).toBe("https://r2/relatorio/os/os-4.pdf");
+    expect(por.FATURA.estado).toBe("EM_BREVE");
+    expect(por.CERTIFICADO_GARANTIA.estado).toBe("EM_BREVE");
+  });
+
   it("GARANTIA concluída: só certificado disponível (sem fatura)", async () => {
     const urlAssinada = vi.fn(async (c: string) => `https://r2/${c}`);
 
