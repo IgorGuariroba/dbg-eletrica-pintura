@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/db/client";
 import { criarPagamentoCheckoutRepoDrizzle } from "@/pagamento/checkout-query-repo-drizzle";
 import { montarCheckoutConsolidado } from "@/pagamento/checkout";
+import { criarUpsellRepoDrizzle } from "@/financeiro/upsell/upsell-repo-drizzle";
+import { carregarUpsellCheckout } from "@/financeiro/upsell/carregar-upsell-checkout";
 import { SiteHeader } from "../../../_landing/site-header";
 import { SiteFooter } from "../../../_landing/site-footer";
 import { PagarView } from "./pagar-view";
@@ -27,6 +29,14 @@ export default async function PagarPage({ params }: PageProps) {
   const consolidado = montarCheckoutConsolidado(sol.ordens);
   const protocolo = token.slice(0, 8).toUpperCase();
 
+  // Upsell (#65): só aparece se houver serviço pagável. Marca visto no render.
+  const oferta = consolidado.podePagarTudo
+    ? await carregarUpsellCheckout(
+        { clienteId: sol.clienteId, somaPagavel: consolidado.somaPagavel },
+        { repo: criarUpsellRepoDrizzle(db) },
+      )
+    : null;
+
   return (
     <>
       <SiteHeader />
@@ -41,7 +51,7 @@ export default async function PagarPage({ params }: PageProps) {
           </p>
         </div>
 
-        <PagarView solicitacao={sol} consolidado={consolidado} />
+        <PagarView solicitacao={sol} consolidado={consolidado} upsell={oferta} />
       </main>
       <SiteFooter />
     </>

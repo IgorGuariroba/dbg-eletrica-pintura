@@ -4,6 +4,8 @@ import { db } from "@/db/client";
 import { ordemServico, solicitacao, cliente } from "@/db/schema";
 import { exigirTecnico } from "@/app/campo/guard";
 import { criarPlanoRepoDrizzle } from "@/financeiro/planos/plano-repo-drizzle";
+import { criarUpsellRepoDrizzle } from "@/financeiro/upsell/upsell-repo-drizzle";
+import { foiEntregue } from "@/operacao/estado-predicados";
 import {
   AssinaturaPresencialView,
   type PlanoOferta,
@@ -26,6 +28,7 @@ export default async function AssinaturaCampoPage({ params }: PageProps) {
   const [row] = await db
     .select({
       estado: ordemServico.estado,
+      clienteId: cliente.id,
       clienteNome: cliente.nome,
     })
     .from(ordemServico)
@@ -36,7 +39,7 @@ export default async function AssinaturaCampoPage({ params }: PageProps) {
 
   if (!row) notFound();
 
-  if (row.estado !== "CONCLUIDA") {
+  if (!foiEntregue(row.estado)) {
     return (
       <div className="mx-auto max-w-lg px-4 py-8">
         <Card>
@@ -46,7 +49,24 @@ export default async function AssinaturaCampoPage({ params }: PageProps) {
             </CardTitle>
             <CardDescription>
               A oferta de assinatura só fica disponível quando a ordem de serviço
-              está concluída.
+              está concluída ou paga.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  // Assinante ativo nunca recebe upsell (#65) — em nenhum canal.
+  if (await criarUpsellRepoDrizzle(db).temAssinaturaAtiva(row.clienteId)) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Cliente já é assinante</CardTitle>
+            <CardDescription>
+              {row.clienteNome} já possui um plano de assinatura ativo. Não há
+              oferta a fazer aqui.
             </CardDescription>
           </CardHeader>
         </Card>

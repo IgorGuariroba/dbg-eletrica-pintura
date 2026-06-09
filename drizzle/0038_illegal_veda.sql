@@ -1,0 +1,1 @@
+ALTER TABLE "cliente" ADD COLUMN "upsell_visto_em" timestamp with time zone;

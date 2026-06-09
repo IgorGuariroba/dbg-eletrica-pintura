@@ -267,6 +267,13 @@
       "when": 1781024126504,
       "tag": "0037_open_baron_strucker",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1781037653100,
+      "tag": "0038_illegal_veda",
+      "breakpoints": true
     }
   ]
 }

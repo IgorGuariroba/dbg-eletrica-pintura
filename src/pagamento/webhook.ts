@@ -50,6 +50,8 @@ export interface RecursoPagamentoMP {
     os_ids?: string[];
     credito_utilizado?: string;
     cliente_id?: string;
+    /** Assinatura PENDENTE do combo "pagar tudo junto + assinar" (#65). */
+    assinatura_id?: string;
   };
 }
 
@@ -66,6 +68,7 @@ export interface DadosPagamento {
   metadata?: {
     credito_utilizado?: string;
     cliente_id?: string;
+    assinatura_id?: string;
   };
 }
 
@@ -86,11 +89,14 @@ export function parsearNotificacao(
     valor: recurso.transaction_amount.toFixed(2),
     metodo: recurso.payment_method_id,
     osIds,
-    ...(recurso.metadata?.credito_utilizado || recurso.metadata?.cliente_id
+    ...(recurso.metadata?.credito_utilizado ||
+    recurso.metadata?.cliente_id ||
+    recurso.metadata?.assinatura_id
       ? {
           metadata: {
             credito_utilizado: recurso.metadata.credito_utilizado,
             cliente_id: recurso.metadata.cliente_id,
+            assinatura_id: recurso.metadata.assinatura_id,
           },
         }
       : {}),

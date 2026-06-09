@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
-import { Check, Copy, ExternalLink, Loader2, RefreshCw, Send, WifiOff } from "lucide-react";
+import { Check, Copy, ExternalLink, Loader2, RefreshCw, Send, Star, WifiOff } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +22,11 @@ interface Props {
   valorTotal: string;
   categoria: string;
   clienteNome: string;
+  /** Upsell pós-conclusão (#65): cliente não-assinante pode receber oferta de plano. */
+  oferecerAssinatura?: boolean;
 }
 
-export function CobrancaView({ osId, estadoInicial, valorTotal, categoria, clienteNome }: Props) {
+export function CobrancaView({ osId, estadoInicial, valorTotal, categoria, clienteNome, oferecerAssinatura = false }: Props) {
   const router = useRouter();
   const [estado, setEstado] = useState(estadoInicial);
   const [activeTab, setActiveTab] = useState("pix");
@@ -238,21 +240,52 @@ export function CobrancaView({ osId, estadoInicial, valorTotal, categoria, clien
       </div>
 
       {estado === "PAGA" ? (
-        <Card className="border-success/30 bg-success/5">
-          <CardHeader>
-            <CardTitle className="text-success flex items-center gap-2">
-              <Check className="size-5" /> Pagamento Confirmado
-            </CardTitle>
-            <CardDescription>
-              Esta ordem de serviço já foi paga e concluída no sistema. Nenhuma ação de cobrança adicional é necessária.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Button className="w-full" onClick={() => router.push(`/campo/os/${osId}` as Route)}>
-              Voltar para Detalhes da OS
-            </Button>
-          </CardFooter>
-        </Card>
+        <div className="space-y-4">
+          <Card className="border-success/30 bg-success/5">
+            <CardHeader>
+              <CardTitle className="text-success flex items-center gap-2">
+                <Check className="size-5" /> Pagamento Confirmado
+              </CardTitle>
+              <CardDescription>
+                Esta ordem de serviço já foi paga e concluída no sistema. Nenhuma ação de cobrança adicional é necessária.
+              </CardDescription>
+            </CardHeader>
+            <CardFooter>
+              {/* Com upsell na tela, "Voltar" recua a ghost p/ não competir com o
+                  CTA único de oferta (hierarquia §7: 1 CTA principal por tela). */}
+              <Button
+                variant={oferecerAssinatura ? "ghost" : "default"}
+                className="w-full"
+                onClick={() => router.push(`/campo/os/${osId}` as Route)}
+              >
+                Voltar para Detalhes da OS
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {oferecerAssinatura && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="size-5 text-primary" /> Quer virar assinante?
+                </CardTitle>
+                <CardDescription>
+                  {clienteNome} ainda não tem plano. Ofereça desconto, visitas
+                  preventivas e prioridade no agendamento — o cliente assina no
+                  próprio celular.
+                </CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  onClick={() => router.push(`/campo/os/${osId}/assinatura` as Route)}
+                >
+                  Oferecer plano de assinatura
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+        </div>
       ) : estado !== "CONCLUIDA" ? (
         <Card className="border-destructive/30 bg-destructive/5">
           <CardHeader>
@@ -310,6 +343,9 @@ export function CobrancaView({ osId, estadoInicial, valorTotal, categoria, clien
                   </Button>
                 ) : (
                   <div className="flex flex-col items-center space-y-4 w-full">
+                    {/* bg-white funcional: QR Pix exige fundo branco p/ leitura
+                        do scanner — não escurecer no dark mode (exceção à regra
+                        de tokens semânticos, ver .agents/rules/padroes-de-design.md). */}
                     <div className="p-3 bg-white rounded-lg border border-border shadow-xs">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={`data:image/png;base64,${qrBase64}`} alt="Pix QR Code" className="size-48 object-contain" />
@@ -383,7 +419,11 @@ export function CobrancaView({ osId, estadoInicial, valorTotal, categoria, clien
                     href={urlWaMe}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-12 w-full max-w-sm items-center justify-center gap-2 rounded-md bg-success text-success-foreground text-sm font-semibold hover:bg-success/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className={buttonVariants({
+                      size: "lg",
+                      className:
+                        "w-full max-w-sm gap-2 bg-success text-success-foreground hover:bg-success/90",
+                    })}
                   >
                     <Send className="size-4" /> Enviar via WhatsApp
                     <ExternalLink className="size-3" />

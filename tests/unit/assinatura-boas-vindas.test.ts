@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { enviarBoasVindas } from "@/assinatura/enviar-boas-vindas";
+import {
+  enviarBoasVindas,
+  enviarBoasVindasCombo,
+} from "@/assinatura/enviar-boas-vindas";
 import type { DadosBoasVindas } from "@/assinatura/enviar-boas-vindas";
 
 function dados(over: Partial<DadosBoasVindas> = {}): DadosBoasVindas {
@@ -58,5 +61,26 @@ describe("enviarBoasVindas", () => {
     });
     expect(out).toEqual({ status: "skipped", motivo: "cliente sem e-mail" });
     expect(chamou).toBe(false);
+  });
+});
+
+describe("enviarBoasVindasCombo", () => {
+  it("envia carregando pela assinatura (sem preapproval) e cobrança 'a confirmar'", async () => {
+    const enviados: { para: string; html: string }[] = [];
+    const idsCarregados: string[] = [];
+
+    const out = await enviarBoasVindasCombo("ass-1", {
+      carregar: async (id) => {
+        idsCarregados.push(id);
+        return dados();
+      },
+      enviar: async (i) => void enviados.push(i),
+    });
+
+    expect(out.status).toBe("sent");
+    expect(idsCarregados).toEqual(["ass-1"]);
+    expect(enviados[0].para).toBe("maria@x.com");
+    // Combo não tem pre-approval no MP — nunca consulta próxima cobrança.
+    expect(enviados[0].html).toContain("a confirmar");
   });
 });
