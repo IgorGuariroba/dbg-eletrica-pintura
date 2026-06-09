@@ -4,10 +4,12 @@ const SECRET = "cron_secret_test";
 
 const gerarPreventivasDevidas = vi.fn();
 vi.mock("@/assinatura/preventiva-geracao", () => ({ gerarPreventivasDevidas }));
+// O repo Drizzle é mockado, então `db` não é usado pela rota nestes testes —
+// não mockar @/db/client evita vazar o mock para o teardown global / outros
+// arquivos no run serial (--no-file-parallelism).
 vi.mock("@/assinatura/preventiva-geracao-drizzle", () => ({
   criarPreventivaGeracaoRepoDrizzle: () => ({}),
 }));
-vi.mock("@/db/client", () => ({ db: {} }));
 
 async function chamar(headers: Record<string, string> = {}) {
   const { GET } = await import("@/app/api/cron/preventivas/route");
