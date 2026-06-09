@@ -200,7 +200,14 @@ export function LandingOverrideForm({
               onValueChange={(v) => setUpsell(v ?? SEM_UPSELL)}
             >
               <SelectTrigger id="upsell" className="w-full">
-                <SelectValue placeholder="Nenhum" />
+                <SelectValue placeholder="Nenhum">
+                  {(v: string) =>
+                    v === SEM_UPSELL
+                      ? "Nenhum"
+                      : (outrosServicos.find((s) => s.id === v)?.nome ??
+                        "Nenhum")
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={SEM_UPSELL}>Nenhum</SelectItem>
