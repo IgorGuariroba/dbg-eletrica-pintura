@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import type { DB } from "@/db/client";
 import { solicitacao, cliente } from "@/db/schema";
-import { normalizarWhatsapp, ordenarVariaveis } from "@/notificacao/templates";
+import { normalizarWhatsapp, ordenarVariaveis, criarTemplateRepo } from "@/notificacao/templates";
 import { enviarTemplate } from "@/notificacao/enviar-template";
 import { whatsappConfigurado } from "@/notificacao/whatsapp-gateway";
 import { renderizarEmailRemarketing } from "@/notificacao/email-service";
@@ -16,7 +16,7 @@ export async function processarReativacaoInativos(
   deps: ProcessarRemarketingDeps,
 ): Promise<number> {
   const agora = deps.agora ?? new Date();
-  const templateRepo = deps.templateRepo ?? (await import("@/notificacao/templates")).criarTemplateRepo(db);
+  const templateRepo = deps.templateRepo ?? criarTemplateRepo(db);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   // Subquery para obter o max(criadoEm) de solicitações por cliente
