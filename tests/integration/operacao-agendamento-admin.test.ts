@@ -30,7 +30,15 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
         isTecnico: true,
         ativo: true,
         especialidades: [categoria as any],
-        disponibilidade: { qua: { inicio: "08:00", fim: "18:00" } },
+        disponibilidade: {
+          seg: { inicio: "00:00", fim: "23:59" },
+          ter: { inicio: "00:00", fim: "23:59" },
+          qua: { inicio: "00:00", fim: "23:59" },
+          qui: { inicio: "00:00", fim: "23:59" },
+          sex: { inicio: "00:00", fim: "23:59" },
+          sab: { inicio: "00:00", fim: "23:59" },
+          dom: { inicio: "00:00", fim: "23:59" },
+        },
       })
       .returning();
     membroIds.push(m.id);
@@ -80,6 +88,10 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
     schema = await import("@/db/schema");
     dbRaw = dbMod.db;
 
+    // Não mutamos o singleton operacaoConfig (id "default") aqui: ele é compartilhado
+    // com o teste de integração do cliente, e escritas concorrentes causariam corrida.
+    // A grade vem da config vigente (ou do HORARIO_COMERCIAL_PADRAO de fallback),
+    // por isso o técnico é semeado com disponibilidade ampla, garantindo interseção.
     const { criarAgendamentoRepoDrizzle } = await import("@/operacao/agendamento-repo-drizzle");
     const { criarAgendamentoService } = await import("@/operacao/agendamento");
     service = criarAgendamentoService(criarAgendamentoRepoDrizzle(dbMod.db));
@@ -93,6 +105,7 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
 
   afterAll(async () => {
     const { inArray } = await import("drizzle-orm");
+
     if (solicitacaoIds.length) {
       const osRows = await dbRaw
         .select({ id: schema.ordemServico.id })
@@ -113,25 +126,31 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
     }
   });
 
-  it("reagendarAdmin persiste novo slot/técnico e registra transição (buscarOs + salvarAgendamento)", async () => {
+  it("reagendarAdmin valida o slot na grade, persiste e registra transição (buscarOs + salvarAgendamento)", async () => {
     const { eq } = await import("drizzle-orm");
-    const tec = await seedTecnico("ELETRICA");
-    const { id: os } = await seedOs({
-      categoria: "ELETRICA",
-      estado: "EM_EXECUCAO",
-      tecnicoId: tec,
-      agendadoPara: new Date("2026-06-10T11:00:00Z"),
-    });
+    await seedTecnico("DRYWALL");
+    const { id: os, token } = await seedOs({ categoria: "DRYWALL", estado: "APROVADA" });
 
-    const novoSlot = new Date("2026-06-17T11:00:00Z");
-    await service.reagendarAdmin(os, "admin@dbg.com.br", novoSlot, tec);
+    // Escolhe um slot real da grade (o admin não fornece mais técnico/horário cru).
+    // A grade considera todos os técnicos elegíveis, então o técnico atribuído é
+    // resolvido pelo próprio slot — apenas garantimos que algum foi associado.
+    const slots = await service.obterSlotsCliente(token, os);
+    const escolhido = slots[0];
+    expect(escolhido).toBeDefined();
+
+    await service.reagendarAdmin(os, "admin@dbg.com.br", escolhido.inicio);
 
     const [row] = await dbRaw
-      .select({ estado: schema.ordemServico.estado, agendadoPara: schema.ordemServico.agendadoPara })
+      .select({
+        estado: schema.ordemServico.estado,
+        tecnicoId: schema.ordemServico.tecnicoId,
+        agendadoPara: schema.ordemServico.agendadoPara,
+      })
       .from(schema.ordemServico)
       .where(eq(schema.ordemServico.id, os));
     expect(row.estado).toBe("AGENDADA");
-    expect(new Date(row.agendadoPara!).toISOString()).toBe(novoSlot.toISOString());
+    expect(row.tecnicoId).toBeTruthy();
+    expect(new Date(row.agendadoPara!).toISOString()).toBe(escolhido.inicio.toISOString());
 
     const trans = await dbRaw
       .select()
@@ -144,9 +163,9 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
 
   it("cancelarAdmin libera a OS para APROVADA e zera técnico/horário (liberarAgendamento)", async () => {
     const { eq } = await import("drizzle-orm");
-    const tec = await seedTecnico("ELETRICA");
+    const tec = await seedTecnico("DRYWALL");
     const { id: os } = await seedOs({
-      categoria: "ELETRICA",
+      categoria: "DRYWALL",
       estado: "AGENDADA",
       tecnicoId: tec,
       agendadoPara: new Date("2026-06-10T11:00:00Z"),
@@ -169,9 +188,9 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
 
   it("cancelarLoteAdmin marca CANCELADA as válidas e reporta as inexistentes", async () => {
     const { eq } = await import("drizzle-orm");
-    const tec = await seedTecnico("ELETRICA");
+    const tec = await seedTecnico("DRYWALL");
     const { id: os } = await seedOs({
-      categoria: "ELETRICA",
+      categoria: "DRYWALL",
       estado: "AGENDADA",
       tecnicoId: tec,
       agendadoPara: new Date("2026-06-10T11:00:00Z"),
@@ -195,9 +214,9 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
 
   it("converte violação de slot único em SlotIndisponivelError (catch do salvarAgendamento)", async () => {
     const { SlotIndisponivelError } = await import("@/operacao/agendamento");
-    const tec = await seedTecnico("ELETRICA");
-    const { id: osA } = await seedOs({ categoria: "ELETRICA", estado: "AGENDADA", tecnicoId: tec });
-    const { id: osB } = await seedOs({ categoria: "ELETRICA", estado: "AGENDADA", tecnicoId: tec });
+    const tec = await seedTecnico("DRYWALL");
+    const { id: osA } = await seedOs({ categoria: "DRYWALL", estado: "AGENDADA", tecnicoId: tec });
+    const { id: osB } = await seedOs({ categoria: "DRYWALL", estado: "AGENDADA", tecnicoId: tec });
 
     const slot = new Date("2026-06-24T11:00:00Z");
     await service.reagendarTecnico(osA, tec, "t@dbg.com.br", slot, null);
@@ -205,18 +224,5 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
     await expect(
       service.reagendarTecnico(osB, tec, "t@dbg.com.br", slot, null)
     ).rejects.toBeInstanceOf(SlotIndisponivelError);
-  });
-
-  it("rethrow de erro de banco não-único (FK inexistente) sem virar SlotIndisponivelError", async () => {
-    const { SlotIndisponivelError } = await import("@/operacao/agendamento");
-    const { id: os } = await seedOs({ categoria: "ELETRICA", estado: "AGENDADA" });
-    const tecInexistente = "00000000-0000-0000-0000-000000000000";
-
-    const erro = await service
-      .reagendarAdmin(os, "admin@dbg.com.br", new Date("2026-06-30T11:00:00Z"), tecInexistente)
-      .then(() => null, (e) => e);
-
-    expect(erro).toBeInstanceOf(Error);
-    expect(erro).not.toBeInstanceOf(SlotIndisponivelError);
   });
 });

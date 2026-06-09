@@ -294,14 +294,14 @@ describe("AgendamentoService - reagendarTecnico", () => {
 });
 
 describe("AgendamentoService - Admin Operations", () => {
-  it("Caso 8 (RED): permite reagendar e cancelar de forma soberana", async () => {
+  it("Caso 8 (RED): reagenda validando a grade e cancela de forma soberana", async () => {
     const dataAgendada = new Date("2026-06-01T11:00:00Z");
     const repo = criarFakeRepo({
       buscarOs: vi.fn(async (osId) => {
         if (osId === "os-1") {
           return {
             id: "os-1",
-            estado: "EM_EXECUCAO", // Admin pode reagendar mesmo se estiver em execução!
+            estado: "AGENDADA",
             categoria: "ELETRICA",
             tecnicoId: "tec-1",
             agendadoPara: dataAgendada,
@@ -313,19 +313,19 @@ describe("AgendamentoService - Admin Operations", () => {
     });
     const service = criarAgendamentoService(repo);
 
-    const novoSlot = new Date("2026-06-02T10:00:00Z");
+    const novoSlot = new Date("2026-06-08T11:00:00.000Z"); // segunda 08:00 SP, presente na grade fake
     const agora = new Date("2026-06-01T10:00:00Z");
     vi.useFakeTimers();
     vi.setSystemTime(agora);
 
-    // 1. Admin Reagendar
-    await service.reagendarAdmin("os-1", "admin@dbg.com.br", novoSlot, "tec-2");
+    // 1. Admin Reagendar (técnico resolvido pela grade)
+    await service.reagendarAdmin("os-1", "admin@dbg.com.br", novoSlot);
     expect(repo.salvarAgendamento).toHaveBeenCalledWith(
       "os-1",
       novoSlot,
-      "tec-2",
+      "tec-1",
       expect.objectContaining({
-        estadoAnterior: "EM_EXECUCAO",
+        estadoAnterior: "AGENDADA",
         estadoNovo: "AGENDADA",
         atorEmail: "admin@dbg.com.br",
         motivo: "Reagendamento administrativo",
@@ -339,7 +339,7 @@ describe("AgendamentoService - Admin Operations", () => {
       "os-1",
       "APROVADA",
       expect.objectContaining({
-        estadoAnterior: "EM_EXECUCAO",
+        estadoAnterior: "AGENDADA",
         estadoNovo: "APROVADA",
         atorEmail: "admin@dbg.com.br",
         motivo: "Cancelamento em lote",
@@ -675,7 +675,7 @@ describe("AgendamentoService - cancelarTecnico", () => {
   });
 });
 
-describe("AgendamentoService - reagendarAdmin (erros e fallback de técnico)", () => {
+describe("AgendamentoService - reagendarAdmin (validação contra a grade)", () => {
   it("lança OsInexistenteError quando a OS não existe", async () => {
     const service = criarAgendamentoService(criarFakeRepo());
     await expect(
@@ -683,25 +683,39 @@ describe("AgendamentoService - reagendarAdmin (erros e fallback de técnico)", (
     ).rejects.toThrow(OsInexistenteError);
   });
 
-  it("lança Error quando não há técnico atribuído nem fornecido", async () => {
-    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ tecnicoId: null })) });
+  it("lança OsNaoAgendavelError quando a OS não está em estado pré-execução", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "EM_EXECUCAO" })) });
     const service = criarAgendamentoService(repo);
     await expect(
       service.reagendarAdmin("os-1", "admin@dbg.com.br", new Date())
-    ).rejects.toThrow("Técnico não atribuído e nenhum fornecido");
+    ).rejects.toThrow(OsNaoAgendavelError);
   });
 
-  it("reaproveita o técnico já atribuído quando nenhum é fornecido", async () => {
-    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ tecnicoId: "tec-1" })) });
+  it("lança SlotNaoEncontradoError quando o horário não existe na grade", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "AGENDADA" })) });
     const service = criarAgendamentoService(repo);
-    const novoSlot = new Date("2026-06-12T10:00:00Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T10:00:00Z"));
+    await expect(
+      service.reagendarAdmin("os-1", "admin@dbg.com.br", new Date("2026-06-01T03:00:00Z"))
+    ).rejects.toThrow(SlotNaoEncontradoError);
+    vi.useRealTimers();
+  });
+
+  it("resolve o técnico a partir do slot escolhido na grade", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "AGENDADA", tecnicoId: null })) });
+    const service = criarAgendamentoService(repo);
+    const novoSlot = new Date("2026-06-08T11:00:00.000Z"); // segunda 08:00 SP, presente na grade fake
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T10:00:00Z"));
     await service.reagendarAdmin("os-1", "admin@dbg.com.br", novoSlot);
     expect(repo.salvarAgendamento).toHaveBeenCalledWith(
       "os-1",
       novoSlot,
       "tec-1",
-      expect.objectContaining({ motivo: "Reagendamento administrativo" })
+      expect.objectContaining({ estadoNovo: "AGENDADA", motivo: "Reagendamento administrativo" })
     );
+    vi.useRealTimers();
   });
 });
 

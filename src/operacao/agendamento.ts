@@ -93,7 +93,7 @@ export interface AgendamentoService {
   ): Promise<void>;
   cancelarTecnico(osId: string, tecnicoId: string, email: string, motivo: string): Promise<void>;
 
-  reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date, tecnicoId?: string): Promise<void>;
+  reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date): Promise<void>;
   cancelarAdmin(osId: string, adminEmail: string, motivo?: string): Promise<void>;
   cancelarLoteAdmin(
     osIds: string[],
@@ -102,8 +102,29 @@ export interface AgendamentoService {
   ): Promise<{ osId: string; ok: boolean; erro?: string }[]>;
 }
 
+/** Estados em que o admin pode reagendar uma OS (pré-execução). */
+const REAGENDAVEIS_ADMIN: EstadoOs[] = ["APROVADA", "AGENDADA", "A_CAMINHO", "NO_LOCAL"];
+
 export class AgendamentoServiceImpl implements AgendamentoService {
   constructor(private readonly repo: AgendamentoRepo) {}
+
+  /** Grade de slots disponíveis para os próximos 14 dias de uma categoria. */
+  private async calcularGradeSlots(categoria: Categoria, assinante: boolean) {
+    const inicio = new Date();
+    const fim = new Date(inicio.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+    const tecnicos = await this.repo.listarTecnicosAgendaveis(categoria);
+    const horarioComercial = await this.repo.obterHorarioComercial();
+
+    return calcularSlotsDisponiveis({
+      inicio,
+      fim,
+      categoria,
+      horarioComercial,
+      tecnicos,
+      assinante,
+    });
+  }
 
   async obterSlotsCliente(token: string, osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]> {
     const os = await this.repo.buscarOsComToken(token, osId);
@@ -114,20 +135,7 @@ export class AgendamentoServiceImpl implements AgendamentoService {
       throw new OsNaoAgendavelError();
     }
 
-    const inicio = new Date();
-    const fim = new Date(inicio.getTime() + 14 * 24 * 60 * 60 * 1000);
-
-    const tecnicos = await this.repo.listarTecnicosAgendaveis(os.categoria);
-    const horarioComercial = await this.repo.obterHorarioComercial();
-
-    const rawSlots = calcularSlotsDisponiveis({
-      inicio,
-      fim,
-      categoria: os.categoria,
-      horarioComercial,
-      tecnicos,
-      assinante: os.clienteAssinante,
-    });
+    const rawSlots = await this.calcularGradeSlots(os.categoria, os.clienteAssinante);
 
     const vistos = new Set<number>();
     const unicos: { inicio: Date; prioridade?: boolean }[] = [];
@@ -154,20 +162,7 @@ export class AgendamentoServiceImpl implements AgendamentoService {
       throw new OsNaoAgendavelError();
     }
 
-    const inicio = new Date();
-    const fim = new Date(inicio.getTime() + 14 * 24 * 60 * 60 * 1000);
-
-    const tecnicos = await this.repo.listarTecnicosAgendaveis(os.categoria);
-    const horarioComercial = await this.repo.obterHorarioComercial();
-
-    const rawSlots = calcularSlotsDisponiveis({
-      inicio,
-      fim,
-      categoria: os.categoria,
-      horarioComercial,
-      tecnicos,
-      assinante: os.clienteAssinante,
-    });
+    const rawSlots = await this.calcularGradeSlots(os.categoria, os.clienteAssinante);
 
     const alvoTime = horario.getTime();
     const slot = rawSlots.find((s) => s.inicio.getTime() === alvoTime);
@@ -226,20 +221,7 @@ export class AgendamentoServiceImpl implements AgendamentoService {
       throw new ForaDaJanelaError();
     }
 
-    const inicio = new Date();
-    const fim = new Date(inicio.getTime() + 14 * 24 * 60 * 60 * 1000);
-
-    const tecnicos = await this.repo.listarTecnicosAgendaveis(os.categoria);
-    const horarioComercial = await this.repo.obterHorarioComercial();
-
-    const rawSlots = calcularSlotsDisponiveis({
-      inicio,
-      fim,
-      categoria: os.categoria,
-      horarioComercial,
-      tecnicos,
-      assinante: os.clienteAssinante,
-    });
+    const rawSlots = await this.calcularGradeSlots(os.categoria, os.clienteAssinante);
 
     const alvoTime = novoHorario.getTime();
     const slot = rawSlots.find((s) => s.inicio.getTime() === alvoTime);
@@ -321,17 +303,22 @@ export class AgendamentoServiceImpl implements AgendamentoService {
     });
   }
 
-  async reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date, tecnicoId?: string): Promise<void> {
+  async reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date): Promise<void> {
     const os = await this.repo.buscarOs(osId);
     if (!os) {
       throw new OsInexistenteError();
     }
-    const finalTecnicoId = tecnicoId ?? os.tecnicoId;
-    if (!finalTecnicoId) {
-      throw new Error("Técnico não atribuído e nenhum fornecido");
+    if (!REAGENDAVEIS_ADMIN.includes(os.estado)) {
+      throw new OsNaoAgendavelError("OS não está em estado reagendável (pré-execução)");
     }
 
-    await this.repo.salvarAgendamento(osId, novoHorario, finalTecnicoId, {
+    const rawSlots = await this.calcularGradeSlots(os.categoria, os.clienteAssinante);
+    const slot = rawSlots.find((s) => s.inicio.getTime() === novoHorario.getTime());
+    if (!slot) {
+      throw new SlotNaoEncontradoError();
+    }
+
+    await this.repo.salvarAgendamento(osId, slot.inicio, slot.tecnicoId, {
       estadoAnterior: os.estado,
       estadoNovo: "AGENDADA",
       atorEmail: adminEmail,
