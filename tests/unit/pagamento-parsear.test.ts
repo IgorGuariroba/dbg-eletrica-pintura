@@ -35,6 +35,20 @@ describe("parsearNotificacao", () => {
     expect(dados.osIds).toEqual(["os-1", "os-2"]);
   });
 
+  it("propaga assinatura_id do combo (pagar tudo junto + assinar)", () => {
+    const dados = parsearNotificacao({
+      ...recursoBase,
+      metadata: {
+        os_ids: ["os-1"],
+        assinatura_id: "ass-uuid-1",
+        cliente_id: "cli-uuid-1",
+      },
+    });
+
+    expect(dados.metadata?.assinatura_id).toBe("ass-uuid-1");
+    expect(dados.metadata?.cliente_id).toBe("cli-uuid-1");
+  });
+
   it("lança MetadataOsAusenteError quando não há os_id nem os_ids", () => {
     expect(() =>
       parsearNotificacao({ ...recursoBase, metadata: {} }),

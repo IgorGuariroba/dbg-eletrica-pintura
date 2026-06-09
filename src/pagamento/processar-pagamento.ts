@@ -25,6 +25,31 @@ export interface ProcessarDeps {
    * dispatcher). Default: dispatcher fire-and-forget. Injetável para teste.
    */
   notificarTransicao?: (osId: string, estado: string) => void;
+  /**
+   * Ativa a assinatura PENDENTE do combo "pagar tudo junto + assinar" (#65)
+   * quando o pagamento combinado é aprovado. Default: caso de uso
+   * `ativarAssinaturaCombinada` com repo Drizzle. Injetável para teste.
+   */
+  ativarAssinatura?: (assinaturaId: string) => Promise<void>;
+}
+
+/** Ativação padrão da assinatura do combo (lazy p/ não pesar o módulo). */
+async function ativarPadrao(assinaturaId: string): Promise<void> {
+  const [{ ativarAssinaturaCombinada }, { criarAssinaturaCombinadaRepoDrizzle }, { db }] =
+    await Promise.all([
+      import("@/assinatura/assinatura-combinada"),
+      import("@/assinatura/assinatura-combinada-repo-drizzle"),
+      import("@/db/client"),
+    ]);
+  await ativarAssinaturaCombinada(assinaturaId, {
+    repo: criarAssinaturaCombinadaRepoDrizzle(db),
+    enviarBoasVindas: async (id) => {
+      const { enviarBoasVindasCombo } = await import(
+        "@/assinatura/enviar-boas-vindas"
+      );
+      await enviarBoasVindasCombo(id);
+    },
+  });
 }
 
 /** Emissão padrão: dispatcher de eventos, assíncrono e não-bloqueante. */
@@ -60,6 +85,14 @@ export async function processarPagamento(
   agora: Date = new Date(),
 ): Promise<ProcessarResultado> {
   const transitadas: string[] = [];
+
+  if (deveTransitarParaPaga(dados.status) && dados.metadata?.assinatura_id) {
+    await (deps.ativarAssinatura ?? ativarPadrao)(dados.metadata.assinatura_id);
+    log("assinatura_combo_ativada", {
+      ...base(dados),
+      assinaturaId: dados.metadata.assinatura_id,
+    });
+  }
 
   if (deveTransitarParaPaga(dados.status) && dados.metadata?.credito_utilizado && dados.metadata?.cliente_id) {
     const valorCredito = dados.metadata.credito_utilizado;

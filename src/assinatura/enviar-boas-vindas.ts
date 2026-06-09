@@ -90,6 +90,41 @@ export async function enviarBoasVindas(
   return { status: "sent" };
 }
 
+/**
+ * Boas-vindas da assinatura vendida no combo "pagar tudo junto" (#65): a
+ * assinatura não tem pre-approval no MP, então o lookup é pelo id local e a
+ * próxima cobrança fica "a confirmar" (recorrência do 2º ciclo é follow-up).
+ */
+export async function enviarBoasVindasCombo(
+  assinaturaId: string,
+  config: EnviarBoasVindasConfig = {},
+): Promise<{ status: "sent" | "skipped"; motivo?: string }> {
+  return enviarBoasVindas(assinaturaId, {
+    carregar: carregarDadosPorIdDrizzle,
+    obterProximaCobranca: async () => undefined,
+    ...config,
+  });
+}
+
+/** Carrega os dados de boas-vindas pelo id local da assinatura (combo #65). */
+async function carregarDadosPorIdDrizzle(
+  assinaturaId: string,
+): Promise<DadosBoasVindas | undefined> {
+  const [row] = await db
+    .select({
+      clienteNome: cliente.nome,
+      clienteEmail: cliente.email,
+      planoNome: plano.nome,
+      beneficios: plano.beneficios,
+    })
+    .from(assinatura)
+    .innerJoin(cliente, eq(assinatura.clienteId, cliente.id))
+    .innerJoin(plano, eq(assinatura.planoId, plano.id))
+    .where(eq(assinatura.id, assinaturaId))
+    .limit(1);
+  return row;
+}
+
 /** Carrega os dados de boas-vindas direto do banco (default de produção). */
 async function carregarDadosDrizzle(
   preapprovalIdMp: string,
