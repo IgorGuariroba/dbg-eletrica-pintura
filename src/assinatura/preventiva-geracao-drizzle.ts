@@ -1,7 +1,14 @@
 import { randomBytes } from "node:crypto";
 import { and, eq, inArray, max } from "drizzle-orm";
 import type { DB } from "@/db/client";
-import { assinatura, cliente, ordemServico, plano, solicitacao } from "@/db/schema";
+import {
+  assinatura,
+  cliente,
+  ordemServico,
+  plano,
+  solicitacao,
+  transicaoOs,
+} from "@/db/schema";
 import type { Categoria } from "@/financeiro/planos/plano-repo";
 import type {
   AssinaturaAtiva,
@@ -46,12 +53,22 @@ export function criarPreventivaGeracaoRepoDrizzle(
     },
 
     async ultimaPreventivaPorCategoria(assinaturaId) {
+      // A cadência conta da CONCLUSÃO real da última preventiva — não da data
+      // agendada nem de preventivas canceladas. A data vem do registro da
+      // transição → CONCLUIDA (`transicaoOs.em`).
       const rows = await db
         .select({
           categoria: ordemServico.categoria,
-          ultima: max(ordemServico.agendadoPara),
+          ultima: max(transicaoOs.em),
         })
         .from(ordemServico)
+        .innerJoin(
+          transicaoOs,
+          and(
+            eq(transicaoOs.osId, ordemServico.id),
+            eq(transicaoOs.estadoNovo, "CONCLUIDA"),
+          ),
+        )
         .where(
           and(
             eq(ordemServico.assinaturaId, assinaturaId),

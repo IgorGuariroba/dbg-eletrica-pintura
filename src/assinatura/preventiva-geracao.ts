@@ -20,7 +20,7 @@ export interface NovaPreventiva {
 export interface PreventivaGeracaoRepo {
   /** Assinaturas ATIVA com início definido, já com os dados do plano. */
   listarAtivas(): Promise<AssinaturaAtiva[]>;
-  /** Data da última preventiva (qualquer estado) por categoria da assinatura. */
+  /** Data de conclusão da última preventiva CONCLUÍDA por categoria. */
   ultimaPreventivaPorCategoria(
     assinaturaId: string,
   ): Promise<Map<Categoria, Date>>;

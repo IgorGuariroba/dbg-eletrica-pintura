@@ -82,6 +82,9 @@ describe.skipIf(!hasDb)("gerarPreventivasDevidas (integração)", () => {
         .where(inArray(schema.ordemServico.assinaturaId, assinaturaIds));
       if (oss.length) {
         await dbRaw
+          .delete(schema.transicaoOs)
+          .where(inArray(schema.transicaoOs.osId, oss.map((o) => o.id)));
+        await dbRaw
           .delete(schema.ordemServico)
           .where(inArray(schema.ordemServico.id, oss.map((o) => o.id)));
         await dbRaw
@@ -151,5 +154,57 @@ describe.skipIf(!hasDb)("gerarPreventivasDevidas (integração)", () => {
     const res = await gerarPreventivasDevidas(criarRepo(dbRaw), hoje);
     expect(res.geradas).toBe(0);
     expect(await osDaAssinatura(assinaturaId)).toHaveLength(0);
+  });
+
+  it("conta a cadência da CONCLUSÃO real da última preventiva (não do agendamento)", async () => {
+    // Assinatura antiga, mas a última preventiva só foi concluída há ~3 meses:
+    // a próxima vence agora (concluída + 3 meses), não conta do início.
+    const { assinaturaId } = await seedAssinaturaAtiva({
+      inicio: new Date("2025-06-01T00:00:00Z"),
+      preventivasPorAno: 4, // a cada 3 meses
+      categorias: ["ELETRICA"],
+    });
+    // Preventiva anterior: agendada bem antes, concluída há ~3 meses.
+    const [solPrev] = await dbRaw
+      .insert(schema.solicitacao)
+      .values({
+        token: Math.random().toString(36).slice(2, 10),
+        clienteId: clienteIds[clienteIds.length - 1],
+        categorias: ["ELETRICA"],
+        endereco,
+        origem: "PREVENTIVA",
+      })
+      .returning({ id: schema.solicitacao.id });
+    const [osPrev] = await dbRaw
+      .insert(schema.ordemServico)
+      .values({
+        solicitacaoId: solPrev.id,
+        tipo: "PREVENTIVA",
+        estado: "CONCLUIDA",
+        categoria: "ELETRICA",
+        assinaturaId,
+        agendadoPara: new Date("2026-01-01T00:00:00Z"),
+      })
+      .returning({ id: schema.ordemServico.id });
+    await dbRaw.insert(schema.transicaoOs).values({
+      osId: osPrev.id,
+      estadoAnterior: "EM_EXECUCAO",
+      estadoNovo: "CONCLUIDA",
+      atorEmail: "tecnico@dbg.test",
+      em: new Date("2026-03-08T00:00:00Z"), // concluída há ~3 meses
+    });
+
+    const hoje = new Date("2026-06-08T00:00:00Z");
+    const res = await gerarPreventivasDevidas(criarRepo(dbRaw), hoje);
+
+    expect(res.geradas).toBe(1);
+    const agendadas = (await osDaAssinatura(assinaturaId)).filter(
+      (o) => o.estado === "AGENDADA",
+    );
+    expect(agendadas).toHaveLength(1);
+    // próxima = conclusão (08/03) + 3 meses = 08/06
+    expect(agendadas[0].agendadoPara?.toISOString()).toBe(
+      "2026-06-08T00:00:00.000Z",
+    );
   });
 });
