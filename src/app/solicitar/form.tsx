@@ -119,6 +119,8 @@ export interface SolicitarFormProps {
   submitLabel?: string;
   /** Lista de bairros atendidos. */
   bairrosAtendidos?: string[];
+  /** Categorias pré-selecionadas (ex.: landing de um serviço). */
+  categoriasIniciais?: Categoria[];
 }
 
 const CONSENT_LABEL_PUBLICO =
@@ -129,12 +131,15 @@ export function SolicitarForm({
   consentLabel = CONSENT_LABEL_PUBLICO,
   submitLabel = "Enviar solicitação",
   bairrosAtendidos = [],
+  categoriasIniciais = [],
 }: SolicitarFormProps = {}) {
   const [state, action, pending] = useActionState<SolicitarState, FormData>(
     onSubmitAction,
     {},
   );
-  const [categorias, setCategorias] = useState<Set<Categoria>>(new Set());
+  const [categorias, setCategorias] = useState<Set<Categoria>>(
+    () => new Set(categoriasIniciais),
+  );
   const [fotos, setFotos] = useState<string[]>([]);
   const [enviandoFoto, setEnviandoFoto] = useState(false);
   const [previews, setPreviews] = useState<Record<string, string>>({});

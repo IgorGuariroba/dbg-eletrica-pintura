@@ -16,12 +16,14 @@ function repoFake(): ServicoRepo {
   return {
     inserir: vi.fn(async (n: NovoServico) => ({
       id: "uuid-fake",
+      slug: "uuid-fake-slug",
       ...n,
       criadoEm: new Date(),
     })),
     atualizar: vi.fn(),
     toggleAtivo: vi.fn(),
     buscarPorId: vi.fn(),
+    buscarPorSlug: vi.fn(),
     listar: vi.fn(),
   };
 }

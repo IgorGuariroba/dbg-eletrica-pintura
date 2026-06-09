@@ -71,4 +71,31 @@ describe.skipIf(!hasDb)("ServicoRepo Drizzle", () => {
       fotoUrl: "https://r2.dbg/x.jpg",
     });
   });
+
+  it("inserir gera slug kebab-case sem acentos a partir do nome", async () => {
+    // Token único evita colisão no DB dev compartilhado (db-reset só trunca sob proxy).
+    const tk = Math.random().toString(36).slice(2, 8);
+    const s = await novo({ nome: `Instalação de Tomada 220V ${tk}` });
+    expect(s.slug).toBe(`instalacao-de-tomada-220v-${tk}`);
+  });
+
+  it("resolve colisão de slug com sufixo numérico", async () => {
+    const nome = `Pintura Parede ${Math.random().toString(36).slice(2)}`;
+    const a = await novo({ nome });
+    const b = await novo({ nome });
+    expect(b.slug).toBe(`${a.slug}-1`);
+  });
+
+  it("buscarPorSlug retorna o serviço; slug inexistente retorna null", async () => {
+    const s = await novo({ nome: "Troca de Disjuntor" });
+    const achado = await repo.buscarPorSlug(s.slug!);
+    expect(achado?.id).toBe(s.id);
+    expect(await repo.buscarPorSlug("nao-existe-xyz")).toBeNull();
+  });
+
+  it("atualizar nome recalcula o slug", async () => {
+    const s = await novo({ nome: "Nome Antigo" });
+    const upd = await repo.atualizar(s.id, { nome: "Nome Novo Reformado" });
+    expect(upd?.slug).toBe("nome-novo-reformado");
+  });
 });

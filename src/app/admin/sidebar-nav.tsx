@@ -8,6 +8,7 @@ import {
   Boxes,
   ClipboardList,
   DollarSign,
+  Globe,
   ImageIcon,
   Layers,
   LayoutDashboard,
@@ -63,6 +64,12 @@ const ITENS: Item[] = [
     label: "Avaliações",
     href: "/admin/marketing/avaliacoes" as Route,
     icon: Star,
+    modulo: "MARKETING",
+  },
+  {
+    label: "Landing pages",
+    href: "/admin/marketing/landing" as Route,
+    icon: Globe,
     modulo: "MARKETING",
   },
   {

@@ -158,19 +158,26 @@ export const membro = pgTable(
 // Serviço (Catálogo)
 // ============================================================
 
-export const servico = pgTable("servico", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  nome: varchar("nome", { length: 200 }).notNull(),
-  categoria: categoriaServicoEnum("categoria").notNull(),
-  precoBase: decimal("preco_base", { precision: 10, scale: 2 }).notNull(),
-  unidade: unidadeMedidaEnum("unidade").notNull(),
-  fotoUrl: text("foto_url"),
-  prazoGarantiaMeses: integer("prazo_garantia_meses").notNull().default(0),
-  ativo: boolean("ativo").notNull().default(true),
-  criadoEm: timestamp("criado_em", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
+export const servico = pgTable(
+  "servico",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    nome: varchar("nome", { length: 200 }).notNull(),
+    slug: varchar("slug", { length: 255 }),
+    categoria: categoriaServicoEnum("categoria").notNull(),
+    precoBase: decimal("preco_base", { precision: 10, scale: 2 }).notNull(),
+    unidade: unidadeMedidaEnum("unidade").notNull(),
+    fotoUrl: text("foto_url"),
+    prazoGarantiaMeses: integer("prazo_garantia_meses").notNull().default(0),
+    ativo: boolean("ativo").notNull().default(true),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    slugUq: uniqueIndex("servico_slug_uq").on(t.slug),
+  }),
+);
 
 // ============================================================
 // Checklist Preventivo (template por Categoria)
@@ -1103,6 +1110,84 @@ export const assinaturaRelations = relations(assinatura, ({ one }) => ({
     references: [plano.id],
   }),
 }));
+
+// ============================================================
+// Landing pages: override de Marketing por Serviço (Slice 7 / #61)
+//
+// Overlay opcional 1:1 sobre o Serviço. A landing pública sempre existe
+// (versão auto, derivada do Serviço); o override só sobrescreve campos.
+// preco_promo NÃO altera o Catálogo — é exibição da landing apenas.
+// ============================================================
+
+export const landingOverride = pgTable("landing_override", {
+  servicoId: uuid("servico_id")
+    .primaryKey()
+    .references(() => servico.id, { onDelete: "cascade" }),
+  titulo: varchar("titulo", { length: 200 }),
+  descricao: text("descricao"),
+  precoPromo: decimal("preco_promo", { precision: 10, scale: 2 }),
+  upsellServicoId: uuid("upsell_servico_id").references(() => servico.id, {
+    onDelete: "set null",
+  }),
+  criadoEm: timestamp("criado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const landingOverrideFoto = pgTable(
+  "landing_override_foto",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    servicoId: uuid("servico_id")
+      .notNull()
+      .references(() => landingOverride.servicoId, { onDelete: "cascade" }),
+    chave: text("chave").notNull(),
+    ordem: integer("ordem").notNull().default(0),
+  },
+  (t) => ({
+    servicoOrdemIdx: index("landing_override_foto_servico_ordem_idx").on(
+      t.servicoId,
+      t.ordem,
+    ),
+  }),
+);
+
+// Depoimentos cherry-picked: aponta para avaliações existentes (≥4★).
+// Guarda só o avaliacao_id; nome/texto são resolvidos em runtime (sem PII em cache).
+export const landingOverrideDepoimento = pgTable(
+  "landing_override_depoimento",
+  {
+    servicoId: uuid("servico_id")
+      .notNull()
+      .references(() => landingOverride.servicoId, { onDelete: "cascade" }),
+    avaliacaoId: uuid("avaliacao_id")
+      .notNull()
+      .references(() => avaliacao.id, { onDelete: "cascade" }),
+    ordem: integer("ordem").notNull().default(0),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.servicoId, t.avaliacaoId] }),
+  }),
+);
+
+export const landingOverrideRelations = relations(
+  landingOverride,
+  ({ one, many }) => ({
+    servico: one(servico, {
+      fields: [landingOverride.servicoId],
+      references: [servico.id],
+    }),
+    upsell: one(servico, {
+      fields: [landingOverride.upsellServicoId],
+      references: [servico.id],
+    }),
+    fotos: many(landingOverrideFoto),
+    depoimentos: many(landingOverrideDepoimento),
+  }),
+);
 
 
 

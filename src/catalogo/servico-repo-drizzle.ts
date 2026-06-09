@@ -1,6 +1,7 @@
 import { and, asc, count, eq, not, sql } from "drizzle-orm";
 import type { DB } from "@/db/client";
 import { servico } from "@/db/schema";
+import { gerarSlugUnico } from "@/equipe/slug";
 import type {
   AtualizacaoServico,
   ListarFiltro,
@@ -14,6 +15,7 @@ function row(r: typeof servico.$inferSelect): Servico {
   return {
     id: r.id,
     nome: r.nome,
+    slug: r.slug,
     categoria: r.categoria,
     precoBase: r.precoBase,
     unidade: r.unidade,
@@ -25,9 +27,28 @@ function row(r: typeof servico.$inferSelect): Servico {
 }
 
 export function criarServicoRepoDrizzle(db: DB): ServicoRepo {
+  /** Gera slug kebab-case único, ignorando o próprio registro em updates. */
+  function slugUnico(nome: string, ignorarId?: string) {
+    return gerarSlugUnico(nome, async (s) => {
+      const cond = ignorarId
+        ? and(eq(servico.slug, s), not(eq(servico.id, ignorarId)))
+        : eq(servico.slug, s);
+      const [exists] = await db
+        .select({ id: servico.id })
+        .from(servico)
+        .where(cond)
+        .limit(1);
+      return Boolean(exists);
+    });
+  }
+
   return {
     async inserir(n: NovoServico) {
-      const [r] = await db.insert(servico).values(n).returning();
+      const slug = await slugUnico(n.nome);
+      const [r] = await db
+        .insert(servico)
+        .values({ ...n, slug })
+        .returning();
       return row(r);
     },
     async atualizar(id, mudancas: AtualizacaoServico) {
@@ -35,9 +56,15 @@ export function criarServicoRepoDrizzle(db: DB): ServicoRepo {
         const [r] = await db.select().from(servico).where(eq(servico.id, id));
         return r ? row(r) : null;
       }
+      const finalMudancas: AtualizacaoServico & { slug?: string } = {
+        ...mudancas,
+      };
+      if (mudancas.nome) {
+        finalMudancas.slug = await slugUnico(mudancas.nome, id);
+      }
       const [r] = await db
         .update(servico)
-        .set(mudancas)
+        .set(finalMudancas)
         .where(eq(servico.id, id))
         .returning();
       return r ? row(r) : null;
@@ -52,6 +79,13 @@ export function criarServicoRepoDrizzle(db: DB): ServicoRepo {
     },
     async buscarPorId(id) {
       const [r] = await db.select().from(servico).where(eq(servico.id, id));
+      return r ? row(r) : null;
+    },
+    async buscarPorSlug(slug) {
+      const [r] = await db
+        .select()
+        .from(servico)
+        .where(eq(servico.slug, slug));
       return r ? row(r) : null;
     },
     async listar({ categoria, ativo, limit, offset }: ListarFiltro): Promise<ListarResultado> {

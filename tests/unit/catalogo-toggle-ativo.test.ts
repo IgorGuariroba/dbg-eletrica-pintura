@@ -5,6 +5,7 @@ import type { Servico, ServicoRepo } from "@/catalogo/servico-repo";
 const base: Servico = {
   id: "uuid-1",
   nome: "X",
+  slug: "x",
   categoria: "ELETRICA",
   precoBase: "100.00",
   unidade: "PONTO",
@@ -20,6 +21,7 @@ function repo(resultado: Servico | null): ServicoRepo {
     atualizar: vi.fn(),
     toggleAtivo: vi.fn(async () => resultado),
     buscarPorId: vi.fn(),
+    buscarPorSlug: vi.fn(),
     listar: vi.fn(),
   };
 }
