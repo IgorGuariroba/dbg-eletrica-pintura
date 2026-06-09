@@ -19,6 +19,7 @@ import { ArrowRight, CalendarCheck } from "lucide-react";
 import { RecompensasAvaliacao } from "@/components/shared/recompensas-avaliacao";
 import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
 import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
+import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo-drizzle";
 
 export const metadata = {
   title: "Seu orçamento — DBG Elétrica e Pintura",
@@ -66,6 +67,7 @@ export default async function AcompanhamentoPage({
       (o) => o.avaliacao !== null && o.avaliacao.nota >= 4
     );
   const googleReviewUrl = qualificada ? (opConfig.googleReviewUrl ?? null) : null;
+  const { valorPremio } = await criarConfigReferralRepoDrizzle(db).obter();
 
   const protocolo = token.slice(0, 8).toUpperCase();
 
@@ -246,7 +248,7 @@ export default async function AcompanhamentoPage({
               </p>
             </div>
 
-            <RecompensasAvaliacao googleReviewUrl={googleReviewUrl} />
+            <RecompensasAvaliacao googleReviewUrl={googleReviewUrl} clienteId={view.clienteId} valorPremio={valorPremio} />
           </section>
         )}
       </main>

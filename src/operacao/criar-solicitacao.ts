@@ -50,6 +50,7 @@ export const criarSolicitacaoSchema = z.object({
     origem: z.enum(["FORMULARIO", "EXPRESS", "MANUAL"]).default("FORMULARIO"),
     foraCobertura: z.boolean().default(false),
   }),
+  indicadorId: z.string().uuid().nullish(),
 });
 
 export type CriarSolicitacaoInputBruto = z.input<typeof criarSolicitacaoSchema>;
@@ -80,9 +81,11 @@ export async function criarSolicitacao(
       fotosUrls: parsed.solicitacao.fotosUrls ?? [],
     },
     token,
+    indicadorId: parsed.indicadorId ?? null,
   };
   return repo.criarComOrdens({
     cliente: completo.cliente,
     solicitacao: { ...completo.solicitacao, token: completo.token },
+    indicadorId: completo.indicadorId,
   });
 }

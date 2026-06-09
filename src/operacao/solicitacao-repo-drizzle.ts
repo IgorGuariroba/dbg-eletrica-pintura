@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import type { DB } from "@/db/client";
-import { cliente, ordemServico, solicitacao } from "@/db/schema";
+import { cliente, ordemServico, solicitacao, indicacao } from "@/db/schema";
 import type {
   Cliente,
   OrdemServico,
@@ -74,6 +74,18 @@ export function criarSolicitacaoRepoDrizzle(db: DB): SolicitacaoRepo {
           },
         })
         .returning();
+
+      if (input.indicadorId) {
+        await db
+          .insert(indicacao)
+          .values({
+            indicadorId: input.indicadorId,
+            indicadoId: cli.id,
+            descontoAplicado: false,
+            creditoGerado: false,
+          })
+          .onConflictDoNothing();
+      }
 
       const [sol] = await db
         .insert(solicitacao)

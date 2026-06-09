@@ -43,6 +43,8 @@ export async function criarSolicitacaoAction(
   const fotosKeys = lerFotosKeysForm(form);
   const dataDesejada = lerDataDesejadaForm(form);
 
+  const indicadorId = form.get("indicadorId") ? String(form.get("indicadorId")).trim() : null;
+
   let resultado;
   try {
     const endereco = lerEnderecoForm(form);
@@ -67,6 +69,7 @@ export async function criarSolicitacaoAction(
           origem: "FORMULARIO",
           foraCobertura,
         },
+        indicadorId,
       },
       criarSolicitacaoRepoDrizzle(db),
     );

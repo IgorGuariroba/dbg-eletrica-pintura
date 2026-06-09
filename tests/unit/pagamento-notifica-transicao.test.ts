@@ -7,6 +7,8 @@ import type { DadosPagamento } from "@/pagamento/webhook";
 function repos(estado = "CONCLUIDA") {
   const pagamentoRepo: PagamentoRepo = {
     registrar: vi.fn(async () => true),
+    processarReferralPosPagamento: vi.fn(async () => {}),
+    consumirCredito: vi.fn(async () => {}),
   };
   const transicaoRepo: TransicaoRepo = {
     carregarContexto: vi.fn(async () => ({

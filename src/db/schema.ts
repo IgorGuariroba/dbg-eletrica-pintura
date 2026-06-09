@@ -103,6 +103,9 @@ export const cliente = pgTable(
     }>(),
     googleId: varchar("google_id", { length: 100 }),
     googleEmail: varchar("google_email", { length: 255 }),
+    saldoCredito: decimal("saldo_credito", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0.00"),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -362,6 +365,9 @@ export const orcamento = pgTable("orcamento", {
     precision: 5,
     scale: 2,
   })
+    .notNull()
+    .default("0"),
+  descontoIndicacao: decimal("desconto_indicacao", { precision: 10, scale: 2 })
     .notNull()
     .default("0"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull().default("0"),
@@ -1222,6 +1228,63 @@ export const remarketingEnviado = pgTable(
     uq: uniqueIndex("remarketing_enviado_uq").on(t.gatilho, t.clienteId, t.contexto),
   })
 );
+
+// ============================================================
+// Programa de Indicação Dupla (Referral Loop) (módulo Marketing)
+// ============================================================
+
+export const configReferral = pgTable("config_referral", {
+  id: text("id").primaryKey().default("default"),
+  valorPremio: decimal("valor_premio", { precision: 10, scale: 2 })
+    .notNull()
+    .default("30.00"),
+  ativo: boolean("ativo").notNull().default(true),
+  atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+export const indicacao = pgTable(
+  "indicacao",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    indicadorId: uuid("indicador_id")
+      .notNull()
+      .references(() => cliente.id, { onDelete: "cascade" }),
+    indicadoId: uuid("indicado_id")
+      .notNull()
+      .references(() => cliente.id, { onDelete: "cascade" }),
+    descontoAplicado: boolean("desconto_aplicado").notNull().default(false),
+    creditoGerado: boolean("credito_gerado").notNull().default(false),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    indicadoUq: uniqueIndex("indicacao_indicado_uq").on(t.indicadoId),
+  })
+);
+
+export const creditoMovimentacao = pgTable(
+  "credito_movimentacao",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clienteId: uuid("cliente_id")
+      .notNull()
+      .references(() => cliente.id, { onDelete: "cascade" }),
+    valor: decimal("valor", { precision: 10, scale: 2 }).notNull(),
+    tipo: varchar("tipo", { length: 20 }).notNull(), // CONSUMIDO | ADICIONADO
+    paymentId: varchar("payment_id", { length: 64 }),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    paymentUq: uniqueIndex("credito_movimentacao_payment_uq").on(t.paymentId),
+  })
+);
+
 
 
 

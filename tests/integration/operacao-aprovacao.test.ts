@@ -200,4 +200,65 @@ describe.skipIf(!hasDb)("AprovacaoRepo Drizzle", () => {
     expect(orc.motivoRejeicao).toBe("achei caro");
     expect(orc.rejeitadoEm).not.toBeNull();
   });
+
+  it("aprovar orçamento com desconto de indicação marca descontoAplicado como true", async () => {
+    const { token, osId } = await seedOrcada(7);
+    const { eq } = await import("drizzle-orm");
+
+    // 1. Obtém o cliente que foi gerado no seed
+    const [os] = await dbRaw
+      .select({ solicitacaoId: schema.ordemServico.solicitacaoId })
+      .from(schema.ordemServico)
+      .where(eq(schema.ordemServico.id, osId))
+      .limit(1);
+    
+    const [sol] = await dbRaw
+      .select({ clienteId: schema.solicitacao.clienteId })
+      .from(schema.solicitacao)
+      .where(eq(schema.solicitacao.id, os.solicitacaoId))
+      .limit(1);
+
+    const clienteId = sol.clienteId;
+
+    // 2. Cria o cliente indicador e insere a indicação
+    const [indicador] = await dbRaw
+      .insert(schema.cliente)
+      .values({
+        nome: "Indicador Aprov",
+        whatsapp: String(Math.floor(1e12 + Math.random() * 9e12)),
+      })
+      .returning();
+    clienteIds.push(indicador.id);
+
+    await dbRaw
+      .insert(schema.indicacao)
+      .values({
+        indicadorId: indicador.id,
+        indicadoId: clienteId,
+        descontoAplicado: false,
+        creditoGerado: false,
+      });
+
+    // 3. Atualiza o orçamento para ter desconto de indicação > 0
+    await dbRaw
+      .update(schema.orcamento)
+      .set({ descontoIndicacao: "30.00" })
+      .where(eq(schema.orcamento.osId, osId));
+
+    // 4. Aprova o orçamento
+    const ok = await repo.aprovar(token, osId, { token, ip: "1.1.1.1" });
+    expect(ok).toBe(true);
+
+    // 5. Valida se descontoAplicado virou true
+    const [ind] = await dbRaw
+      .select()
+      .from(schema.indicacao)
+      .where(eq(schema.indicacao.indicadoId, clienteId))
+      .limit(1);
+
+    expect(ind.descontoAplicado).toBe(true);
+
+    // Teardown da indicação
+    await dbRaw.delete(schema.indicacao).where(eq(schema.indicacao.indicadoId, clienteId));
+  });
 });

@@ -81,6 +81,7 @@ export interface ResultadoCriacao {
 export interface CriarSolicitacaoInput {
   cliente: NovoCliente;
   solicitacao: Omit<NovaSolicitacao, "clienteId" | "token">;
+  indicadorId?: string | null;
 }
 
 export interface SolicitacaoRepo {
@@ -92,6 +93,7 @@ export interface SolicitacaoRepo {
       estado: NovaOrdemServico["estado"];
       tecnicoId?: string | null;
     };
+    indicadorId?: string | null;
   }): Promise<ResultadoCriacao>;
   buscarPorToken(token: string): Promise<{
     solicitacao: Solicitacao;

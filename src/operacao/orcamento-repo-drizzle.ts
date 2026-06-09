@@ -4,6 +4,8 @@ import type { DB } from "@/db/client";
 import {
   assinatura,
   cliente,
+  configReferral,
+  indicacao,
   orcamento,
   orcamentoItem,
   ordemServico,
@@ -69,6 +71,39 @@ export function criarOrcamentoRepoDrizzle(db: DB): OrcamentoRepo {
       return row?.percentual ?? "0";
     },
 
+    async buscarDescontoIndicacaoDisponivel(osId): Promise<string> {
+      // OS → solicitação → cliente (indicado). O desconto só vale uma vez:
+      // exige uma indicação ainda não consumida (descontoAplicado = false).
+      const [row] = await db
+        .select({ indicacaoId: indicacao.id })
+        .from(ordemServico)
+        .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
+        .innerJoin(
+          indicacao,
+          and(
+            eq(indicacao.indicadoId, solicitacao.clienteId),
+            eq(indicacao.descontoAplicado, false),
+          ),
+        )
+        .where(eq(ordemServico.id, osId))
+        .limit(1);
+      if (!row) return "0.00";
+
+      // Valor configurado pela campanha; campanha inativa não concede desconto.
+      const [config] = await db
+        .select({
+          valorPremio: configReferral.valorPremio,
+          ativo: configReferral.ativo,
+        })
+        .from(configReferral)
+        .where(eq(configReferral.id, "default"))
+        .limit(1);
+      const ativo = config?.ativo ?? true;
+      if (!ativo) return "0.00";
+      const valor = config?.valorPremio ?? "30.00";
+      return Number(valor) > 0 ? valor : "0.00";
+    },
+
     async obterValidadeDias(): Promise<number> {
       const { criarConfigRemarketingRepoDrizzle } = await import("@/marketing/remarketing/config-repo-drizzle");
       const configRepo = criarConfigRemarketingRepoDrizzle(db);
@@ -90,6 +125,7 @@ export function criarOrcamentoRepoDrizzle(db: DB): OrcamentoRepo {
           totalDeslocamento: dados.totalDeslocamento,
           descontoPlano: dados.descontoPlano ?? "0",
           percentualDescontoPlano: dados.percentualDescontoPlano ?? "0",
+          descontoIndicacao: dados.descontoIndicacao ?? "0",
           total: dados.total,
           validoAte: dados.validoAte,
         })
@@ -129,6 +165,29 @@ export function criarOrcamentoRepoDrizzle(db: DB): OrcamentoRepo {
       if (transitadas.length === 0) {
         await db.delete(orcamento).where(eq(orcamento.id, orc.id));
         return null;
+      }
+
+      // Consome o desconto de indicação: marca a indicação do cliente como
+      // aplicada para que não reincida em orçamentos futuros. Só após o
+      // orçamento vencer o portão atômico (OS efetivamente ORÇADA).
+      if (Number(dados.descontoIndicacao ?? "0") > 0) {
+        const [sol] = await db
+          .select({ clienteId: solicitacao.clienteId })
+          .from(ordemServico)
+          .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
+          .where(eq(ordemServico.id, dados.osId))
+          .limit(1);
+        if (sol) {
+          await db
+            .update(indicacao)
+            .set({ descontoAplicado: true })
+            .where(
+              and(
+                eq(indicacao.indicadoId, sol.clienteId),
+                eq(indicacao.descontoAplicado, false),
+              ),
+            );
+        }
       }
       return { id: orc.id };
     },

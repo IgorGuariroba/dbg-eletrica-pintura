@@ -142,6 +142,19 @@ export function SolicitarForm({
   );
   const [fotos, setFotos] = useState<string[]>([]);
   const [enviandoFoto, setEnviandoFoto] = useState(false);
+  const [indicadorId, setIndicadorId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get("ref");
+      if (ref) {
+        setTimeout(() => {
+          setIndicadorId(ref);
+        }, 0);
+      }
+    }
+  }, []);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const previewsRef = useRef<Record<string, string>>({});
 
@@ -357,6 +370,9 @@ export function SolicitarForm({
 
   return (
     <form action={action} className="space-y-6">
+      {indicadorId && (
+        <input type="hidden" name="indicadorId" value={indicadorId} />
+      )}
       {/* WhatsApp + Nome */}
       <div className="space-y-4">
         <div>

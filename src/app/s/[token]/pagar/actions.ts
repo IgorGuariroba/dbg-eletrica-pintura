@@ -25,16 +25,35 @@ export async function pagarOsAction(token: string, osId: string) {
   }
 
   try {
+    const totalOs = Number(os.total);
+    const saldoCredito = Number(sol.saldoCredito);
+
+    let precoUnitario = totalOs;
+    let creditoUtilizado = 0;
+
+    if (saldoCredito > 0) {
+      precoUnitario = Math.max(0.01, totalOs - saldoCredito);
+      creditoUtilizado = totalOs - precoUnitario;
+    }
+
     const gateway = criarGatewayMercadoPago();
     const result = await criarPreferenciaCheckoutPro(gateway, {
       items: [
         {
           titulo: `${rotularCategoria(os.categoria)} (Serviço DBG)`,
           quantidade: 1,
-          precoUnitario: os.total,
+          precoUnitario: precoUnitario.toFixed(2),
         },
       ],
-      metadata: { os_id: osId },
+      metadata: {
+        os_id: osId,
+        ...(creditoUtilizado > 0
+          ? {
+              credito_utilizado: creditoUtilizado.toFixed(2),
+              cliente_id: sol.clienteId,
+            }
+          : {}),
+      },
     });
 
     return { url: result.url };
@@ -58,16 +77,35 @@ export async function pagarTudoAction(token: string) {
   }
 
   try {
+    const totalConsolidado = Number(consolidado.somaPagavel);
+    const saldoCredito = Number(sol.saldoCredito);
+
+    let precoUnitario = totalConsolidado;
+    let creditoUtilizado = 0;
+
+    if (saldoCredito > 0) {
+      precoUnitario = Math.max(0.01, totalConsolidado - saldoCredito);
+      creditoUtilizado = totalConsolidado - precoUnitario;
+    }
+
     const gateway = criarGatewayMercadoPago();
     const result = await criarPreferenciaCheckoutPro(gateway, {
       items: [
         {
           titulo: "Checkout Consolidado - DBG Elétrica e Pintura",
           quantidade: 1,
-          precoUnitario: consolidado.somaPagavel,
+          precoUnitario: precoUnitario.toFixed(2),
         },
       ],
-      metadata: { os_ids: consolidado.osIds },
+      metadata: {
+        os_ids: consolidado.osIds,
+        ...(creditoUtilizado > 0
+          ? {
+              credito_utilizado: creditoUtilizado.toFixed(2),
+              cliente_id: sol.clienteId,
+            }
+          : {}),
+      },
     });
 
     return { url: result.url };

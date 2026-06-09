@@ -59,6 +59,7 @@ export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
           clienteNome: schema.cliente.nome,
           clienteEmail: schema.cliente.email,
           clienteWhatsapp: schema.cliente.whatsapp,
+          clienteId: schema.cliente.id,
         })
         .from(schema.solicitacao)
         .innerJoin(schema.cliente, eq(schema.solicitacao.clienteId, schema.cliente.id))
@@ -103,6 +104,7 @@ export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
           clienteNome: sol.clienteNome,
           clienteEmail: sol.clienteEmail,
           clienteWhatsapp: sol.clienteWhatsapp,
+          clienteId: sol.clienteId,
           solicitacaoId: sol.id,
           comentarioGeral: comGeral?.comentario ?? null,
           ordens: [],
@@ -127,6 +129,7 @@ export function criarAvaliacaoRepoDrizzle(db: DB): AvaliacaoRepo {
         clienteNome: sol.clienteNome,
         clienteEmail: sol.clienteEmail,
         clienteWhatsapp: sol.clienteWhatsapp,
+        clienteId: sol.clienteId,
         solicitacaoId: sol.id,
         comentarioGeral: comGeral?.comentario ?? null,
         ordens: ordens.map((o) => ({
