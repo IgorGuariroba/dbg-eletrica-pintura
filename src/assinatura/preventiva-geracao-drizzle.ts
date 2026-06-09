@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { and, eq, inArray, max } from "drizzle-orm";
 import type { DB } from "@/db/client";
 import {
@@ -106,36 +106,30 @@ export function criarPreventivaGeracaoRepoDrizzle(
         .limit(1);
       if (!cli?.endereco) return null; // sem endereço: não dá para agendar a visita
 
-      const [sol] = await db
-        .insert(solicitacao)
-        .values({
+      // IDs gerados aqui para encadear solicitação → OS num único `db.batch`
+      // (transação atômica do neon-http): ou as duas linhas entram, ou nenhuma.
+      const solId = randomUUID();
+      const osId = randomUUID();
+      await db.batch([
+        db.insert(solicitacao).values({
+          id: solId,
           token: randomBytes(32).toString("hex"),
           clienteId: dados.clienteId,
           categorias: [dados.categoria],
           endereco: cli.endereco,
           origem: "PREVENTIVA",
-        })
-        .returning({ id: solicitacao.id });
-
-      // Neon HTTP não tem transação multi-statement: se o insert da OS falha,
-      // compensa apagando a solicitação-snapshot recém-criada.
-      try {
-        const [os] = await db
-          .insert(ordemServico)
-          .values({
-            solicitacaoId: sol.id,
-            tipo: "PREVENTIVA",
-            estado: "AGENDADA",
-            categoria: dados.categoria,
-            assinaturaId: dados.assinaturaId,
-            agendadoPara: dados.agendadoPara,
-          })
-          .returning({ id: ordemServico.id });
-        return { osId: os.id };
-      } catch (e) {
-        await db.delete(solicitacao).where(eq(solicitacao.id, sol.id));
-        throw e;
-      }
+        }),
+        db.insert(ordemServico).values({
+          id: osId,
+          solicitacaoId: solId,
+          tipo: "PREVENTIVA",
+          estado: "AGENDADA",
+          categoria: dados.categoria,
+          assinaturaId: dados.assinaturaId,
+          agendadoPara: dados.agendadoPara,
+        }),
+      ]);
+      return { osId };
     },
   };
 }
