@@ -25,8 +25,12 @@ Três canais pra assinar: checkout digital (upsell com economia visível), prese
 _Avoid_: Venda de plano
 
 **Upsell**:
-Oferta de Plano de Assinatura antes do pagamento no checkout. Mostra economia visível ("com plano Conforto, esse serviço sairia R$X ao invés de R$Y"). Aparece uma vez só (primeiro checkout ou consolidado). Social proof incluído.
+Oferta de Plano de Assinatura para não-assinante. Mostra economia visível ("com plano Conforto, esse serviço sairia R$X ao invés de R$Y") + social proof ("N clientes já assinaram"). Aparece em dois pontos: checkout consolidado (card) e PWA pós-conclusão (técnico oferece em OS PAGA). Mostra uma vez só por cliente (flag `upsell_visto_em`), reexibe após `UPSELL_REEXIBICAO_DIAS` (default 90). Assinante ativo NUNCA vê.
 _Avoid_: Cross-sell, upgrade
+
+**Pagar Tudo Junto + Assinar**:
+No checkout, o não-assinante pode pagar as OS pendentes e a 1ª mensalidade do plano numa preferência MP única (2 itens). A assinatura nasce PENDENTE sem pre-approval; o webhook de pagamentos aprovado ativa OS (PAGA) + assinatura (ATIVA) e dispara boas-vindas. Recorrência do 2º ciclo (autorização de pre-approval) é etapa futura.
+_Avoid_: Carrinho de assinatura
 
 **Fatura**:
 PDF gerado automaticamente após pagamento confirmado. Layout profissional com logo DBG. Enviada por e-mail (Resend). Acessível no portal.
