@@ -2,27 +2,31 @@
 
 import { db } from "@/db/client";
 import { exigirPortal } from "@/portal/guard";
-import {
-  cancelarOsCliente,
-  reagendarOsCliente,
-  ForaDaJanelaError,
-} from "@/operacao/reagendamento";
-import { criarReagendamentoRepoDrizzle } from "@/operacao/reagendamento-repo-drizzle";
+import { criarAgendamentoService, ForaDaJanelaError } from "@/operacao/agendamento";
+import { criarAgendamentoRepoDrizzle } from "@/operacao/agendamento-repo-drizzle";
 import { revalidatePath } from "next/cache";
-import { listarSlotsDisponiveis } from "@/operacao/slots-loader";
-import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
-import { slotsPorHorario, DIAS_AGENDAMENTO, escolherSlot } from "@/operacao/agendamento-cliente";
 import { eq } from "drizzle-orm";
-import { ordemServico } from "@/db/schema";
+import { ordemServico, solicitacao } from "@/db/schema";
 import { acionarGarantia, ForaDoPrazoError } from "@/operacao/garantia/acionar-garantia";
 import { criarGarantiaRepoDrizzle } from "@/operacao/garantia/garantia-repo-drizzle";
 import { uploadFotoGarantia } from "@/operacao/r2-privado";
 
+const service = criarAgendamentoService(criarAgendamentoRepoDrizzle(db));
+
 export async function cancelarOsClienteAction(osId: string): Promise<{ erro?: string }> {
   try {
     const user = await exigirPortal();
-    const repo = criarReagendamentoRepoDrizzle(db);
-    await cancelarOsCliente(osId, { whatsapp: user.whatsapp! }, repo);
+
+    const [row] = await db
+      .select({ token: solicitacao.token })
+      .from(ordemServico)
+      .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
+      .where(eq(ordemServico.id, osId))
+      .limit(1);
+
+    if (!row) throw new Error("OS não encontrada");
+
+    await service.cancelarCliente(row.token, osId, user.whatsapp!);
     revalidatePath("/portal");
     return { erro: undefined };
   } catch (err) {
@@ -38,25 +42,18 @@ export async function listarSlotsOsPortalAction(osId: string) {
   try {
     await exigirPortal();
 
-    const [os] = await db
-      .select({ categoria: ordemServico.categoria })
+    const [row] = await db
+      .select({ token: solicitacao.token })
       .from(ordemServico)
+      .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
       .where(eq(ordemServico.id, osId))
       .limit(1);
 
-    if (!os) throw new Error("OS não encontrada");
+    if (!row) throw new Error("OS não encontrada");
 
-    const inicio = new Date();
-    const fim = new Date(inicio.getTime() + DIAS_AGENDAMENTO * 24 * 60 * 60 * 1000);
+    const slots = await service.obterSlotsCliente(row.token, osId);
 
-    const slots = await listarSlotsDisponiveis(
-      db,
-      { inicio, fim, categoria: os.categoria },
-      { configRepo: criarOperacaoConfigRepoDrizzle(db) },
-    );
-
-    const oferecidos = slotsPorHorario(slots);
-    return oferecidos.map((s) => ({
+    return slots.map((s) => ({
       inicioISO: s.inicio.toISOString(),
     }));
   } catch (err) {
@@ -71,29 +68,17 @@ export async function reagendarOsClienteAction(
 ): Promise<{ erro?: string }> {
   try {
     const user = await exigirPortal();
-    const repo = criarReagendamentoRepoDrizzle(db);
 
-    const [os] = await db
-      .select({ categoria: ordemServico.categoria })
+    const [row] = await db
+      .select({ token: solicitacao.token })
       .from(ordemServico)
+      .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
       .where(eq(ordemServico.id, osId))
       .limit(1);
 
-    if (!os) throw new Error("OS não encontrada");
+    if (!row) throw new Error("OS não encontrada");
 
-    const inicio = new Date();
-    const fim = new Date(inicio.getTime() + DIAS_AGENDAMENTO * 24 * 60 * 60 * 1000);
-
-    // Re-deriva slots para encontrar o técnico correspondente ao slot
-    const slots = await listarSlotsDisponiveis(
-      db,
-      { inicio, fim, categoria: os.categoria },
-      { configRepo: criarOperacaoConfigRepoDrizzle(db) },
-    );
-
-    const slot = escolherSlot(slots, novoSlotISO);
-
-    await reagendarOsCliente(osId, { whatsapp: user.whatsapp! }, slot.inicio, slot.tecnicoId, repo);
+    await service.reagendarCliente(row.token, osId, user.whatsapp!, new Date(novoSlotISO));
 
     revalidatePath("/portal");
     return { erro: undefined };

@@ -4,11 +4,10 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { ordemServico } from "@/db/schema";
 import { exigirTecnico } from "@/app/campo/guard";
-import {
-  cancelarOsTecnico,
-  reagendarOsTecnico,
-} from "@/operacao/reagendamento";
-import { criarReagendamentoRepoDrizzle } from "@/operacao/reagendamento-repo-drizzle";
+import { criarAgendamentoService } from "@/operacao/agendamento";
+import { criarAgendamentoRepoDrizzle } from "@/operacao/agendamento-repo-drizzle";
+
+const agendamentoService = criarAgendamentoService(criarAgendamentoRepoDrizzle(db));
 
 export interface AcaoState {
   erro?: string;
@@ -33,12 +32,12 @@ export async function reagendarAction(
   if (Number.isNaN(novoSlot.getTime())) return { erro: "Data inválida" };
 
   try {
-    await reagendarOsTecnico(
+    await agendamentoService.reagendarTecnico(
       osId,
-      { membroId: tecnico.membroId, email: tecnico.email ?? "tecnico" },
+      tecnico.membroId,
+      tecnico.email ?? "tecnico",
       novoSlot,
       motivo || null,
-      criarReagendamentoRepoDrizzle(db),
     );
     return { ok: true };
   } catch (e) {
@@ -61,11 +60,11 @@ export async function cancelarAction(
   if (!osId) return { erro: "OS não informada" };
 
   try {
-    await cancelarOsTecnico(
+    await agendamentoService.cancelarTecnico(
       osId,
-      { membroId: tecnico.membroId, email: tecnico.email ?? "tecnico" },
+      tecnico.membroId,
+      tecnico.email ?? "tecnico",
       motivo,
-      criarReagendamentoRepoDrizzle(db),
     );
     return { ok: true };
   } catch (e) {

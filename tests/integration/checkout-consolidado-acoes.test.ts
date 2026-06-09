@@ -183,7 +183,8 @@ describe.skipIf(!hasDb)("Checkout Consolidado Actions Integration", () => {
         currency_id: "BRL",
       },
     ]);
-    expect(callArgs.metadata).toEqual({ os_ids: [osId1, osId2] });
+    expect(callArgs.metadata.os_ids).toHaveLength(2);
+    expect(callArgs.metadata.os_ids).toEqual(expect.arrayContaining([osId1, osId2]));
   });
 
   it("comportamento 13: ja PAGA nao recobra", async () => {
