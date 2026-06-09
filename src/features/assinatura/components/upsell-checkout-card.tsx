@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import Link from "next/link";
 import { CreditCard, Loader2, Sparkles, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -34,22 +34,18 @@ interface Props {
  */
 export function UpsellCheckoutCard({ token, oferta, podePagarTudo }: Props) {
   const [pending, startTransition] = useTransition();
-  const [loading, setLoading] = useState(false);
 
   function handlePagarTudoComAssinatura() {
-    setLoading(true);
     startTransition(async () => {
       try {
         const res = await pagarTudoComAssinaturaAction(token, oferta.planoSlug);
         if (res.erro) {
           toast.error(res.erro);
-          setLoading(false);
         } else if (res.url) {
           window.location.href = res.url;
         }
       } catch {
         toast.error("Ocorreu um erro ao processar o seu pagamento.");
-        setLoading(false);
       }
     });
   }
@@ -91,11 +87,11 @@ export function UpsellCheckoutCard({ token, oferta, podePagarTudo }: Props) {
         {podePagarTudo && (
           <Button
             variant="secondary"
-            className="w-full sm:flex-1 min-h-[44px]"
+            className="w-full sm:flex-1 min-h-11"
             disabled={pending}
             onClick={handlePagarTudoComAssinatura}
           >
-            {loading ? (
+            {pending ? (
               <>
                 <Loader2 className="size-4 animate-spin" /> Processando…
               </>
@@ -110,7 +106,7 @@ export function UpsellCheckoutCard({ token, oferta, podePagarTudo }: Props) {
           href={`/assinar/${oferta.planoSlug}`}
           className={buttonVariants({
             variant: "outline",
-            className: "w-full sm:flex-1 min-h-[44px]",
+            className: "w-full sm:flex-1 min-h-11",
           })}
         >
           Conhecer o plano
