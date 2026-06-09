@@ -2,9 +2,11 @@
 
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { ordemServico } from "@/db/schema";
+import { ordemServico, solicitacao } from "@/db/schema";
 import { exigirTecnico } from "@/app/campo/guard";
 import { criarPlanoRepoDrizzle } from "@/financeiro/planos/plano-repo-drizzle";
+import { criarUpsellRepoDrizzle } from "@/financeiro/upsell/upsell-repo-drizzle";
+import { foiEntregue } from "@/operacao/estado-predicados";
 import { gerarQrDataUrl } from "@/lib/qr";
 import { urlWhatsApp } from "@/lib/contato";
 
@@ -14,9 +16,10 @@ export type EnviarAssinaturaResultado =
 
 /**
  * Gera o material para o cliente assinar um plano presencialmente, ao fim de uma
- * OS concluída: QR + link wa.me apontando para a landing /assinar/{slug}?os={id}.
+ * OS entregue: QR + link wa.me apontando para a landing /assinar/{slug}?os={id}.
  * O cliente paga no próprio dispositivo (auth Google + checkout MP) — o técnico
- * nunca captura dados financeiros. Exige técnico autenticado e OS CONCLUIDA.
+ * nunca captura dados financeiros. Exige técnico autenticado e OS CONCLUIDA ou
+ * PAGA (#65: upsell pós-conclusão). Cliente já assinante nunca recebe a oferta.
  */
 export async function enviarAssinaturaAction(
   osId: string,
@@ -34,16 +37,24 @@ export async function enviarAssinaturaAction(
   }
 
   const [os] = await db
-    .select({ estado: ordemServico.estado })
+    .select({
+      estado: ordemServico.estado,
+      clienteId: solicitacao.clienteId,
+    })
     .from(ordemServico)
+    .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
     .where(eq(ordemServico.id, osId))
     .limit(1);
   if (!os) return { ok: false, erro: "Ordem de serviço não encontrada." };
-  if (os.estado !== "CONCLUIDA") {
+  if (!foiEntregue(os.estado)) {
     return {
       ok: false,
-      erro: "A assinatura só pode ser oferecida em OS concluída.",
+      erro: "A assinatura só pode ser oferecida em OS concluída ou paga.",
     };
+  }
+
+  if (await criarUpsellRepoDrizzle(db).temAssinaturaAtiva(os.clienteId)) {
+    return { ok: false, erro: "Este cliente já é assinante de um plano DBG." };
   }
 
   const plano = await criarPlanoRepoDrizzle(db).buscarPorSlug(slug);

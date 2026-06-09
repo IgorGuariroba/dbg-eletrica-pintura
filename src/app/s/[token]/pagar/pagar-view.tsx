@@ -10,6 +10,8 @@ import { CreditCard, CheckCircle2, Loader2, ArrowLeft, ShieldCheck } from "lucid
 import Link from "next/link";
 import { toast } from "sonner";
 import { LABEL_CATEGORIA } from "@/operacao/rotulo-estado";
+import { UpsellCheckoutCard } from "@/features/assinatura/components/upsell-checkout-card";
+import type { OfertaUpsell } from "@/financeiro/upsell/montar-upsell";
 import { pagarOsAction, pagarTudoAction } from "./actions";
 
 interface OrdemCheckout {
@@ -40,9 +42,10 @@ interface CheckoutConsolidado {
 interface PagarViewProps {
   solicitacao: SolicitacaoCheckoutView;
   consolidado: CheckoutConsolidado;
+  upsell: OfertaUpsell | null;
 }
 
-export function PagarView({ solicitacao, consolidado }: PagarViewProps) {
+export function PagarView({ solicitacao, consolidado, upsell }: PagarViewProps) {
   const [isPending, startTransition] = useTransition();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
@@ -256,6 +259,15 @@ export function PagarView({ solicitacao, consolidado }: PagarViewProps) {
             </Button>
           </CardFooter>
         </Card>
+      )}
+
+      {/* Upsell de assinatura (#65): só pra não-assinante, uma vez por cliente. */}
+      {upsell && (
+        <UpsellCheckoutCard
+          token={solicitacao.token}
+          oferta={upsell}
+          podePagarTudo={consolidado.podePagarTudo}
+        />
       )}
     </div>
   );
