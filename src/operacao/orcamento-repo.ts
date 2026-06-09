@@ -39,6 +39,8 @@ export interface NovoOrcamento {
   /** Já líquido do desconto de plano, se houver. */
   total: string;
   validoAte: Date;
+  /** Desconto de indicação (referral) congelado no ato. Default "0". */
+  descontoIndicacao?: string;
 }
 
 export interface OrcamentoRepo {
@@ -52,6 +54,11 @@ export interface OrcamentoRepo {
    * não conhecem assinatura (ex.: testes legados) são tratados como "0".
    */
   buscarPercentualDescontoAssinante?(osId: string): Promise<string>;
+  /**
+   * Obtém o desconto de indicação disponível para o cliente da OS.
+   * Retorna "0.00" se não aplicável.
+   */
+  buscarDescontoIndicacaoDisponivel?(osId: string): Promise<string>;
   /**
    * Obtém a validade configurada do orçamento em dias. Se não implementado,
    * utiliza o padrão do sistema (7 dias).

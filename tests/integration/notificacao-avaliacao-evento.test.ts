@@ -41,6 +41,48 @@ describe.skipIf(!hasDb)("Disparo de Pedido de Avaliação (Bloco B)", () => {
   beforeAll(async () => {
     db = (await import("@/db/client")).db;
     schema = await import("@/db/schema");
+    
+    // Clean up leaked test clients from previous runs respecting FK constraints
+    const clients = await db
+      .select({ id: schema.cliente.id })
+      .from(schema.cliente)
+      .where(like(schema.cliente.whatsapp, `${PREFIXO_WPP}%`));
+    
+    const clientIds = clients.map(c => c.id);
+    if (clientIds.length > 0) {
+      const sols = await db
+        .select({ id: schema.solicitacao.id })
+        .from(schema.solicitacao)
+        .where(inArray(schema.solicitacao.clienteId, clientIds));
+      
+      const solIds = sols.map(s => s.id);
+      if (solIds.length > 0) {
+        const oss = await db
+          .select({ id: schema.ordemServico.id })
+          .from(schema.ordemServico)
+          .where(inArray(schema.ordemServico.solicitacaoId, solIds));
+        
+        const osIds = oss.map(o => o.id);
+        if (osIds.length > 0) {
+          await db.delete(schema.pagamento).where(inArray(schema.pagamento.osId, osIds));
+          await db.delete(schema.notificacaoMarco).where(inArray(schema.notificacaoMarco.osId, osIds));
+          await db.delete(schema.transicaoOs).where(inArray(schema.transicaoOs.osId, osIds));
+          
+          const orcs = await db
+            .select({ id: schema.orcamento.id })
+            .from(schema.orcamento)
+            .where(inArray(schema.orcamento.osId, osIds));
+          const orcIds = orcs.map(or => or.id);
+          if (orcIds.length > 0) {
+            await db.delete(schema.orcamentoItem).where(inArray(schema.orcamentoItem.orcamentoId, orcIds));
+          }
+          await db.delete(schema.orcamento).where(inArray(schema.orcamento.osId, osIds));
+          await db.delete(schema.ordemServico).where(inArray(schema.ordemServico.id, osIds));
+        }
+        await db.delete(schema.solicitacao).where(inArray(schema.solicitacao.id, solIds));
+      }
+      await db.delete(schema.cliente).where(inArray(schema.cliente.id, clientIds));
+    }
   });
 
   afterEach(async () => {

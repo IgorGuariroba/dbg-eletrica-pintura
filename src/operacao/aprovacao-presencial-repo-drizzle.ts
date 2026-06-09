@@ -1,6 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { DB } from "@/db/client";
-import { orcamento, ordemServico, transicaoOs } from "@/db/schema";
+import { orcamento, ordemServico, transicaoOs, indicacao, solicitacao } from "@/db/schema";
 import type { AprovacaoPresencialRepo } from "./aprovacao-presencial";
 
 export function criarAprovacaoPresencialRepoDrizzle(
@@ -20,7 +20,7 @@ export function criarAprovacaoPresencialRepoDrizzle(
 
       // Carimba a aprovação presencial no orçamento mais recente da OS.
       const [orc] = await db
-        .select({ id: orcamento.id })
+        .select({ id: orcamento.id, descontoIndicacao: orcamento.descontoIndicacao })
         .from(orcamento)
         .where(eq(orcamento.osId, osId))
         .orderBy(desc(orcamento.criadoEm))
@@ -36,6 +36,21 @@ export function criarAprovacaoPresencialRepoDrizzle(
             aprovacaoLgpd: lgpdAceito,
           })
           .where(eq(orcamento.id, orc.id));
+
+        if (orc.descontoIndicacao && Number(orc.descontoIndicacao) > 0) {
+          const [sol] = await db
+            .select({ clienteId: solicitacao.clienteId })
+            .from(solicitacao)
+            .innerJoin(ordemServico, eq(solicitacao.id, ordemServico.solicitacaoId))
+            .where(eq(ordemServico.id, osId))
+            .limit(1);
+          if (sol) {
+            await db
+              .update(indicacao)
+              .set({ descontoAplicado: true })
+              .where(eq(indicacao.indicadoId, sol.clienteId));
+          }
+        }
       }
 
       // Registra a transição no histórico de campo (ORCADA → APROVADA).

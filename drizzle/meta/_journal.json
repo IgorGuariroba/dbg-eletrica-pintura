@@ -253,6 +253,20 @@
       "when": 1781014758159,
       "tag": "0035_soft_spiral",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1781023387223,
+      "tag": "0036_odd_shen",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1781024126504,
+      "tag": "0037_open_baron_strucker",
+      "breakpoints": true
     }
   ]
 }

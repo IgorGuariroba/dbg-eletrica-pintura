@@ -138,10 +138,21 @@ export async function montarOrcamento(
   // no orçamento — histórico imutável mesmo se a assinatura mudar depois.
   const percentual =
     (await repo.buscarPercentualDescontoAssinante?.(os.id)) ?? "0";
-  const { desconto, totalLiquido } = aplicarDescontoPlano(
+  const { desconto: descontoPlano, totalLiquido: totalComPlano } = aplicarDescontoPlano(
     calc.total,
     percentual,
   );
+
+  // Desconto de indicação: verifica se o cliente possui indicação pendente e aplica o desconto
+  const valorDescontoIndicacao =
+    (await repo.buscarDescontoIndicacaoDisponivel?.(os.id)) ?? "0.00";
+
+  // Deduz o valor e garante que o total líquido final não seja negativo
+  const totalCents = Math.round(Number(totalComPlano) * 100);
+  const descIndicacaoCents = Math.round(Number(valorDescontoIndicacao) * 100);
+  const totalFinalCents = Math.max(0, totalCents - descIndicacaoCents);
+  const totalFinal = (totalFinalCents / 100).toFixed(2);
+  const descIndicacaoAplicado = ((totalCents - totalFinalCents) / 100).toFixed(2);
 
   const diasValidade = repo.obterValidadeDias ? await repo.obterValidadeDias() : VALIDADE_DIAS;
   const validoAte = new Date(Date.now() + diasValidade * 24 * 60 * 60 * 1000);
@@ -152,9 +163,10 @@ export async function montarOrcamento(
     itens: calc.itens,
     totalMaoDeObra: calc.totalMaoDeObra,
     totalDeslocamento: calc.totalDeslocamento,
-    descontoPlano: desconto,
+    descontoPlano: descontoPlano,
     percentualDescontoPlano: percentual,
-    total: totalLiquido,
+    descontoIndicacao: descIndicacaoAplicado,
+    total: totalFinal,
     validoAte,
   });
   if (!criado) throw new OsIndisponivelError();

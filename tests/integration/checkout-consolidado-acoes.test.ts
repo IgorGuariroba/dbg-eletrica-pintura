@@ -70,13 +70,14 @@ describe.skipIf(!hasDb)("Checkout Consolidado Actions Integration", () => {
     }
   });
 
-  async function seedSetup(token: string) {
+  async function seedSetup(token: string, saldoCredito = "0.00") {
     const r = Math.random().toString(36).slice(2, 10);
     const [cli] = await db
       .insert(schema.cliente)
       .values({
         nome: `Cli ${r}`,
         whatsapp: String(Math.floor(1e12 + Math.random() * 9e12)),
+        saldoCredito,
       })
       .returning();
     const [sol] = await db
@@ -196,5 +197,83 @@ describe.skipIf(!hasDb)("Checkout Consolidado Actions Integration", () => {
 
     expect(res).toEqual({ erro: "Apenas ordens de serviço no estado CONCLUIDA podem ser pagas" });
     expect(mockCriarPreferencia).not.toHaveBeenCalled();
+  });
+
+  it("individual com saldoCredito menor que o total consome todo credito e cobra o resto", async () => {
+    const token = `tok-${Math.random().toString(36).slice(2, 10)}`;
+    const { solId } = await seedSetup(token, "50.00");
+    const osId = await seedOs(solId, "ELETRICA", "CONCLUIDA", "250.00");
+
+    const res = await pagarOsAction(token, osId);
+
+    expect(res).toEqual({ url: "https://mercadopago.mock/pref-mock-123" });
+    expect(mockCriarPreferencia).toHaveBeenCalledTimes(1);
+
+    const callArgs = mockCriarPreferencia.mock.calls[0][0];
+    expect(callArgs.items[0].unit_price).toBe(200.00); // 250 - 50 = 200
+    expect(callArgs.metadata).toEqual({
+      os_id: osId,
+      credito_utilizado: "50.00",
+      cliente_id: expect.any(String),
+    });
+  });
+
+  it("individual com saldoCredito maior ou igual ao total consome credito ate deixar 0.01 de cobranca", async () => {
+    const token = `tok-${Math.random().toString(36).slice(2, 10)}`;
+    const { solId } = await seedSetup(token, "300.00");
+    const osId = await seedOs(solId, "ELETRICA", "CONCLUIDA", "250.00");
+
+    const res = await pagarOsAction(token, osId);
+
+    expect(res).toEqual({ url: "https://mercadopago.mock/pref-mock-123" });
+    expect(mockCriarPreferencia).toHaveBeenCalledTimes(1);
+
+    const callArgs = mockCriarPreferencia.mock.calls[0][0];
+    expect(callArgs.items[0].unit_price).toBe(0.01); // Deixa R$0.01 mínimo
+    expect(callArgs.metadata).toEqual({
+      os_id: osId,
+      credito_utilizado: "249.99", // 250 - 0.01 = 249.99
+      cliente_id: expect.any(String),
+    });
+  });
+
+  it("consolidado com saldoCredito menor que o total consome todo credito e cobra o resto", async () => {
+    const token = `tok-${Math.random().toString(36).slice(2, 10)}`;
+    const { solId } = await seedSetup(token, "100.00");
+    const osId1 = await seedOs(solId, "ELETRICA", "CONCLUIDA", "250.00");
+    const osId2 = await seedOs(solId, "PINTURA", "CONCLUIDA", "199.90");
+
+    const res = await pagarTudoAction(token);
+
+    expect(res).toEqual({ url: "https://mercadopago.mock/pref-mock-123" });
+    expect(mockCriarPreferencia).toHaveBeenCalledTimes(1);
+
+    const callArgs = mockCriarPreferencia.mock.calls[0][0];
+    expect(callArgs.items[0].unit_price).toBe(349.90); // 449.90 - 100 = 349.90
+    expect(callArgs.metadata).toEqual({
+      os_ids: expect.arrayContaining([osId1, osId2]),
+      credito_utilizado: "100.00",
+      cliente_id: expect.any(String),
+    });
+  });
+
+  it("consolidado com saldoCredito maior que o total consome credito ate deixar 0.01 de cobranca", async () => {
+    const token = `tok-${Math.random().toString(36).slice(2, 10)}`;
+    const { solId } = await seedSetup(token, "500.00");
+    const osId1 = await seedOs(solId, "ELETRICA", "CONCLUIDA", "250.00");
+    const osId2 = await seedOs(solId, "PINTURA", "CONCLUIDA", "199.90");
+
+    const res = await pagarTudoAction(token);
+
+    expect(res).toEqual({ url: "https://mercadopago.mock/pref-mock-123" });
+    expect(mockCriarPreferencia).toHaveBeenCalledTimes(1);
+
+    const callArgs = mockCriarPreferencia.mock.calls[0][0];
+    expect(callArgs.items[0].unit_price).toBe(0.01); // Deixa R$0.01 mínimo
+    expect(callArgs.metadata).toEqual({
+      os_ids: expect.arrayContaining([osId1, osId2]),
+      credito_utilizado: "449.89", // 449.90 - 0.01 = 449.89
+      cliente_id: expect.any(String),
+    });
   });
 });

@@ -28,6 +28,7 @@ interface OSInfo {
 interface SolicitacaoView {
   token: string;
   clienteNome: string;
+  clienteId: string;
   solicitacaoId: string;
   comentarioGeral: string | null;
   ordens: OSInfo[];
@@ -130,7 +131,7 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
             </p>
           </div>
 
-          <RecompensasAvaliacao googleReviewUrl={resultado.googleReviewUrl} />
+          <RecompensasAvaliacao googleReviewUrl={resultado.googleReviewUrl} clienteId={view.clienteId} />
 
           <div className="flex gap-4 pt-2">
             <Link href={`/s/${token}`} className={buttonVariants({ variant: "outline" })}>

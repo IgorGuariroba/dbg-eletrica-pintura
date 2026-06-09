@@ -14,6 +14,7 @@ export interface SolicitacaoAvaliacaoView {
   clienteNome: string;
   clienteEmail: string | null;
   clienteWhatsapp: string;
+  clienteId: string;
   solicitacaoId: string;
   comentarioGeral: string | null;
   ordens: {

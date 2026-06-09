@@ -21,6 +21,8 @@ export function criarPagamentoCheckoutRepoDrizzle(db: DB): PagamentoCheckoutRepo
           criadoEm: solicitacao.criadoEm,
           endereco: solicitacao.endereco,
           clienteNome: cliente.nome,
+          clienteId: cliente.id,
+          saldoCredito: cliente.saldoCredito,
         })
         .from(solicitacao)
         .innerJoin(cliente, eq(solicitacao.clienteId, cliente.id))
@@ -49,11 +51,13 @@ export function criarPagamentoCheckoutRepoDrizzle(db: DB): PagamentoCheckoutRepo
       if (ordens.length === 0) {
         return {
           token: sol.token,
+          clienteId: sol.clienteId,
           clienteNome: sol.clienteNome,
           cidade: sol.endereco?.cidade ?? null,
           uf: sol.endereco?.uf ?? null,
           criadoEm: sol.criadoEm,
           ordens: [],
+          saldoCredito: sol.saldoCredito,
         };
       }
 
@@ -102,11 +106,13 @@ export function criarPagamentoCheckoutRepoDrizzle(db: DB): PagamentoCheckoutRepo
 
       return {
         token: sol.token,
+        clienteId: sol.clienteId,
         clienteNome: sol.clienteNome,
         cidade: sol.endereco?.cidade ?? null,
         uf: sol.endereco?.uf ?? null,
         criadoEm: sol.criadoEm,
         ordens: ordensMapped,
+        saldoCredito: sol.saldoCredito,
       };
     },
   };

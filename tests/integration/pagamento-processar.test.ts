@@ -261,4 +261,180 @@ describe.skipIf(!hasDb)("processarPagamento (Drizzle)", () => {
     expect(segunda.transitadas).toEqual([]);
     expect(await linhasPagamento(d.paymentId)).toBe(2);
   });
+
+  async function linesPagamento(paymentId: string) {
+    return linhasPagamento(paymentId);
+  }
+
+  it("pagamento da primeira OS de indicado gera crédito para indicador", async () => {
+    const { eq } = await import("drizzle-orm");
+
+    // 1. Cria o cliente indicador (A)
+    const [indicador] = await dbRaw
+      .insert(schema.cliente)
+      .values({
+        nome: "Indicador Pag",
+        whatsapp: String(Math.floor(1e12 + Math.random() * 9e12)),
+        saldoCredito: "0.00",
+      })
+      .returning();
+    clienteIds.push(indicador.id);
+
+    // 2. Cria o cliente indicado (B) e sua OS
+    const { osId } = await seedOs("CONCLUIDA");
+
+    // Pega o ID do cliente B gerado no seed
+    const [os] = await dbRaw
+      .select({ solicitacaoId: schema.ordemServico.solicitacaoId })
+      .from(schema.ordemServico)
+      .where(eq(schema.ordemServico.id, osId))
+      .limit(1);
+    
+    const [sol] = await dbRaw
+      .select({ clienteId: schema.solicitacao.clienteId })
+      .from(schema.solicitacao)
+      .where(eq(schema.solicitacao.id, os.solicitacaoId))
+      .limit(1);
+
+    const indicadoId = sol.clienteId;
+
+    // Vincula a indicação
+    await dbRaw
+      .insert(schema.indicacao)
+      .values({
+        indicadorId: indicador.id,
+        indicadoId,
+        descontoAplicado: true,
+        creditoGerado: false,
+      });
+
+    // 3. Processa o pagamento da primeira OS do indicado
+    const d = dados(osId);
+    const out = await processarPagamento(d, deps);
+    expect(out.transitadas).toEqual([osId]);
+
+    // 4. Verifica se o saldo do indicador foi atualizado para 30.00
+    const [indCli] = await dbRaw
+      .select({ saldoCredito: schema.cliente.saldoCredito })
+      .from(schema.cliente)
+      .where(eq(schema.cliente.id, indicador.id))
+      .limit(1);
+
+    expect(indCli.saldoCredito).toBe("30.00");
+
+    // 5. Verifica se creditoGerado virou true
+    const [ind] = await dbRaw
+      .select()
+      .from(schema.indicacao)
+      .where(eq(schema.indicacao.indicadoId, indicadoId))
+      .limit(1);
+
+    expect(ind.creditoGerado).toBe(true);
+
+    // 6. Teste de Idempotência: Se criarmos e pagarmos uma segunda OS para o Cliente B, o saldo do indicador NÃO pode aumentar novamente
+    const { osId: osId2 } = await seedOs("CONCLUIDA");
+    
+    // Atualiza a segunda OS para pertencer à mesma solicitação/cliente
+    await dbRaw
+      .update(schema.ordemServico)
+      .set({ solicitacaoId: os.solicitacaoId })
+      .where(eq(schema.ordemServico.id, osId2));
+
+    const d2 = dados(osId2);
+    const out2 = await processarPagamento(d2, deps);
+    expect(out2.transitadas).toEqual([osId2]);
+
+    const [indCli2] = await dbRaw
+      .select({ saldoCredito: schema.cliente.saldoCredito })
+      .from(schema.cliente)
+      .where(eq(schema.cliente.id, indicador.id))
+      .limit(1);
+
+    // O saldo deve permanecer 30.00 (não pode somar +30)
+    expect(indCli2.saldoCredito).toBe("30.00");
+
+    // Limpeza da indicação
+    await dbRaw.delete(schema.indicacao).where(eq(schema.indicacao.indicadoId, indicadoId));
+  });
+
+  it("pagamento approved consome crédito do cliente de forma idempotente", async () => {
+    const { eq } = await import("drizzle-orm");
+
+    // 1. Cria o cliente com saldo inicial de R$ 50.00
+    const [cli] = await dbRaw
+      .insert(schema.cliente)
+      .values({
+        nome: "Cliente Credito",
+        whatsapp: String(Math.floor(1e12 + Math.random() * 9e12)),
+        saldoCredito: "50.00",
+      })
+      .returning();
+    clienteIds.push(cli.id);
+
+    // 2. Cria a OS do cliente
+    const { osId } = await seedOs("CONCLUIDA");
+
+    // Atualiza a OS para pertencer ao cliente com crédito
+    const [os] = await dbRaw
+      .select({ solicitacaoId: schema.ordemServico.solicitacaoId })
+      .from(schema.ordemServico)
+      .where(eq(schema.ordemServico.id, osId))
+      .limit(1);
+
+    await dbRaw
+      .update(schema.solicitacao)
+      .set({ clienteId: cli.id })
+      .where(eq(schema.solicitacao.id, os.solicitacaoId));
+
+    // 3. Processa o pagamento simulando que usou R$ 30.00 de crédito
+    const payId = `pay-cred-${Math.random().toString(36).slice(2, 10)}`;
+    const d = dados(osId, "approved", payId);
+    d.metadata = {
+      credito_utilizado: "30.00",
+      cliente_id: cli.id,
+    };
+
+    const out = await processarPagamento(d, deps);
+    expect(out.transitadas).toEqual([osId]);
+
+    // 4. Verifica se o saldo do cliente caiu para 20.00
+    const [cliLido] = await dbRaw
+      .select({ saldoCredito: schema.cliente.saldoCredito })
+      .from(schema.cliente)
+      .where(eq(schema.cliente.id, cli.id))
+      .limit(1);
+
+    expect(cliLido.saldoCredito).toBe("20.00");
+
+    // 5. Verifica se registrou a movimentação
+    const [mov] = await dbRaw
+      .select()
+      .from(schema.creditoMovimentacao)
+      .where(eq(schema.creditoMovimentacao.paymentId, payId))
+      .limit(1);
+
+    expect(mov).toBeDefined();
+    expect(mov.clienteId).toBe(cli.id);
+    expect(mov.valor).toBe("30.00");
+    expect(mov.tipo).toBe("CONSUMIDO");
+
+    // 6. Teste de Idempotência: rodar o webhook duplicado não pode consumir novamente
+    const dDuplicado = dados(osId, "approved", payId);
+    dDuplicado.metadata = {
+      credito_utilizado: "30.00",
+      cliente_id: cli.id,
+    };
+    await processarPagamento(dDuplicado, deps);
+
+    const [cliLido2] = await dbRaw
+      .select({ saldoCredito: schema.cliente.saldoCredito })
+      .from(schema.cliente)
+      .where(eq(schema.cliente.id, cli.id))
+      .limit(1);
+
+    expect(cliLido2.saldoCredito).toBe("20.00"); // Permanece 20.00, não consome mais
+
+    // Limpeza da movimentação
+    await dbRaw.delete(schema.creditoMovimentacao).where(eq(schema.creditoMovimentacao.clienteId, cli.id));
+  });
 });

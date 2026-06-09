@@ -36,6 +36,7 @@ export interface OsView {
 export interface SolicitacaoView {
   token: string;
   clienteNome: string;
+  clienteId: string;
   cidade: string | null;
   uf: string | null;
   criadoEm: Date;

@@ -61,6 +61,17 @@ export async function processarPagamento(
 ): Promise<ProcessarResultado> {
   const transitadas: string[] = [];
 
+  if (deveTransitarParaPaga(dados.status) && dados.metadata?.credito_utilizado && dados.metadata?.cliente_id) {
+    const valorCredito = dados.metadata.credito_utilizado;
+    if (Number(valorCredito) > 0) {
+      await deps.pagamentoRepo.consumirCredito(
+        dados.paymentId,
+        dados.metadata.cliente_id,
+        valorCredito,
+      );
+    }
+  }
+
   for (const osId of dados.osIds) {
     if (!deveTransitarParaPaga(dados.status)) {
       log("pagamento_nao_aprovado", { ...base(dados), osId });
@@ -90,6 +101,7 @@ export async function processarPagamento(
         agora,
       );
       transitadas.push(osId);
+      await deps.pagamentoRepo.processarReferralPosPagamento(osId);
       (deps.notificarTransicao ?? notificarPadrao)(osId, "PAGA");
       log("pagamento_confirmado", { ...base(dados), osId });
     } catch (e) {

@@ -2,11 +2,13 @@ import type { OrdemCheckout } from "./checkout";
 
 export interface SolicitacaoCheckoutView {
   token: string;
+  clienteId: string;
   clienteNome: string;
   cidade: string | null;
   uf: string | null;
   criadoEm: Date;
   ordens: OrdemCheckout[];
+  saldoCredito: string;
 }
 
 export interface PagamentoCheckoutRepo {

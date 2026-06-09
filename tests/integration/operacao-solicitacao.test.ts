@@ -188,4 +188,56 @@ describe.skipIf(!hasDb)("SolicitacaoRepo Drizzle", () => {
     const lido = await repo.buscarPorToken(out.solicitacao.token);
     expect(lido?.solicitacao.foraCobertura).toBe(false);
   });
+
+  it("registra indicação quando solicitado com indicadorId válido", async () => {
+    const r = await rand();
+    
+    // 1. Cria o cliente indicador
+    const [indicador] = await dbRaw
+      .insert(schema.cliente)
+      .values({
+        nome: `Indicador ${r}`,
+        whatsapp: `11${Math.floor(Math.random() * 1e9).toString().padStart(9, "0")}`,
+      })
+      .returning();
+    
+    clienteIds.push(indicador.id);
+
+    // 2. Cria a solicitação do cliente indicado passando o indicadorId
+    const out = await repo.criarComOrdens({
+      cliente: {
+        nome: `Indicado ${r}`,
+        whatsapp: `11${Math.floor(Math.random() * 1e9).toString().padStart(9, "0")}`,
+      },
+      solicitacao: {
+        token: `tok-ind-${r}`,
+        categorias: ["ELETRICA"],
+        descricao: "teste indicação",
+        fotosUrls: [],
+        endereco: { logradouro: "Rua Y", cidade: "SP", uf: "SP" },
+        dataDesejada: null,
+        duracaoEstimada: null,
+        lgpdAceito: true,
+        origem: "FORMULARIO",
+      },
+      indicadorId: indicador.id, // Parâmetro novo a ser implementado
+    });
+
+    clienteIds.push(out.cliente.id);
+    solicitacaoIds.push(out.solicitacao.id);
+
+    // 3. Verifica se a linha de indicação foi criada no banco
+    const { eq } = await import("drizzle-orm");
+    const [row] = await dbRaw
+      .select()
+      .from(schema.indicacao)
+      .where(eq(schema.indicacao.indicadoId, out.cliente.id))
+      .limit(1);
+
+    expect(row).toBeDefined();
+    expect(row.indicadorId).toBe(indicador.id);
+    expect(row.indicadoId).toBe(out.cliente.id);
+    expect(row.descontoAplicado).toBe(false);
+    expect(row.creditoGerado).toBe(false);
+  });
 });

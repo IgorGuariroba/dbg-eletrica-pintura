@@ -246,7 +246,7 @@ export default async function AcompanhamentoPage({
               </p>
             </div>
 
-            <RecompensasAvaliacao googleReviewUrl={googleReviewUrl} />
+            <RecompensasAvaliacao googleReviewUrl={googleReviewUrl} clienteId={view.clienteId} />
           </section>
         )}
       </main>

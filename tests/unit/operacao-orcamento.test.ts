@@ -295,4 +295,48 @@ describe("montarOrcamento", () => {
     expect(recebido?.itens[0]?.quantidade).toBe("5.00");
     expect(recebido?.itens[0]?.subtotal).toBe("500.00");
   });
+
+  it("indicado com desconto de indicação pendente recebe abatimento", async () => {
+    let recebido: import("@/operacao/orcamento-repo").NovoOrcamento | undefined;
+    const repo = repoFake({
+      buscarDescontoIndicacaoDisponivel: vi.fn(async () => "30.00"),
+      criarParaOs: vi.fn(async (d) => {
+        recebido = d;
+        return { id: "orc-1" };
+      }),
+    });
+    await montarOrcamento(
+      input({ itens: [{ servicoId: "srv-1", quantidade: "2" }], km: 20 }),
+      tecnico,
+      config,
+      repo,
+    );
+    // Bruto 212.00, desconto indicação 30.00 -> total 182.00
+    expect(recebido?.descontoIndicacao).toBe("30.00");
+    expect(recebido?.total).toBe("182.00");
+  });
+
+  it("acumula desconto do plano e desconto de indicação", async () => {
+    let recebido: import("@/operacao/orcamento-repo").NovoOrcamento | undefined;
+    const repo = repoFake({
+      buscarPercentualDescontoAssinante: vi.fn(async () => "10"),
+      buscarDescontoIndicacaoDisponivel: vi.fn(async () => "30.00"),
+      criarParaOs: vi.fn(async (d) => {
+        recebido = d;
+        return { id: "orc-1" };
+      }),
+    });
+    await montarOrcamento(
+      input({ itens: [{ servicoId: "srv-1", quantidade: "2" }], km: 20 }),
+      tecnico,
+      config,
+      repo,
+    );
+    // Bruto 212.00, 10% plano = desconto 21.20, líquido plano = 190.80
+    // desconto indicação = 30.00 -> total 160.80
+    expect(recebido?.percentualDescontoPlano).toBe("10");
+    expect(recebido?.descontoPlano).toBe("21.20");
+    expect(recebido?.descontoIndicacao).toBe("30.00");
+    expect(recebido?.total).toBe("160.80");
+  });
 });

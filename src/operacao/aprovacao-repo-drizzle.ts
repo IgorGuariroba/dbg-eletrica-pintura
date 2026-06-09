@@ -8,6 +8,7 @@ import {
   ordemServico,
   servico,
   solicitacao,
+  indicacao,
 } from "@/db/schema";
 import type {
   AprovacaoRepo,
@@ -30,7 +31,11 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
   // Orçamento mais recente da OS — fonte única para exibir, expirar e carimbar.
   async function orcamentoMaisRecente(osId: string) {
     const [orc] = await db
-      .select({ id: orcamento.id, validoAte: orcamento.validoAte })
+      .select({
+        id: orcamento.id,
+        validoAte: orcamento.validoAte,
+        descontoIndicacao: orcamento.descontoIndicacao,
+      })
       .from(orcamento)
       .where(eq(orcamento.osId, osId))
       .orderBy(desc(orcamento.criadoEm))
@@ -47,6 +52,7 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
           endereco: solicitacao.endereco,
           criadoEm: solicitacao.criadoEm,
           clienteNome: cliente.nome,
+          clienteId: cliente.id,
         })
         .from(solicitacao)
         .innerJoin(cliente, eq(solicitacao.clienteId, cliente.id))
@@ -150,6 +156,7 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
       return {
         token: sol.token,
         clienteNome: sol.clienteNome,
+        clienteId: sol.clienteId,
         cidade: sol.endereco?.cidade ?? null,
         uf: sol.endereco?.uf ?? null,
         criadoEm: sol.criadoEm,
@@ -209,6 +216,20 @@ export function criarAprovacaoRepoDrizzle(db: DB): AprovacaoRepo {
           assinaturaIp: assinatura.ip,
         })
         .where(eq(orcamento.id, orc.id));
+
+      if (orc.descontoIndicacao && Number(orc.descontoIndicacao) > 0) {
+        const [sol] = await db
+          .select({ clienteId: solicitacao.clienteId })
+          .from(solicitacao)
+          .where(eq(solicitacao.id, solId))
+          .limit(1);
+        if (sol) {
+          await db
+            .update(indicacao)
+            .set({ descontoAplicado: true })
+            .where(eq(indicacao.indicadoId, sol.clienteId));
+        }
+      }
       return true;
     },
 
