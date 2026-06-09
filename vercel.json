@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/preventivas",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/remarketing",
+      "schedule": "0 7 * * *"
     }
   ]
 }

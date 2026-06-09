@@ -68,6 +68,24 @@ export const TEMPLATES_NOTIFICACAO: TemplateNotificacao[] = [
     variaveisPadrao: { saudacao: "Olá", assinatura: "Equipe DBG Elétrica e Pintura" },
     ordemVariaveis: ["saudacao", "nome_cliente", "link", "assinatura"],
   },
+  {
+    nome: "orcamento_expirando",
+    rotulo: "Orçamento Expirando",
+    variaveisPadrao: { saudacao: "Olá", assinatura: "Equipe DBG Elétrica e Pintura" },
+    ordemVariaveis: ["saudacao", "nome_cliente", "link", "assinatura"],
+  },
+  {
+    nome: "orcamento_rejeitado",
+    rotulo: "Orçamento Rejeitado",
+    variaveisPadrao: { saudacao: "Olá", assinatura: "Equipe DBG Elétrica e Pintura" },
+    ordemVariaveis: ["saudacao", "nome_cliente", "link", "assinatura"],
+  },
+  {
+    nome: "cliente_inativo",
+    rotulo: "Cliente Inativo",
+    variaveisPadrao: { saudacao: "Olá", assinatura: "Equipe DBG Elétrica e Pintura" },
+    ordemVariaveis: ["saudacao", "nome_cliente", "link", "assinatura"],
+  },
 ];
 
 export function buscarTemplate(nome: string): TemplateNotificacao | undefined {

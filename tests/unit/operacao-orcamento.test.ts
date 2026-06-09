@@ -163,6 +163,28 @@ describe("montarOrcamento", () => {
     expect(dias).toBe(7);
   });
 
+  it("calcula validade configurada se obterValidadeDias estiver disponivel", async () => {
+    let recebido: import("@/operacao/orcamento-repo").NovoOrcamento | undefined;
+    const repo = repoFake({
+      obterValidadeDias: vi.fn(async () => 10),
+      criarParaOs: vi.fn(async (d) => {
+        recebido = d;
+        return { id: "orc-10" };
+      }),
+    });
+    await montarOrcamento(
+      input({ itens: [{ servicoId: "srv-1", quantidade: "2" }], km: 20 }),
+      tecnico,
+      config,
+      repo,
+    );
+    const dias = Math.round(
+      (recebido!.validoAte.getTime() - Date.now()) / 86_400_000,
+    );
+    expect(dias).toBe(10);
+    expect(repo.obterValidadeDias).toHaveBeenCalled();
+  });
+
   it("override de deslocamento ignora o cálculo automático", async () => {
     let recebido: import("@/operacao/orcamento-repo").NovoOrcamento | undefined;
     const repo = repoFake({

@@ -1189,5 +1189,40 @@ export const landingOverrideRelations = relations(
   }),
 );
 
+// ============================================================
+// Remarketing (módulo Marketing)
+// ============================================================
+
+export const configRemarketing = pgTable(
+  "config_remarketing",
+  {
+    gatilho: varchar("gatilho", { length: 40 }).primaryKey(),
+    ativo: boolean("ativo").notNull().default(true),
+    prazosDias: integer("prazos_dias").array().notNull(),
+    templateId: varchar("template_id", { length: 64 }),
+    atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+      .$onUpdate(() => new Date()),
+  }
+);
+
+export const remarketingEnviado = pgTable(
+  "remarketing_enviado",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    gatilho: varchar("gatilho", { length: 40 }).notNull(),
+    clienteId: uuid("cliente_id")
+      .notNull()
+      .references(() => cliente.id, { onDelete: "cascade" }),
+    contexto: varchar("contexto", { length: 120 }).notNull(),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    uq: uniqueIndex("remarketing_enviado_uq").on(t.gatilho, t.clienteId, t.contexto),
+  })
+);
+
+
 
 
