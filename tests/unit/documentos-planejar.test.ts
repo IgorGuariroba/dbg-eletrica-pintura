@@ -7,6 +7,7 @@ describe("planejarDocumentos", () => {
       expect(planejarDocumentos(tipo, "PAGA")).toEqual({
         fatura: true,
         certificado: true,
+        relatorio: false,
       });
     }
   });
@@ -15,6 +16,7 @@ describe("planejarDocumentos", () => {
     expect(planejarDocumentos("GARANTIA", "CONCLUIDA")).toEqual({
       fatura: false,
       certificado: true,
+      relatorio: false,
     });
   });
 
@@ -22,10 +24,12 @@ describe("planejarDocumentos", () => {
     expect(planejarDocumentos("PREVENTIVA", "CONCLUIDA")).toEqual({
       fatura: false,
       certificado: false,
+      relatorio: true,
     });
     expect(planejarDocumentos("PREVENTIVA", "PAGA")).toEqual({
       fatura: false,
       certificado: false,
+      relatorio: false,
     });
   });
 
@@ -33,6 +37,7 @@ describe("planejarDocumentos", () => {
     expect(planejarDocumentos("NORMAL", "CONCLUIDA")).toEqual({
       fatura: false,
       certificado: false,
+      relatorio: false,
     });
   });
 
@@ -40,6 +45,21 @@ describe("planejarDocumentos", () => {
     expect(planejarDocumentos("NORMAL", "ORCADA")).toEqual({
       fatura: false,
       certificado: false,
+      relatorio: false,
     });
+  });
+
+  it("PREVENTIVA no CONCLUIDA gera relatório (e nada mais)", () => {
+    expect(planejarDocumentos("PREVENTIVA", "CONCLUIDA")).toMatchObject({
+      relatorio: true,
+      fatura: false,
+      certificado: false,
+    });
+  });
+
+  it("relatório só sai na PREVENTIVA concluída, não em outros tipos/estados", () => {
+    expect(planejarDocumentos("PREVENTIVA", "EM_EXECUCAO").relatorio).toBe(false);
+    expect(planejarDocumentos("NORMAL", "CONCLUIDA").relatorio).toBe(false);
+    expect(planejarDocumentos("GARANTIA", "CONCLUIDA").relatorio).toBe(false);
   });
 });

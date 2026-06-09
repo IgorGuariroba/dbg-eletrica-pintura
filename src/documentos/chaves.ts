@@ -13,3 +13,8 @@ export function chaveFatura(osId: string): string {
 export function chaveCertificado(osId: string): string {
   return `garantia/os/${osId}.pdf`;
 }
+
+/** Chave do relatório de inspeção de uma OS Preventiva. */
+export function chaveRelatorio(osId: string): string {
+  return `relatorio/os/${osId}.pdf`;
+}

@@ -34,6 +34,7 @@ describe("portal histórico", () => {
     expect(montarDocumentosPortal({ faturaKey: null, certificadoKey: null })).toEqual([
       { tipo: "FATURA", rotulo: "Fatura", estado: "EM_BREVE", tooltip: "em breve", url: null },
       { tipo: "CERTIFICADO_GARANTIA", rotulo: "Certificado de garantia", estado: "EM_BREVE", tooltip: "em breve", url: null },
+      { tipo: "RELATORIO_INSPECAO", rotulo: "Relatório de inspeção", estado: "EM_BREVE", tooltip: "em breve", url: null },
       { tipo: "ACIONAR_GARANTIA", rotulo: "Acionar garantia", estado: "EM_BREVE", tooltip: "em breve", url: null },
       { tipo: "INDICACAO", rotulo: "Link de indicação", estado: "EM_BREVE", tooltip: "em breve", url: null },
     ]);

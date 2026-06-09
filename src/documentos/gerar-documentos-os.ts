@@ -6,6 +6,7 @@ import {
   orcamento,
   orcamentoItem,
   ordemServico,
+  osChecklistResultado,
   pagamento,
   servico,
   solicitacao,
@@ -18,8 +19,10 @@ import {
 import type { EstadoOs } from "@/operacao/orcamento-repo";
 import { montarDadosCertificado } from "./dados-certificado";
 import { montarDadosFatura, numeroCurtoOs } from "./dados-fatura";
+import { montarDadosRelatorio } from "./dados-relatorio";
 import { gerarCertificadoPdf } from "./certificado-garantia";
 import { gerarFaturaPdf } from "./fatura";
+import { gerarRelatorioPreventivaPdf } from "./relatorio-preventiva";
 import { resolverJanelaGarantia } from "./janela-garantia";
 import {
   r2PrivadoPdf,
@@ -27,7 +30,7 @@ import {
   type ArmazenamentoPdf,
 } from "./pdf/salvar-pdf-r2";
 import { planejarDocumentos } from "./planejar-documentos";
-import { chaveCertificado, chaveFatura } from "./chaves";
+import { chaveCertificado, chaveFatura, chaveRelatorio } from "./chaves";
 
 export interface GerarDocumentosDeps {
   /** Armazenamento de PDFs (default: R2 privado). */
@@ -45,6 +48,7 @@ export interface DocumentoGerado {
 export interface GerarDocumentosResultado {
   fatura?: DocumentoGerado;
   certificado?: DocumentoGerado;
+  relatorio?: DocumentoGerado;
   email: "sent" | "skipped";
   motivo?: string;
 }
@@ -69,7 +73,8 @@ export async function gerarDocumentosOs(
   if (!os) return skip("OS não encontrada");
 
   const plano = planejarDocumentos(os.tipo, estadoNovo);
-  if (!plano.fatura && !plano.certificado) return skip("sem documentos");
+  if (!plano.fatura && !plano.certificado && !plano.relatorio)
+    return skip("sem documentos");
 
   const [sol] = await db
     .select()
@@ -159,6 +164,28 @@ export async function gerarDocumentosOs(
     }
   }
 
+  // Relatório de inspeção (preventiva) ------------------------------------
+  if (plano.relatorio) {
+    const itens = await carregarChecklist(osId);
+    const buffer = await gerarRelatorioPreventivaPdf(
+      montarDadosRelatorio({
+        osId,
+        clienteNome: cli.nome,
+        categoria: os.categoria,
+        dataVisita: os.agendadoPara ?? os.atualizadoEm,
+        itens,
+        observacoesGerais: os.metadados.notaServico ?? null,
+      }),
+    );
+    const chave = chaveRelatorio(osId);
+    const url = await salvarPDFR2(buffer, chave, armazenamento);
+    resultado.relatorio = { chave, url };
+    anexos.push({
+      filename: `relatorio_${numeroCurtoOs(osId)}.pdf`,
+      content: buffer,
+    });
+  }
+
   // Nenhum documento gerado: nada a entregar.
   if (anexos.length === 0) return skip("nenhum documento gerado");
 
@@ -182,6 +209,7 @@ export async function gerarDocumentosOs(
       urlPortal,
       faturaUrl: resultado.fatura?.url ?? null,
       certificadoUrl: resultado.certificado?.url ?? null,
+      relatorioUrl: resultado.relatorio?.url ?? null,
     }),
     anexos,
   });
@@ -244,6 +272,20 @@ async function carregarOrcamento(osId: string): Promise<OrcamentoCarregado> {
 
 function servicosDistintos(itens: { descricao: string }[]): string[] {
   return [...new Set(itens.map((i) => i.descricao))];
+}
+
+/** Resultados do checklist preventivo da OS (para o relatório de inspeção). */
+async function carregarChecklist(osId: string) {
+  return db
+    .select({
+      descricaoSnapshot: osChecklistResultado.descricaoSnapshot,
+      status: osChecklistResultado.status,
+      observacao: osChecklistResultado.observacao,
+      fotoUrl: osChecklistResultado.fotoUrl,
+    })
+    .from(osChecklistResultado)
+    .where(eq(osChecklistResultado.osId, osId))
+    .orderBy(asc(osChecklistResultado.criadoEm));
 }
 
 async function carregarPagamento(osId: string) {

@@ -154,10 +154,13 @@ describe.skipIf(!hasDb)("Disparo de Pedido de Avaliação (Bloco B)", () => {
     };
 
     // 1. Dispatch CONCLUIDA for PREVENTIVA (should trigger)
+    // forceMock: a preventiva concluída gera o relatório (#60) e o envia por
+    // e-mail — sem mock, o Resend em sandbox rejeitaria o destinatário.
     await despacharEventoOs(prev.os.id, "CONCLUIDA", {
       gateway,
       enviarEmail: mockEnviarEmail,
       agora: AGORA,
+      forceMock: true,
     });
 
     const prevWpp = gateway.chamadas.filter((c) => c.destinatario === wppPrev);
@@ -170,6 +173,7 @@ describe.skipIf(!hasDb)("Disparo de Pedido de Avaliação (Bloco B)", () => {
       gateway,
       enviarEmail: mockEnviarEmail,
       agora: AGORA,
+      forceMock: true,
     });
 
     const normWpp = gateway.chamadas.filter((c) => c.destinatario === wppNorm);

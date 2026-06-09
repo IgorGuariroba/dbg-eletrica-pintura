@@ -1,6 +1,6 @@
 import type { EstadoOs, FotosOsPort, HistoricoRepo } from "./historico-repo";
 import { listarFotosOs, obterUrlLeituraAssinada } from "@/operacao/r2-privado";
-import { chaveCertificado, chaveFatura } from "@/documentos/chaves";
+import { chaveCertificado, chaveFatura, chaveRelatorio } from "@/documentos/chaves";
 import { planejarDocumentos } from "@/documentos/planejar-documentos";
 import type { TipoOs } from "@/operacao/maquina-estado";
 
@@ -52,6 +52,7 @@ export function fotosOsR2Port(): FotosOsPort {
 export type DocumentoPortalTipo =
   | "FATURA"
   | "CERTIFICADO_GARANTIA"
+  | "RELATORIO_INSPECAO"
   | "ACIONAR_GARANTIA"
   | "INDICACAO";
 
@@ -66,6 +67,7 @@ export interface DocumentoPortalView {
 export function montarDocumentosPortal(input: {
   faturaKey?: string | null;
   certificadoKey?: string | null;
+  relatorioKey?: string | null;
 }): DocumentoPortalView[] {
   return [
     {
@@ -81,6 +83,13 @@ export function montarDocumentosPortal(input: {
       estado: input.certificadoKey ? "DISPONIVEL" : "EM_BREVE",
       tooltip: input.certificadoKey ? null : "em breve",
       url: input.certificadoKey ?? null,
+    },
+    {
+      tipo: "RELATORIO_INSPECAO",
+      rotulo: "Relatório de inspeção",
+      estado: input.relatorioKey ? "DISPONIVEL" : "EM_BREVE",
+      tooltip: input.relatorioKey ? null : "em breve",
+      url: input.relatorioKey ?? null,
     },
     {
       tipo: "ACIONAR_GARANTIA",
@@ -122,6 +131,9 @@ export async function montarDocumentosPortalOs(input: {
   const certificadoKey = plano.certificado
     ? await assinar(chaveCertificado(input.osId))
     : null;
+  const relatorioKey = plano.relatorio
+    ? await assinar(chaveRelatorio(input.osId))
+    : null;
 
-  return montarDocumentosPortal({ faturaKey, certificadoKey });
+  return montarDocumentosPortal({ faturaKey, certificadoKey, relatorioKey });
 }
