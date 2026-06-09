@@ -15,6 +15,7 @@ export interface NovoServico {
 
 export interface Servico extends NovoServico {
   id: string;
+  slug: string | null;
   criadoEm: Date;
 }
 
@@ -45,5 +46,6 @@ export interface ServicoRepo {
   atualizar(id: string, mudancas: AtualizacaoServico): Promise<Servico | null>;
   toggleAtivo(id: string): Promise<Servico | null>;
   buscarPorId(id: string): Promise<Servico | null>;
+  buscarPorSlug(slug: string): Promise<Servico | null>;
   listar(filtro: ListarFiltro): Promise<ListarResultado>;
 }

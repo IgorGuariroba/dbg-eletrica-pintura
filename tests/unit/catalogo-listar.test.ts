@@ -8,6 +8,7 @@ function repo(): ServicoRepo {
     atualizar: vi.fn(),
     toggleAtivo: vi.fn(),
     buscarPorId: vi.fn(),
+    buscarPorSlug: vi.fn(),
     listar: vi.fn(async () => ({ itens: [], total: 0 })),
   };
 }

@@ -158,19 +158,26 @@ export const membro = pgTable(
 // Serviço (Catálogo)
 // ============================================================
 
-export const servico = pgTable("servico", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  nome: varchar("nome", { length: 200 }).notNull(),
-  categoria: categoriaServicoEnum("categoria").notNull(),
-  precoBase: decimal("preco_base", { precision: 10, scale: 2 }).notNull(),
-  unidade: unidadeMedidaEnum("unidade").notNull(),
-  fotoUrl: text("foto_url"),
-  prazoGarantiaMeses: integer("prazo_garantia_meses").notNull().default(0),
-  ativo: boolean("ativo").notNull().default(true),
-  criadoEm: timestamp("criado_em", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
+export const servico = pgTable(
+  "servico",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    nome: varchar("nome", { length: 200 }).notNull(),
+    slug: varchar("slug", { length: 255 }),
+    categoria: categoriaServicoEnum("categoria").notNull(),
+    precoBase: decimal("preco_base", { precision: 10, scale: 2 }).notNull(),
+    unidade: unidadeMedidaEnum("unidade").notNull(),
+    fotoUrl: text("foto_url"),
+    prazoGarantiaMeses: integer("prazo_garantia_meses").notNull().default(0),
+    ativo: boolean("ativo").notNull().default(true),
+    criadoEm: timestamp("criado_em", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    slugUq: uniqueIndex("servico_slug_uq").on(t.slug),
+  }),
+);
 
 // ============================================================
 // Checklist Preventivo (template por Categoria)

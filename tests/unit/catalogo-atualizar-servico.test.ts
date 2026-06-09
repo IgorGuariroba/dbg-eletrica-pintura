@@ -5,6 +5,7 @@ import type { Servico, ServicoRepo } from "@/catalogo/servico-repo";
 const existente: Servico = {
   id: "uuid-1",
   nome: "Antigo",
+  slug: "antigo",
   categoria: "ELETRICA",
   precoBase: "100.00",
   unidade: "PONTO",
@@ -20,6 +21,7 @@ function repoFake(): ServicoRepo {
     atualizar: vi.fn(async (_id, m) => ({ ...existente, ...m })),
     toggleAtivo: vi.fn(),
     buscarPorId: vi.fn(async () => existente),
+    buscarPorSlug: vi.fn(),
     listar: vi.fn(),
   };
 }
@@ -55,6 +57,7 @@ describe("atualizarServico", () => {
       atualizar: vi.fn(async () => null),
       toggleAtivo: vi.fn(),
       buscarPorId: vi.fn(),
+      buscarPorSlug: vi.fn(),
       listar: vi.fn(),
     };
     const r = await atualizarServico("inex", { nome: "X" }, repo);
