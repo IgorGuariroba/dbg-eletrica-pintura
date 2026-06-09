@@ -5,6 +5,7 @@ import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-d
 import { TokenInvalidoError } from "@/operacao/aprovacao-repo";
 import { SiteHeader } from "@/app/_landing/site-header";
 import { SiteFooter } from "@/app/_landing/site-footer";
+import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo-drizzle";
 import { FormAvaliacao } from "../avaliar/form-avaliacao";
 
 export const metadata = {
@@ -28,6 +29,7 @@ export default async function ReavaliarPage({ params }: ReavaliarPageProps) {
   }
 
   const protocolo = token.slice(0, 8).toUpperCase();
+  const { valorPremio } = await criarConfigReferralRepoDrizzle(db).obter();
 
   return (
     <>
@@ -40,7 +42,7 @@ export default async function ReavaliarPage({ params }: ReavaliarPageProps) {
           Solicitação #{protocolo} · Olá, {view.clienteNome.split(" ")[0]}. Após nossa tratativa, gostaríamos de saber se sua experiência melhorou.
         </p>
 
-        <FormAvaliacao token={token} view={view} />
+        <FormAvaliacao token={token} view={view} valorPremio={valorPremio} />
       </main>
       <SiteFooter />
     </>

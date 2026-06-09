@@ -270,6 +270,69 @@ describe.skipIf(!hasDb)("Orçamento Drizzle", () => {
     expect(Number(orc.total)).toBe(212);
   });
 
+  it("indicado com indicação pendente recebe desconto e consome a indicação", async () => {
+    const { eq } = await import("drizzle-orm");
+    const tec = await seedTecnico();
+    const srv = await seedServico("ELETRICA", "100");
+    const { osId, clienteId } = await seedOsComCliente(tec);
+
+    // Config da campanha: desconto de R$ 30
+    await dbRaw
+      .insert(schema.configReferral)
+      .values({ id: "default", ativo: true, valorPremio: "30.00" })
+      .onConflictDoUpdate({
+        target: schema.configReferral.id,
+        set: { ativo: true, valorPremio: "30.00" },
+      });
+
+    // Indicador + indicação pendente apontando para o cliente da OS (indicado)
+    const [indicador] = await dbRaw
+      .insert(schema.cliente)
+      .values({
+        nome: "Indicador Ref",
+        whatsapp: String(Math.floor(1e12 + Math.random() * 9e12)),
+      })
+      .returning();
+    clienteIds.push(indicador.id);
+    const [ind] = await dbRaw
+      .insert(schema.indicacao)
+      .values({
+        indicadorId: indicador.id,
+        indicadoId: clienteId,
+        descontoAplicado: false,
+        creditoGerado: false,
+      })
+      .returning();
+
+    const r = await montar(
+      { osId, itens: [{ servicoId: srv, quantidade: "2" }], km: 20 },
+      { membroId: tec, isTecnico: true },
+      { precoLitro: "6", kmPorLitro: "10" },
+      orcRepo,
+    );
+
+    const [orc] = await dbRaw
+      .select()
+      .from(schema.orcamento)
+      .where(eq(schema.orcamento.id, r.id))
+      .limit(1);
+    // bruto 212 → desconto indicação 30 → líquido 182
+    expect(Number(orc.descontoIndicacao)).toBe(30);
+    expect(Number(orc.total)).toBe(182);
+
+    // Indicação consumida: não reincide em orçamentos futuros
+    const [indPos] = await dbRaw
+      .select()
+      .from(schema.indicacao)
+      .where(eq(schema.indicacao.id, ind.id))
+      .limit(1);
+    expect(indPos.descontoAplicado).toBe(true);
+
+    await dbRaw
+      .delete(schema.configReferral)
+      .where(eq(schema.configReferral.id, "default"));
+  });
+
   it("segundo orçamento na mesma OS é barrado (estado já não é NOVA)", async () => {
     const tec = await seedTecnico();
     const srv = await seedServico("ELETRICA", "100");

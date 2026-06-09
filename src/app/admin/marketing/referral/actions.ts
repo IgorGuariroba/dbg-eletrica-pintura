@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
-import { configReferral } from "@/db/schema";
+import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo-drizzle";
 import { exigirMarketing } from "../guard";
 
 export interface ActionState {
@@ -24,20 +24,7 @@ export async function salvarConfigReferralAction(
   }
 
   try {
-    await db
-      .insert(configReferral)
-      .values({
-        id: "default",
-        ativo,
-        valorPremio,
-      })
-      .onConflictDoUpdate({
-        target: configReferral.id,
-        set: {
-          ativo,
-          valorPremio,
-        },
-      });
+    await criarConfigReferralRepoDrizzle(db).salvar({ ativo, valorPremio });
   } catch (e) {
     return { erro: e instanceof Error ? e.message : "Erro desconhecido" };
   }

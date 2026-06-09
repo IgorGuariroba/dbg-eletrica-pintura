@@ -7,10 +7,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/db/client";
-import { configReferral } from "@/db/schema";
+import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo-drizzle";
 import { exigirMarketing } from "../guard";
 import { ReferralForm } from "./referral-form";
-import { eq } from "drizzle-orm";
 
 export const metadata: Metadata = {
   title: "Programa de Indicação Dupla — DBG Admin",
@@ -19,14 +18,8 @@ export const metadata: Metadata = {
 export default async function ReferralConfigPage() {
   await exigirMarketing();
 
-  const [config] = await db
-    .select()
-    .from(configReferral)
-    .where(eq(configReferral.id, "default"))
-    .limit(1);
-
-  const ativoInicial = config?.ativo ?? true;
-  const valorPremioInicial = config?.valorPremio ?? "30.00";
+  const { ativo: ativoInicial, valorPremio: valorPremioInicial } =
+    await criarConfigReferralRepoDrizzle(db).obter();
 
   return (
     <div className="space-y-8">

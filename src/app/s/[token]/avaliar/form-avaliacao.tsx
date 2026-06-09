@@ -37,6 +37,8 @@ interface SolicitacaoView {
 interface FormAvaliacaoProps {
   token: string;
   view: SolicitacaoView;
+  /** Valor (R$) do prêmio/desconto da campanha de indicação, vindo da config. */
+  valorPremio?: string;
 }
 
 const LABEL_CATEGORIA: Record<string, string> = {
@@ -45,7 +47,7 @@ const LABEL_CATEGORIA: Record<string, string> = {
   DRYWALL: "Drywall",
 };
 
-export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
+export function FormAvaliacao({ token, view, valorPremio }: FormAvaliacaoProps) {
   const [isPending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
   const [resultado, setResultado] = useState<{ qualificada: boolean; googleReviewUrl: string | null } | null>(null);
@@ -131,7 +133,7 @@ export function FormAvaliacao({ token, view }: FormAvaliacaoProps) {
             </p>
           </div>
 
-          <RecompensasAvaliacao googleReviewUrl={resultado.googleReviewUrl} clienteId={view.clienteId} />
+          <RecompensasAvaliacao googleReviewUrl={resultado.googleReviewUrl} clienteId={view.clienteId} valorPremio={valorPremio} />
 
           <div className="flex gap-4 pt-2">
             <Link href={`/s/${token}`} className={buttonVariants({ variant: "outline" })}>

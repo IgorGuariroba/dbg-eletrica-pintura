@@ -3,14 +3,18 @@
 import { Star, Share2, ExternalLink, Copy, Check } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { formatBRL } from "@/lib/utils";
 
 interface RecompensasAvaliacaoProps {
   /** Link do Google Review (`g.page/...`). `null` esconde o card do Google. */
   googleReviewUrl: string | null;
   /** ID do cliente para gerar o link de indicação. */
   clienteId?: string;
+  /** Valor (R$) do prêmio/desconto da campanha, vindo da config. Default "30.00". */
+  valorPremio?: string;
 }
 
 /**
@@ -19,9 +23,10 @@ interface RecompensasAvaliacaoProps {
  * (se houver URL configurada) + indicação ativa de indicação dupla.
  * Compartilhado entre o pós-submit da avaliação e o portal por token.
  */
-export function RecompensasAvaliacao({ googleReviewUrl, clienteId }: RecompensasAvaliacaoProps) {
+export function RecompensasAvaliacao({ googleReviewUrl, clienteId, valorPremio = "30.00" }: RecompensasAvaliacaoProps) {
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState("");
+  const premioFmt = formatBRL(valorPremio);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -51,7 +56,7 @@ export function RecompensasAvaliacao({ googleReviewUrl, clienteId }: Recompensas
       try {
         await navigator.share({
           title: "Indique a DBG Elétrica e Pintura",
-          text: "Use meu link para solicitar um serviço na DBG e ganhe R$ 30,00 de desconto no seu primeiro orçamento!",
+          text: `Use meu link para solicitar um serviço na DBG e ganhe ${premioFmt} de desconto no seu primeiro orçamento!`,
           url: referralLink,
         });
       } catch (err) {
@@ -88,18 +93,18 @@ export function RecompensasAvaliacao({ googleReviewUrl, clienteId }: Recompensas
         <Card className="w-full max-w-md border border-border bg-card p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-center gap-2 text-primary">
             <Share2 className="size-5" />
-            <span className="font-semibold text-foreground text-sm">Indique e Ganhe R$ 30,00</span>
+            <span className="font-semibold text-foreground text-sm">Indique e Ganhe {premioFmt}</span>
           </div>
           <p className="text-xs text-muted-foreground text-center">
-            Compartilhe seu link com amigos. Eles ganham <strong className="text-foreground">R$ 30,00</strong> de desconto na primeira contratação, e você ganha <strong className="text-foreground">R$ 30,00</strong> em créditos quando o serviço deles for concluído e pago!
+            Compartilhe seu link com amigos. Eles ganham <strong className="text-foreground">{premioFmt}</strong> de desconto na primeira contratação, e você ganha <strong className="text-foreground">{premioFmt}</strong> em créditos quando o serviço deles for concluído e pago!
           </p>
-          
+
           <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-md border border-border/60 w-full">
-            <input
+            <Input
               type="text"
               readOnly
               value={referralLink}
-              className="bg-transparent text-xs text-muted-foreground select-all outline-none flex-1 truncate px-1"
+              className="h-auto flex-1 truncate border-0 bg-transparent px-1 text-xs text-muted-foreground shadow-none select-all focus-visible:ring-0"
             />
             <Button
               size="icon"
