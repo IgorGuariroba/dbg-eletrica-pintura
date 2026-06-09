@@ -106,6 +106,9 @@ export const cliente = pgTable(
     saldoCredito: decimal("saldo_credito", { precision: 10, scale: 2 })
       .notNull()
       .default("0.00"),
+    // Última exibição do upsell de assinatura (issue #65). null = nunca viu.
+    // Reexibe após UPSELL_REEXIBICAO_DIAS (default 90).
+    upsellVistoEm: timestamp("upsell_visto_em", { withTimezone: true }),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),
