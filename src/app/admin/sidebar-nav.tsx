@@ -18,6 +18,7 @@ import {
   UserCheck,
   Send,
   Gift,
+  ThumbsUp,
 } from "lucide-react";
 import {
   Sidebar,
@@ -84,6 +85,12 @@ const ITENS: Item[] = [
     label: "Indicações",
     href: "/admin/marketing/referral" as Route,
     icon: Gift,
+    modulo: "MARKETING",
+  },
+  {
+    label: "Reputação",
+    href: "/admin/marketing/reputacao" as Route,
+    icon: ThumbsUp,
     modulo: "MARKETING",
   },
   {

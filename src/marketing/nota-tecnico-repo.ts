@@ -8,6 +8,8 @@ export interface NotaTecnicoView {
 export interface NotaTecnicoRepo {
   /** Nota média + contagem de avaliações válidas de um técnico específico. */
   obterNotaMedia(tecnicoId: string): Promise<{ media: number | null; total: number } | null>;
+  /** Nota média global da DBG (todas as avaliações válidas, qualquer técnico). */
+  obterNotaMediaGlobal(): Promise<{ media: number | null; total: number }>;
   /** Lista nota média por técnico (ignora avaliações inválidas). */
   listarNotasPorTecnico(): Promise<NotaTecnicoView[]>;
 }
