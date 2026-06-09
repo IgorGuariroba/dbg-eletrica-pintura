@@ -27,6 +27,21 @@ export function criarNotaTecnicoRepoDrizzle(db: DB): NotaTecnicoRepo {
       };
     },
 
+    async obterNotaMediaGlobal() {
+      const [row] = await db
+        .select({
+          media: avg(avaliacao.nota),
+          total: count(avaliacao.id),
+        })
+        .from(avaliacao)
+        .where(eq(avaliacao.invalida, false));
+
+      return {
+        media: row?.media != null ? parseFloat(row.media) : null,
+        total: row?.total ?? 0,
+      };
+    },
+
     async listarNotasPorTecnico() {
       const rows = await db
         .select({
