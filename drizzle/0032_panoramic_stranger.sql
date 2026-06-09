@@ -1,0 +1,1 @@
+ALTER TABLE "plano" ADD COLUMN "categorias_preventiva" jsonb DEFAULT '["ELETRICA","PINTURA"]'::jsonb NOT NULL;

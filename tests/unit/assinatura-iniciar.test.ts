@@ -17,6 +17,7 @@ function planoFixo(over: Partial<Plano> = {}): Plano {
     beneficios: null,
     percentualDesconto: "10",
     preventivasPorAno: 4,
+    categoriasPreventiva: ["ELETRICA", "PINTURA"],
     prioridadeAgendamento: true,
     ativo: true,
     preapprovalPlanIdMp: "plan-mp-1",

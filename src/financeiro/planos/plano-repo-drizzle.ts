@@ -18,6 +18,7 @@ function row(r: typeof plano.$inferSelect): Plano {
     beneficios: r.beneficios,
     percentualDesconto: r.percentualDesconto,
     preventivasPorAno: r.preventivasPorAno,
+    categoriasPreventiva: r.categoriasPreventiva,
     prioridadeAgendamento: r.prioridadeAgendamento,
     ativo: r.ativo,
     preapprovalPlanIdMp: r.preapprovalPlanIdMp,

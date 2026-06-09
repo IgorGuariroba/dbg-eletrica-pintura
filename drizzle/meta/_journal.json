@@ -225,6 +225,13 @@
       "when": 1780935124821,
       "tag": "0031_typical_maverick",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1780972850210,
+      "tag": "0032_panoramic_stranger",
+      "breakpoints": true
     }
   ]
 }

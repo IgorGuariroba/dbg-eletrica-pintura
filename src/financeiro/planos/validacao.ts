@@ -19,3 +19,7 @@ export const preventivasPorAnoSchema = z
   .number()
   .int()
   .min(0, "número de preventivas não pode ser negativo");
+
+export const categoriasPreventivaSchema = z
+  .array(z.enum(["ELETRICA", "PINTURA", "DRYWALL"]))
+  .min(1, "informe ao menos uma categoria");

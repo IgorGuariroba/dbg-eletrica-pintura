@@ -1,3 +1,7 @@
+import type { categoriaServicoEnum } from "@/db/schema";
+
+export type Categoria = (typeof categoriaServicoEnum.enumValues)[number];
+
 /** Dados para criar um plano de assinatura. */
 export interface NovoPlano {
   nome: string;
@@ -5,6 +9,8 @@ export interface NovoPlano {
   beneficios: string | null;
   percentualDesconto: string;
   preventivasPorAno: number;
+  /** Categorias inspecionadas na preventiva (1 OS por categoria). */
+  categoriasPreventiva: Categoria[];
   prioridadeAgendamento: boolean;
   ativo: boolean;
 }
@@ -25,6 +31,7 @@ export interface AtualizacaoPlano {
   beneficios?: string | null;
   percentualDesconto?: string;
   preventivasPorAno?: number;
+  categoriasPreventiva?: Categoria[];
   prioridadeAgendamento?: boolean;
   ativo?: boolean;
 }
