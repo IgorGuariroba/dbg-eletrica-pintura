@@ -2,7 +2,25 @@ import { podeAcessarModulo } from "@/auth/require-modulo";
 import type { Modulo, Role } from "@/auth/role-detection";
 import type { Categoria } from "@/operacao/fila-repo";
 import type { NotaTecnicoView } from "@/marketing/nota-tecnico-repo";
+import type { estadoOsEnum } from "@/db/schema";
 import { rankearTecnicos } from "./ranking";
+import { calcularPct } from "./calculos";
+
+export type EstadoOs = (typeof estadoOsEnum.enumValues)[number];
+
+export interface FunilEstado {
+  estado: EstadoOs;
+  total: number;
+}
+
+export interface SerieDia {
+  dia: string; // YYYY-MM-DD
+  criadas: number;
+  concluidas: number;
+}
+
+// Janela (em dias) da série temporal de OS exibida no card de Operação.
+const JANELA_SERIE_DIAS = 14;
 
 export interface UsuarioDashboard {
   membroId: string;
@@ -21,6 +39,14 @@ export interface CardOperacao {
     totalOrcadas: number;
     pct: number | null;
   };
+  taxaConclusao?: {
+    concluidas: number;
+    aprovadas: number;
+    pct: number | null;
+  };
+  tempoMedioNovaPagaSegundos: number | null;
+  funilEstados: FunilEstado[];
+  serie: SerieDia[];
 }
 
 export interface CardMarketing {
@@ -74,6 +100,10 @@ export interface DashboardRepo {
   contarMinhaFila(especialidades: Categoria[]): Promise<number>;
   contarOsOrcadas30d(): Promise<number>;
   contarOsAprovadas30d(): Promise<number>;
+  contarOsConcluidas30d(): Promise<number>;
+  tempoMedioNovaPagaSegundos(): Promise<number | null>;
+  contarOsPorEstado(): Promise<FunilEstado[]>;
+  serieOsPorDia(dias: number): Promise<SerieDia[]>;
   obterNotaMediaGeral(): Promise<number | null>;
   contarAlertasPendentes(): Promise<number>;
   listarNotasPorTecnico(): Promise<NotaTecnicoView[]>;
@@ -96,15 +126,21 @@ export async function montarDashboard(
       aguardandoAprovacao,
       totalOrcadas,
       aprovadas,
+      concluidas,
+      tempoMedioNovaPagaSegundos,
+      funilEstados,
+      serie,
     ] = await Promise.all([
       repo.contarOsCriadasHoje(),
       repo.contarOsNovasNaFila(),
       repo.contarOsAguardandoAprovacao(),
       repo.contarOsOrcadas30d(),
       repo.contarOsAprovadas30d(),
+      repo.contarOsConcluidas30d(),
+      repo.tempoMedioNovaPagaSegundos(),
+      repo.contarOsPorEstado(),
+      repo.serieOsPorDia(JANELA_SERIE_DIAS),
     ]);
-
-    const pct = totalOrcadas === 0 ? null : aprovadas / totalOrcadas;
 
     dash.operacao = {
       criadasHoje,
@@ -113,8 +149,16 @@ export async function montarDashboard(
       taxaAprovacao: {
         aprovadas,
         totalOrcadas,
-        pct,
+        pct: calcularPct(aprovadas, totalOrcadas),
       },
+      taxaConclusao: {
+        concluidas,
+        aprovadas,
+        pct: calcularPct(concluidas, aprovadas),
+      },
+      tempoMedioNovaPagaSegundos,
+      funilEstados,
+      serie,
     };
   }
 

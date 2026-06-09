@@ -86,6 +86,68 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
         );
       return Number(value);
     },
+    async contarOsConcluidas30d() {
+      const [{ value }] = await db
+        .select({ value: sql<number>`count(distinct ${transicaoOs.osId})` })
+        .from(transicaoOs)
+        .where(
+          and(
+            eq(transicaoOs.estadoNovo, "CONCLUIDA"),
+            gte(transicaoOs.em, sql`now() - interval '30 days'`),
+          ),
+        );
+      return Number(value);
+    },
+    async tempoMedioNovaPagaSegundos() {
+      // Média do intervalo entre a criação da OS e a 1ª transição para PAGA.
+      // Só OS efetivamente pagas entram na conta (inner join implícito).
+      const [{ value }] = await db
+        .select({
+          value: sql<
+            string | null
+          >`avg(extract(epoch from (paga.em - ${ordemServico.criadoEm})))`,
+        })
+        .from(ordemServico)
+        .innerJoin(
+          sql`(select os_id, min(em) as em from transicao_os where estado_novo = 'PAGA' group by os_id) paga`,
+          sql`paga.os_id = ${ordemServico.id}`,
+        );
+      return value === null ? null : Number(value);
+    },
+    async contarOsPorEstado() {
+      const linhas = await db
+        .select({ estado: ordemServico.estado, total: count() })
+        .from(ordemServico)
+        .groupBy(ordemServico.estado);
+      return linhas.map((l) => ({ estado: l.estado, total: Number(l.total) }));
+    },
+    async serieOsPorDia(dias: number) {
+      // generate_series cobre TODOS os dias da janela (inclusive os sem OS),
+      // evitando buracos na série; criadas (ordem_servico) e concluídas
+      // (transicao→CONCLUIDA) são agregadas por dia e left-joinadas.
+      const linhas = await db.execute(sql`
+        select to_char(d.dia, 'YYYY-MM-DD') as dia,
+               coalesce(c.criadas, 0)::int as criadas,
+               coalesce(k.concluidas, 0)::int as concluidas
+        from generate_series(
+               date_trunc('day', now()) - ((${dias} - 1) * interval '1 day'),
+               date_trunc('day', now()),
+               interval '1 day'
+             ) as d(dia)
+        left join (
+          select date_trunc('day', criado_em) as dd, count(*) as criadas
+          from ordem_servico group by 1
+        ) c on c.dd = d.dia
+        left join (
+          select date_trunc('day', em) as dd, count(distinct os_id) as concluidas
+          from transicao_os where estado_novo = 'CONCLUIDA' group by 1
+        ) k on k.dd = d.dia
+        order by d.dia
+      `);
+      return (linhas.rows as { dia: string; criadas: number; concluidas: number }[]).map(
+        (r) => ({ dia: r.dia, criadas: Number(r.criadas), concluidas: Number(r.concluidas) }),
+      );
+    },
     async obterNotaMediaGeral() {
       const [{ value }] = await db
         .select({ value: sql<string | null>`avg(${avaliacao.nota})` })

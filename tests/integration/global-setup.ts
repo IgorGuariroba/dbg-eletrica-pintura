@@ -28,6 +28,9 @@ export default async function setup() {
     servico,
     solicitacao,
     garantiaChamado,
+    avaliacao,
+    alertaAvaliacao,
+    tratativa,
     assinatura,
     assinaturaEvento,
     plano,
@@ -54,6 +57,14 @@ export default async function setup() {
       await db.delete(pagamento).where(inArray(pagamento.osId, osIds));
       // orcamentoItem cai por cascade ao apagar o orçamento.
       await db.delete(orcamento).where(inArray(orcamento.osId, osIds));
+      // tratativa, alertaAvaliacao e avaliacao têm FK `restrict` para a OS —
+      // apagar antes dela. Testes de avaliação (e jobs globais que varrem OS
+      // CONCLUIDA) deixam essas linhas órfãs; sem isto, o delete da OS quebra
+      // por violação de FK. Ordem: tratativa → alerta → avaliacao (depoimentos
+      // de landing caem por cascade ao remover a avaliação).
+      await db.delete(tratativa).where(inArray(tratativa.osId, osIds));
+      await db.delete(alertaAvaliacao).where(inArray(alertaAvaliacao.osId, osIds));
+      await db.delete(avaliacao).where(inArray(avaliacao.osId, osIds));
     }
     await db
       .delete(ordemServico)

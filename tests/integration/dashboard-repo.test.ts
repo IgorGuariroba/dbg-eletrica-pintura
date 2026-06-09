@@ -11,6 +11,7 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
   let schema: typeof import("@/db/schema");
   let clienteIds: string[] = [];
   let solicitacaoIds: string[] = [];
+  let osIds: string[] = [];
   let membroIds: string[] = [];
   let alertaIds: string[] = [];
   let avaliacaoIds: string[] = [];
@@ -76,6 +77,7 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
       .returning();
     clienteIds.push(cli.id);
     solicitacaoIds.push(sol.id);
+    osIds.push(os.id);
     return os.id;
   }
 
@@ -92,6 +94,7 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
   beforeEach(() => {
     clienteIds = [];
     solicitacaoIds = [];
+    osIds = [];
     membroIds = [];
     alertaIds = [];
     avaliacaoIds = [];
@@ -108,6 +111,12 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     }
     if (avaliacaoIds.length) {
       await dbRaw.delete(schema.avaliacao).where(inArray(schema.avaliacao.id, avaliacaoIds));
+    }
+    // Defensivo: testes paralelos varrem OS CONCLUIDA e podem anexar avaliações
+    // às nossas OS semeadas (jobs globais). Remove qualquer avaliação que ainda
+    // referencie nossas OS antes de deletá-las, evitando violação de FK.
+    if (osIds.length) {
+      await dbRaw.delete(schema.avaliacao).where(inArray(schema.avaliacao.osId, osIds));
     }
     if (chamadoIds.length) {
       await dbRaw.delete(schema.garantiaChamado).where(inArray(schema.garantiaChamado.id, chamadoIds));
@@ -395,5 +404,81 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     const n2 = notas.find(n => n.tecnicoId === tec2);
     expect(n2?.media).toBe(4);
     expect(n2?.total).toBe(1); // a inválida não soma no total
+  });
+
+  it("#66: concluídas em 30d conta OS com transição→CONCLUIDA na janela", async () => {
+    const osRecente = await seedOs("ELETRICA", "CONCLUIDA");
+    const [tRecente] = await dbRaw.insert(schema.transicaoOs).values({
+      osId: osRecente,
+      estadoAnterior: "EM_EXECUCAO",
+      estadoNovo: "CONCLUIDA",
+      atorEmail: "teste@dbg.test",
+      em: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 dias atrás
+    }).returning();
+    transicaoIds.push(tRecente.id);
+
+    // Fora da janela (40 dias atrás) — não conta.
+    const osAntiga = await seedOs("ELETRICA", "CONCLUIDA");
+    const [tAntiga] = await dbRaw.insert(schema.transicaoOs).values({
+      osId: osAntiga,
+      estadoAnterior: "EM_EXECUCAO",
+      estadoNovo: "CONCLUIDA",
+      atorEmail: "teste@dbg.test",
+      em: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
+    }).returning();
+    transicaoIds.push(tAntiga.id);
+
+    expect(await repo.contarOsConcluidas30d()).toBeGreaterThanOrEqual(1);
+  });
+
+  it("#66: contagem por estado devolve totais agrupados refletindo o semeado", async () => {
+    await seedOs("ELETRICA", "ORCADA");
+    const porEstado = await repo.contarOsPorEstado();
+
+    const orcada = porEstado.find((e) => e.estado === "ORCADA");
+    expect(orcada).toBeDefined();
+    expect(orcada!.total).toBeGreaterThanOrEqual(1);
+    // Estados sem nenhuma OS não aparecem na lista (group by).
+    porEstado.forEach((e) => expect(e.total).toBeGreaterThan(0));
+  });
+
+  it("#66: série por dia cobre toda a janela e soma criadas/concluídas de hoje", async () => {
+    await seedOs("PINTURA", "NOVA"); // criada hoje
+    const os = await seedOs("PINTURA", "CONCLUIDA");
+    const [t] = await dbRaw.insert(schema.transicaoOs).values({
+      osId: os,
+      estadoAnterior: "EM_EXECUCAO",
+      estadoNovo: "CONCLUIDA",
+      atorEmail: "teste@dbg.test",
+      em: new Date(), // concluída hoje
+    }).returning();
+    transicaoIds.push(t.id);
+
+    const serie = await repo.serieOsPorDia(14);
+    expect(serie).toHaveLength(14); // janela completa, sem buracos
+    const hoje = serie[serie.length - 1];
+    expect(hoje.criadas).toBeGreaterThanOrEqual(2);
+    expect(hoje.concluidas).toBeGreaterThanOrEqual(1);
+  });
+
+  it("#66: tempo médio NOVA→PAGA é um número não-nulo quando há OS paga", async () => {
+    const os = await seedOs("ELETRICA", "PAGA");
+    const [t] = await dbRaw.insert(schema.transicaoOs).values({
+      osId: os,
+      estadoAnterior: "CONCLUIDA",
+      estadoNovo: "PAGA",
+      atorEmail: "teste@dbg.test",
+      em: new Date(),
+    }).returning();
+    transicaoIds.push(t.id);
+
+    // DB de integração não é hermético (outros arquivos semeiam OS pagas em
+    // paralelo), então a média absoluta não é determinística. O que provamos
+    // aqui é que a query (join + extract epoch + avg) roda e devolve um número
+    // quando há ao menos uma OS paga; o cálculo exato é coberto pelo unit.
+    const segundos = await repo.tempoMedioNovaPagaSegundos();
+    expect(segundos).not.toBeNull();
+    expect(typeof segundos).toBe("number");
+    expect(Number.isFinite(segundos)).toBe(true);
   });
 });

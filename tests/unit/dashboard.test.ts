@@ -17,6 +17,10 @@ function repoFake(over: Partial<DashboardRepo> = {}): DashboardRepo {
     contarMinhaFila: vi.fn(async () => 0),
     contarOsOrcadas30d: vi.fn(async () => 0),
     contarOsAprovadas30d: vi.fn(async () => 0),
+    contarOsConcluidas30d: vi.fn(async () => 0),
+    tempoMedioNovaPagaSegundos: vi.fn(async () => null),
+    contarOsPorEstado: vi.fn(async () => []),
+    serieOsPorDia: vi.fn(async () => []),
     obterNotaMediaGeral: vi.fn(async () => null),
     contarAlertasPendentes: vi.fn(async () => 0),
     listarNotasPorTecnico: vi.fn(async () => []),
@@ -71,7 +75,7 @@ describe("montarDashboard", () => {
     });
     const dash = await montarDashboard(usuario({ modulos: ["OPERACAO"] }), repo);
 
-    expect(dash.operacao).toEqual({
+    expect(dash.operacao).toMatchObject({
       criadasHoje: 3,
       novasNaFila: 5,
       aguardandoAprovacao: 2,
@@ -82,6 +86,54 @@ describe("montarDashboard", () => {
       },
     });
     expect(dash.tecnico).toBeUndefined();
+  });
+
+  it("card de Operação inclui taxa de conclusão (concluídas / aprovadas em 30d)", async () => {
+    const repo = repoFake({
+      contarOsAprovadas30d: vi.fn(async () => 8),
+      contarOsConcluidas30d: vi.fn(async () => 6),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["OPERACAO"] }), repo);
+
+    expect(dash.operacao?.taxaConclusao).toEqual({
+      concluidas: 6,
+      aprovadas: 8,
+      pct: 0.75,
+    });
+  });
+
+  it("card de Operação expõe o tempo médio NOVA→PAGA em segundos", async () => {
+    const repo = repoFake({
+      tempoMedioNovaPagaSegundos: vi.fn(async () => 172800),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["OPERACAO"] }), repo);
+
+    expect(dash.operacao?.tempoMedioNovaPagaSegundos).toBe(172800);
+  });
+
+  it("card de Operação expõe a contagem de OS por estado (funil)", async () => {
+    const funil = [
+      { estado: "NOVA" as const, total: 5 },
+      { estado: "ORCADA" as const, total: 3 },
+      { estado: "PAGA" as const, total: 10 },
+    ];
+    const repo = repoFake({ contarOsPorEstado: vi.fn(async () => funil) });
+    const dash = await montarDashboard(usuario({ modulos: ["OPERACAO"] }), repo);
+
+    expect(dash.operacao?.funilEstados).toEqual(funil);
+  });
+
+  it("card de Operação inclui a série de OS criadas/concluídas por dia", async () => {
+    const serie = [
+      { dia: "2026-06-07", criadas: 4, concluidas: 2 },
+      { dia: "2026-06-08", criadas: 1, concluidas: 3 },
+    ];
+    const serieOsPorDia = vi.fn(async () => serie);
+    const repo = repoFake({ serieOsPorDia });
+    const dash = await montarDashboard(usuario({ modulos: ["OPERACAO"] }), repo);
+
+    expect(dash.operacao?.serie).toEqual(serie);
+    expect(serieOsPorDia).toHaveBeenCalledWith(14);
   });
 
   it("taxa de aprovação com zero ORÇADAS resulta em pct null", async () => {
