@@ -19,6 +19,7 @@ import {
   exigirRateLimit,
   RateLimitExcedidoError,
 } from "@/lib/rate-limit-guard";
+import { verificarTurnstile } from "@/lib/turnstile";
 
 export interface SolicitarState {
   erro?: string;
@@ -60,6 +61,13 @@ export async function criarSolicitacaoAction(
   } catch (e) {
     if (e instanceof RateLimitExcedidoError) return { erro: e.message };
     throw e;
+  }
+
+  const captcha = await verificarTurnstile(
+    form.get("cf-turnstile-response") as string | null,
+  );
+  if (!captcha.valido) {
+    return { erro: "Não foi possível confirmar que você não é um robô. Recarregue a página e tente de novo." };
   }
 
   const categorias = lerCategoriasForm(form);

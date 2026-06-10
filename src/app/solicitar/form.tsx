@@ -7,6 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import Script from "next/script";
 import { Camera, MapPin, Mic, Square, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -122,6 +123,8 @@ export interface SolicitarFormProps {
   /** Categorias pré-selecionadas (ex.: landing de um serviço). */
   categoriasIniciais?: Categoria[];
 }
+
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 const CONSENT_LABEL_PUBLICO =
   "Concordo em compartilhar meus dados (nome, WhatsApp, endereço, fotos) com a DBG para análise da solicitação, conforme a LGPD. Posso pedir a remoção a qualquer momento.";
@@ -728,6 +731,20 @@ export function SolicitarForm({
         </label>
         <input type="hidden" name="lgpdAceito" value={lgpd ? "true" : "false"} />
       </div>
+
+      {turnstileSiteKey && (
+        <>
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            strategy="lazyOnload"
+          />
+          <div
+            className="cf-turnstile"
+            data-sitekey={turnstileSiteKey}
+            data-theme="auto"
+          />
+        </>
+      )}
 
       {(state.erro || erroLocal) && (
         <p className="text-sm text-destructive" role="alert">
