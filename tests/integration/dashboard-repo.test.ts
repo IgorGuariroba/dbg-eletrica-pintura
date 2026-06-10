@@ -720,4 +720,21 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     expect(await repo.contarChamadosGarantiaTotal()).toBeGreaterThanOrEqual(1);
     expect(await repo.contarOsPagaElegiveisGarantia()).toBeGreaterThanOrEqual(1);
   });
+
+  it("#66: serviços sem demanda e preço médio por categoria", async () => {
+    const semDemanda = await seedServico(`Srv ${Math.random().toString(36).slice(2, 8)}`);
+    const comDemanda = await seedServico(`Srv ${Math.random().toString(36).slice(2, 8)}`);
+    const os = await seedOs("ELETRICA", "ORCADA");
+    await seedOrcamentoComItens(os, [{ servicoId: comDemanda }]); // orçado agora
+
+    const sem = await repo.listarServicosSemDemanda(90);
+    const ids = sem.map((s) => s.servicoId);
+    expect(ids).toContain(semDemanda); // nunca orçado → sem demanda
+    expect(ids).not.toContain(comDemanda); // orçado nos últimos 90d
+
+    const precos = await repo.precoMedioPorCategoria();
+    const eletrica = precos.find((p) => p.categoria === "ELETRICA");
+    expect(eletrica).toBeDefined();
+    expect(Number(eletrica!.precoMedio)).toBeGreaterThan(0);
+  });
 });

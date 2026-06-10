@@ -12,6 +12,8 @@ function vazio() {
 function repoFake(over: Partial<DashboardRepo> = {}): DashboardRepo {
   return {
     contarServicosAtivos: vi.fn(async () => 0),
+    listarServicosSemDemanda: vi.fn(async () => []),
+    precoMedioPorCategoria: vi.fn(async () => []),
     contarTecnicosAtivos: vi.fn(async () => 0),
     contarMembrosInternos: vi.fn(async () => 0),
     listarOsPorTecnicoMes: vi.fn(async () => []),
@@ -71,10 +73,29 @@ describe("montarDashboard", () => {
     const repo = repoFake({ contarServicosAtivos: vi.fn(async () => 7) });
     const dash = await montarDashboard(usuario({ modulos: ["CATALOGO"] }), repo);
 
-    expect(dash.catalogo).toEqual({ servicosAtivos: 7 });
+    expect(dash.catalogo).toMatchObject({ servicosAtivos: 7 });
     expect(dash.operacao).toBeUndefined();
     expect(dash.equipe).toBeUndefined();
     expect(dash.tecnico).toBeUndefined();
+  });
+
+  it("card de Catálogo traz mais pedidos, sem demanda e preço médio por categoria", async () => {
+    const maisPedidos = [{ servicoId: "s1", nome: "Tomada", total: 9 }];
+    const semDemanda = [{ servicoId: "s9", nome: "Serviço raro" }];
+    const precoMedio = [
+      { categoria: "ELETRICA" as const, precoMedio: "120.00" },
+      { categoria: "PINTURA" as const, precoMedio: "200.00" },
+    ];
+    const repo = repoFake({
+      listarServicosMaisPedidos: vi.fn(async () => maisPedidos),
+      listarServicosSemDemanda: vi.fn(async () => semDemanda),
+      precoMedioPorCategoria: vi.fn(async () => precoMedio),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["CATALOGO"] }), repo);
+
+    expect(dash.catalogo?.maisPedidos).toEqual(maisPedidos);
+    expect(dash.catalogo?.semDemanda).toEqual(semDemanda);
+    expect(dash.catalogo?.precoMedioPorCategoria).toEqual(precoMedio);
   });
 
   it("membro só com módulo EQUIPE vê só o card de Equipe", async () => {

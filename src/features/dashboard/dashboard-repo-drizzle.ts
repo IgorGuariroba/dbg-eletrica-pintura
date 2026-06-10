@@ -42,6 +42,40 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
     contarServicosAtivos() {
       return contar(servico, eq(servico.ativo, true));
     },
+    async listarServicosSemDemanda(dias: number) {
+      // Serviços ativos que não aparecem em nenhum item de orçamento criado nos
+      // últimos `dias` dias (inclui serviços que nunca foram orçados).
+      const linhas = await db
+        .select({ servicoId: servico.id, nome: servico.nome })
+        .from(servico)
+        .where(
+          and(
+            eq(servico.ativo, true),
+            sql`not exists (
+              select 1 from orcamento_item oi
+              join orcamento o on o.id = oi.orcamento_id
+              where oi.servico_id = ${servico.id}
+                and o.criado_em >= now() - (${dias} * interval '1 day')
+            )`,
+          ),
+        )
+        .orderBy(servico.nome);
+      return linhas;
+    },
+    async precoMedioPorCategoria() {
+      const linhas = await db
+        .select({
+          categoria: servico.categoria,
+          precoMedio: sql<string>`avg(${servico.precoBase})`,
+        })
+        .from(servico)
+        .where(eq(servico.ativo, true))
+        .groupBy(servico.categoria);
+      return linhas.map((l) => ({
+        categoria: l.categoria,
+        precoMedio: Number(l.precoMedio).toFixed(2),
+      }));
+    },
     contarTecnicosAtivos() {
       return contar(membro, and(eq(membro.isTecnico, true), eq(membro.ativo, true)));
     },

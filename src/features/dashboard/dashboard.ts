@@ -36,6 +36,9 @@ const LIMITE_MAIS_PEDIDOS = 5;
 // Dias sem OS atribuída a partir dos quais um técnico é considerado ocioso.
 const DIAS_OCIOSIDADE = 7;
 
+// Dias sem aparecer em orçamento a partir dos quais um serviço é "sem demanda".
+const DIAS_SEM_DEMANDA = 90;
+
 export interface UsuarioDashboard {
   membroId: string;
   role: Role;
@@ -108,8 +111,21 @@ export interface CardFinanceiro {
   faturamento: FaturamentoPeriodos;
 }
 
+export interface ServicoSemDemanda {
+  servicoId: string;
+  nome: string;
+}
+
+export interface PrecoMedioCategoria {
+  categoria: Categoria;
+  precoMedio: string;
+}
+
 export interface CardCatalogo {
   servicosAtivos: number;
+  maisPedidos: ServicoPedido[];
+  semDemanda: ServicoSemDemanda[];
+  precoMedioPorCategoria: PrecoMedioCategoria[];
 }
 
 export interface OsPorTecnico {
@@ -142,6 +158,8 @@ export interface Dashboard {
 
 export interface DashboardRepo {
   contarServicosAtivos(): Promise<number>;
+  listarServicosSemDemanda(dias: number): Promise<ServicoSemDemanda[]>;
+  precoMedioPorCategoria(): Promise<PrecoMedioCategoria[]>;
   contarTecnicosAtivos(): Promise<number>;
   contarMembrosInternos(): Promise<number>;
   listarOsPorTecnicoMes(): Promise<OsPorTecnico[]>;
@@ -318,7 +336,19 @@ export async function montarDashboard(
   }
 
   if (podeAcessarModulo("CATALOGO", usuario)) {
-    dash.catalogo = { servicosAtivos: await repo.contarServicosAtivos() };
+    const [servicosAtivos, maisPedidos, semDemanda, precoMedioPorCategoria] =
+      await Promise.all([
+        repo.contarServicosAtivos(),
+        repo.listarServicosMaisPedidos(LIMITE_MAIS_PEDIDOS),
+        repo.listarServicosSemDemanda(DIAS_SEM_DEMANDA),
+        repo.precoMedioPorCategoria(),
+      ]);
+    dash.catalogo = {
+      servicosAtivos,
+      maisPedidos,
+      semDemanda,
+      precoMedioPorCategoria,
+    };
   }
 
   if (podeAcessarModulo("EQUIPE", usuario)) {
