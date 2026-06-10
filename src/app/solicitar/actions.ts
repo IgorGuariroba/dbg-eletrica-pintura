@@ -15,16 +15,24 @@ import {
 } from "@/operacao/solicitacao-form";
 import { bairroForaDaCobertura } from "@/operacao/cobertura";
 import { listarBairrosAtendidos } from "@/operacao/cobertura-query";
+import {
+  exigirRateLimit,
+  RateLimitExcedidoError,
+} from "@/lib/rate-limit-guard";
 
 export interface SolicitarState {
   erro?: string;
 }
 
+const MINUTO = 60_000;
+
 export async function buscarCepAction(cep: string) {
+  await exigirRateLimit("cep", { limite: 10, janelaMs: MINUTO });
   return buscarCep(cep);
 }
 
 export async function geocodeReversoAction(lat: number, lng: number) {
+  await exigirRateLimit("geo", { limite: 10, janelaMs: MINUTO });
   return reverseGeocode(lat, lng);
 }
 
@@ -32,6 +40,10 @@ export async function assinarUploadFotoSolicitacaoAction(input: {
   filename: string;
   contentType: string;
 }) {
+  await exigirRateLimit("upload-solicitacao", {
+    limite: 20,
+    janelaMs: 10 * MINUTO,
+  });
   return uploadServiceSolicitacaoR2().assinarUploadFoto(input);
 }
 
@@ -39,6 +51,16 @@ export async function criarSolicitacaoAction(
   _prev: SolicitarState,
   form: FormData,
 ): Promise<SolicitarState> {
+  try {
+    await exigirRateLimit("criar-solicitacao", {
+      limite: 5,
+      janelaMs: 60 * MINUTO,
+    });
+  } catch (e) {
+    if (e instanceof RateLimitExcedidoError) return { erro: e.message };
+    throw e;
+  }
+
   const categorias = lerCategoriasForm(form);
   const fotosKeys = lerFotosKeysForm(form);
   const dataDesejada = lerDataDesejadaForm(form);

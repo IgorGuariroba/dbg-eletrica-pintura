@@ -237,7 +237,7 @@ Para garantir uma interface fluida em qualquer dispositivo, siga estas regras de
 
 * **Dispositivos Móveis (Mobile):**
   - Layouts devem colapsar para 1 coluna (`grid-cols-1`).
-  - A barra lateral (Sidebar) deve virar um painel deslizante (Drawer/Sheet).
+  - A barra lateral (Sidebar) deve virar um painel deslizante (Drawer/Sheet) em páginas internas/formulários, mas em **todos os Dashboards** ela deve ser substituída por uma **Bottom Nav (barra inferior) flutuante com suporte a FAB (Floating Action Button)**.
   - Tabelas devem ser convertidas/reestruturadas para o formato de Cards caso o espaço seja insuficiente para colunas legíveis.
 
 * **Tablets:**
@@ -258,13 +258,17 @@ Para garantir uma interface fluida em qualquer dispositivo, siga estas regras de
 A densidade ideal varia conforme a categoria de tela e o dispositivo. Antes de renderizar ou revisar qualquer tela, classifique-a em uma destas quatro categorias:
 
 ### 10.1. Dashboard (Objetivo: Responder perguntas rapidamente - Evitar excesso de dados)
+* **Regra de Ouro da Jornada:** Todos os fluxos de usuário devem levar a algum Dashboard específico (do cliente, do técnico ou do admin).
 * **Desktop (Densidade Alta - Nível 4/5):**
   - Grid de até 4 colunas para KPIs.
   - Gráficos e painéis de ranking distribuídos horizontalmente em seções balanceadas.
+  - **Obrigatório:** Uso de **Sidebar** (navegação lateral).
 * **Mobile (Densidade Baixa - Nível 2/5):**
   - Layout estrito de 1 coluna.
   - Máximo de 4 KPIs visíveis inicialmente (demais ocultos sob scroll ou expansores).
   - Gráficos simplificados; esconder métricas secundárias.
+  - **Obrigatório:** Uso de **Bottom Nav (barra inferior) flutuante com suporte a FAB (Floating Action Button)**.
+
 
 ### 10.2. Formulário (Objetivo: Facilidade de entrada de dados - Não velocidade de leitura)
 * **Desktop (Densidade Média - Nível 3/5):**

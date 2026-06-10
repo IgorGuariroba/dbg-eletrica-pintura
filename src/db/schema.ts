@@ -1288,6 +1288,16 @@ export const creditoMovimentacao = pgTable(
   })
 );
 
+// ============================================================
+// Rate limit (janela fixa por chave — ex.: `rota:ip`)
+// ============================================================
+
+export const rateLimit = pgTable("rate_limit", {
+  chave: varchar("chave", { length: 120 }).primaryKey(),
+  janelaInicio: timestamp("janela_inicio", { withTimezone: true }).notNull(),
+  contagem: integer("contagem").notNull().default(1),
+});
+
 
 
 
