@@ -1,4 +1,5 @@
 import type { Dashboard } from "../dashboard";
+import { formatBRL } from "@/lib/utils";
 import { KpiCard } from "./kpi-card";
 import { RankingTecnicos } from "./ranking-tecnicos";
 import { FunilBars } from "./funil-bars";
@@ -6,10 +7,6 @@ import { ListaDashboard } from "./lista-dashboard";
 
 function pct(valor: number | null): string {
   return valor != null ? `${Math.round(valor * 100)}%` : "—";
-}
-
-function dinheiro(valor: string): string {
-  return `R$ ${valor}`;
 }
 
 // Tempo médio em segundos → forma legível (dias/horas/minutos).
@@ -81,23 +78,23 @@ export function DashboardCards({ data }: { data: Dashboard }) {
         <section className="space-y-4">
           <h2 className="text-lg font-semibold">Financeiro</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard label="MRR" value={dinheiro(data.financeiro.mrr)} />
+            <KpiCard label="MRR" value={formatBRL(data.financeiro.mrr)} />
             <KpiCard
               label="Faturamento (mês)"
-              value={dinheiro(data.financeiro.faturamento.mes.faturamento)}
+              value={formatBRL(data.financeiro.faturamento.mes.faturamento)}
             />
             <KpiCard
               label="Ticket médio (mês)"
-              value={dinheiro(data.financeiro.faturamento.mes.ticketMedio)}
+              value={formatBRL(data.financeiro.faturamento.mes.ticketMedio)}
             />
             <KpiCard label="Churn mensal" value={pct(data.financeiro.churn.pct)} />
             <KpiCard
               label="Faturamento (hoje)"
-              value={dinheiro(data.financeiro.faturamento.dia.faturamento)}
+              value={formatBRL(data.financeiro.faturamento.dia.faturamento)}
             />
             <KpiCard
               label="Faturamento (semana)"
-              value={dinheiro(data.financeiro.faturamento.semana.faturamento)}
+              value={formatBRL(data.financeiro.faturamento.semana.faturamento)}
             />
             <KpiCard
               label="Inadimplência > 7 dias"
@@ -124,7 +121,7 @@ export function DashboardCards({ data }: { data: Dashboard }) {
             <KpiCard label="Indicações (mês)" value={data.marketing.indicacoesMes} />
             <KpiCard
               label="Créditos resgatados (mês)"
-              value={dinheiro(data.marketing.creditosResgatadosMes)}
+              value={formatBRL(data.marketing.creditosResgatadosMes)}
             />
             <KpiCard
               label="Remarketing"
@@ -236,7 +233,7 @@ export function DashboardCards({ data }: { data: Dashboard }) {
               itens={data.catalogo.precoMedioPorCategoria.map((p) => ({
                 chave: p.categoria,
                 label: CATEGORIA[p.categoria] ?? p.categoria,
-                valor: dinheiro(p.precoMedio),
+                valor: formatBRL(p.precoMedio),
               }))}
               vazio="Sem serviços cadastrados."
             />

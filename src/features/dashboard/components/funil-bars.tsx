@@ -19,7 +19,7 @@ export function FunilBars({ estagios }: { estagios: FunilEstagio[] }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {estagios.map((estagio) => (
-          <div key={estagio.nome} className="space-y-1.5">
+          <div key={estagio.nome} className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium text-foreground">
                 {ROTULO[estagio.nome]}

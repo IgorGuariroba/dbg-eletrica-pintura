@@ -174,8 +174,9 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
       return Number(value);
     },
     async tempoMedioNovaPagaSegundos() {
-      // Média do intervalo entre a criação da OS e a 1ª transição para PAGA.
-      // Só OS efetivamente pagas entram na conta (inner join implícito).
+      // Média do intervalo NOVA→PAGA: âncora NOVA = `ordemServico.criadoEm`
+      // (toda OS nasce em estado NOVA — default da coluna `estado`), fim = 1ª
+      // transição para PAGA. Só OS efetivamente pagas entram (inner join).
       const [{ value }] = await db
         .select({
           value: sql<
