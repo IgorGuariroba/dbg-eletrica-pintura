@@ -49,17 +49,15 @@ export async function assinarUploadFotoSolicitacaoAction(input: {
   return uploadServiceSolicitacaoR2().assinarUploadFoto(input);
 }
 
-export async function criarSolicitacaoAction(
-  _prev: SolicitarState,
-  form: FormData,
-): Promise<SolicitarState> {
+/** Rate-limit + captcha; devolve a mensagem de bloqueio ou null se passou. */
+async function bloqueioAntiAbuso(form: FormData): Promise<string | null> {
   try {
     await exigirRateLimit("criar-solicitacao", {
       limite: 5,
       janelaMs: 60 * MINUTO,
     });
   } catch (e) {
-    if (e instanceof RateLimitExcedidoError) return { erro: e.message };
+    if (e instanceof RateLimitExcedidoError) return e.message;
     throw e;
   }
 
@@ -67,8 +65,17 @@ export async function criarSolicitacaoAction(
     form.get("cf-turnstile-response") as string | null,
   );
   if (!captcha.valido) {
-    return { erro: "Não foi possível confirmar que você não é um robô. Recarregue a página e tente de novo." };
+    return "Não foi possível confirmar que você não é um robô. Recarregue a página e tente de novo.";
   }
+  return null;
+}
+
+export async function criarSolicitacaoAction(
+  _prev: SolicitarState,
+  form: FormData,
+): Promise<SolicitarState> {
+  const bloqueio = await bloqueioAntiAbuso(form);
+  if (bloqueio) return { erro: bloqueio };
 
   const categorias = lerCategoriasForm(form);
   const fotosKeys = lerFotosKeysForm(form);
