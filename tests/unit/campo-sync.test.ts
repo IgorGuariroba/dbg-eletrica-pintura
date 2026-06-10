@@ -495,7 +495,10 @@ describe("processarItemSync — Detecção de Conflitos", () => {
       where: vi.fn().mockReturnValue(queryResult),
       update: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
-      batch: vi.fn().mockResolvedValue([]),
+      // criarComOrdens roda no batch: [clientes, solicitações, ordens]
+      batch: vi
+        .fn()
+        .mockResolvedValue([[{ id: "cli-123" }], [{ id: "temp-id-123" }], []]),
       insert: vi.fn().mockReturnValue({
         values: vi.fn().mockReturnValue(valuesBuilder),
       }),

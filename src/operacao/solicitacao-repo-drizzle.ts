@@ -54,9 +54,11 @@ export function criarSolicitacaoRepoDrizzle(db: DB): SolicitacaoRepo {
   return {
     async criarComOrdens(input) {
       const { cliente: novoCli, solicitacao: nova } = input;
-      // Neon HTTP não suporta transação multi-statement; faz upsert + inserts
-      // sequenciais. O upsert do cliente é atômico via UNIQUE(whatsapp).
-      const [cli] = await db
+      // Neon HTTP não tem transação interativa, mas db.batch() roda todos os
+      // statements em UMA transação. Como o batch não permite usar valores
+      // retornados entre statements, os ids são resolvidos por subquery
+      // (cliente por whatsapp, solicitação por token) dentro da própria tx.
+      const upsertCliente = db
         .insert(cliente)
         .values({
           nome: novoCli.nome,
@@ -75,23 +77,14 @@ export function criarSolicitacaoRepoDrizzle(db: DB): SolicitacaoRepo {
         })
         .returning();
 
-      if (input.indicadorId) {
-        await db
-          .insert(indicacao)
-          .values({
-            indicadorId: input.indicadorId,
-            indicadoId: cli.id,
-            descontoAplicado: false,
-            creditoGerado: false,
-          })
-          .onConflictDoNothing();
-      }
+      const clienteIdPorWhatsapp = sql`(select id from ${cliente} where ${cliente.whatsapp} = ${novoCli.whatsapp})`;
+      const solicitacaoIdPorToken = sql`(select id from ${solicitacao} where ${solicitacao.token} = ${nova.token})`;
 
-      const [sol] = await db
+      const inserirSolicitacao = db
         .insert(solicitacao)
         .values({
           token: nova.token,
-          clienteId: cli.id,
+          clienteId: clienteIdPorWhatsapp,
           categorias: nova.categorias,
           descricao: nova.descricao,
           fotosUrls: nova.fotosUrls,
@@ -104,11 +97,11 @@ export function criarSolicitacaoRepoDrizzle(db: DB): SolicitacaoRepo {
         })
         .returning();
 
-      const ordens = await db
+      const inserirOrdens = db
         .insert(ordemServico)
         .values(
           nova.categorias.map((cat) => ({
-            solicitacaoId: sol.id,
+            solicitacaoId: solicitacaoIdPorToken,
             categoria: cat,
             tipo: input.ordensCustom?.tipo ?? ("NORMAL" as const),
             estado: input.ordensCustom?.estado ?? ("NOVA" as const),
@@ -116,6 +109,39 @@ export function criarSolicitacaoRepoDrizzle(db: DB): SolicitacaoRepo {
           })),
         )
         .returning();
+
+      let cli: typeof cliente.$inferSelect;
+      let sol: typeof solicitacao.$inferSelect;
+      let ordens: (typeof ordemServico.$inferSelect)[];
+      if (input.indicadorId) {
+        const inserirIndicacao = db
+          .insert(indicacao)
+          .values({
+            indicadorId: input.indicadorId,
+            indicadoId: clienteIdPorWhatsapp,
+            descontoAplicado: false,
+            creditoGerado: false,
+          })
+          .onConflictDoNothing();
+        const [clientes, , solicitacoes, ordensRows] = await db.batch([
+          upsertCliente,
+          inserirIndicacao,
+          inserirSolicitacao,
+          inserirOrdens,
+        ]);
+        [cli] = clientes;
+        [sol] = solicitacoes;
+        ordens = ordensRows;
+      } else {
+        const [clientes, solicitacoes, ordensRows] = await db.batch([
+          upsertCliente,
+          inserirSolicitacao,
+          inserirOrdens,
+        ]);
+        [cli] = clientes;
+        [sol] = solicitacoes;
+        ordens = ordensRows;
+      }
 
       const r: ResultadoCriacao = {
         cliente: clienteRow(cli),

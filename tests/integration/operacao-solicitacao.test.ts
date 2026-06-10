@@ -240,4 +240,44 @@ describe.skipIf(!hasDb)("SolicitacaoRepo Drizzle", () => {
     expect(row.descontoAplicado).toBe(false);
     expect(row.creditoGerado).toBe(false);
   });
+
+  it("é atômico: falha no meio não deixa cliente nem solicitação órfãos", async () => {
+    const r = await rand();
+    const wpp = `11${Math.floor(Math.random() * 1e9)
+      .toString()
+      .padStart(9, "0")}`;
+
+    // indicadorId inexistente → FK da indicação estoura DEPOIS do upsert do
+    // cliente; sem transação o cliente ficaria órfão no banco.
+    await expect(
+      repo.criarComOrdens({
+        cliente: { nome: `Órfão ${r}`, whatsapp: wpp },
+        solicitacao: {
+          token: `tok-orfao-${r}`,
+          categorias: ["ELETRICA"],
+          descricao: null,
+          fotosUrls: [],
+          endereco: { logradouro: "Rua Z", cidade: "SP", uf: "SP" },
+          dataDesejada: null,
+          duracaoEstimada: null,
+          lgpdAceito: true,
+          origem: "FORMULARIO",
+        },
+        indicadorId: "00000000-0000-0000-0000-000000000000",
+      }),
+    ).rejects.toThrow();
+
+    const { eq } = await import("drizzle-orm");
+    const clientes = await dbRaw
+      .select()
+      .from(schema.cliente)
+      .where(eq(schema.cliente.whatsapp, wpp));
+    expect(clientes).toHaveLength(0);
+
+    const solicitacoes = await dbRaw
+      .select()
+      .from(schema.solicitacao)
+      .where(eq(schema.solicitacao.token, `tok-orfao-${r}`));
+    expect(solicitacoes).toHaveLength(0);
+  });
 });
