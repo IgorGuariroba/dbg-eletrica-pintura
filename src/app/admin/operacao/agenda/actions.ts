@@ -53,12 +53,13 @@ export async function listarSlotsOsAdminAction(osId: string) {
 export async function reagendarLinhaAction(
   osId: string,
   novoSlotISO: string,
+  motivo: string,
 ): Promise<{ erro?: string }> {
   try {
     await exigirOperacao();
     const email = await emailOperador();
 
-    await service.reagendarAdmin(osId, email, new Date(novoSlotISO));
+    await service.reagendarAdmin(osId, email, new Date(novoSlotISO), motivo);
 
     revalidatePath("/admin/operacao/agenda");
     return { erro: undefined };

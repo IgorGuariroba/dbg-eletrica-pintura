@@ -64,6 +64,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
   const [reagendarOsId, setReagendarOsId] = useState<string | null>(null);
   const [slots, setSlots] = useState<{ inicioISO: string }[]>([]);
   const [slotSelecionado, setSlotSelecionado] = useState<string | null>(null);
+  const [motivoReagendar, setMotivoReagendar] = useState("");
   const [carregandoSlots, setCarregandoSlots] = useState(false);
   const [reagendando, startReagendar] = useTransition();
 
@@ -144,6 +145,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
   const abrirReagendar = async (osId: string) => {
     setReagendarOsId(osId);
     setSlotSelecionado(null);
+    setMotivoReagendar("");
     setReagendarOpen(true);
     setCarregandoSlots(true);
 
@@ -160,9 +162,13 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
 
   const executarReagendar = () => {
     if (!reagendarOsId || !slotSelecionado) return;
+    if (motivoReagendar.trim().length < 10) {
+      toast.error("O motivo deve conter ao menos 10 caracteres.");
+      return;
+    }
 
     startReagendar(async () => {
-      const res = await reagendarLinhaAction(reagendarOsId, slotSelecionado);
+      const res = await reagendarLinhaAction(reagendarOsId, slotSelecionado, motivoReagendar);
       if (res.erro) {
         toast.error(res.erro);
       } else {
@@ -422,7 +428,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
           <DialogHeader>
             <DialogTitle>Reagendar Visita</DialogTitle>
             <DialogDescription>
-              Selecione um dos horários disponíveis para alocar esta Ordem de Serviço.
+              Selecione um dos horários disponíveis e informe o motivo do reagendamento (mínimo 10 caracteres).
             </DialogDescription>
           </DialogHeader>
 
@@ -489,6 +495,13 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
               })()}
           </div>
 
+          <Textarea
+            placeholder="Digite o motivo do reagendamento..."
+            value={motivoReagendar}
+            onChange={(e) => setMotivoReagendar(e.target.value)}
+            className="min-h-24"
+          />
+
           <DialogFooter className="border-t pt-4">
             <Button
               variant="outline"
@@ -499,7 +512,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
               Voltar
             </Button>
             <Button
-              disabled={!slotSelecionado || reagendando}
+              disabled={!slotSelecionado || motivoReagendar.trim().length < 10 || reagendando}
               onClick={executarReagendar}
               className="font-bold cursor-pointer"
             >

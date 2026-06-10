@@ -93,7 +93,7 @@ export interface AgendamentoService {
   ): Promise<void>;
   cancelarTecnico(osId: string, tecnicoId: string, email: string, motivo: string): Promise<void>;
 
-  reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date): Promise<void>;
+  reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date, motivo: string): Promise<void>;
   cancelarAdmin(osId: string, adminEmail: string, motivo?: string): Promise<void>;
   cancelarLoteAdmin(
     osIds: string[],
@@ -303,7 +303,12 @@ export class AgendamentoServiceImpl implements AgendamentoService {
     });
   }
 
-  async reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date): Promise<void> {
+  async reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date, motivo: string): Promise<void> {
+    const motivoLimpo = motivo?.trim() ?? "";
+    if (motivoLimpo.length < 10) {
+      throw new MotivoObrigatorioError();
+    }
+
     const os = await this.repo.buscarOs(osId);
     if (!os) {
       throw new OsInexistenteError();
@@ -322,7 +327,7 @@ export class AgendamentoServiceImpl implements AgendamentoService {
       estadoAnterior: os.estado,
       estadoNovo: "AGENDADA",
       atorEmail: adminEmail,
-      motivo: "Reagendamento administrativo",
+      motivo: motivoLimpo,
       em: new Date(),
     });
   }
