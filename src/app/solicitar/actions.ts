@@ -15,30 +15,68 @@ import {
 } from "@/operacao/solicitacao-form";
 import { bairroForaDaCobertura } from "@/operacao/cobertura";
 import { listarBairrosAtendidos } from "@/operacao/cobertura-query";
+import {
+  exigirRateLimit,
+  RateLimitExcedidoError,
+} from "@/lib/rate-limit-guard";
+import { verificarTurnstile } from "@/lib/turnstile";
 
 export interface SolicitarState {
   erro?: string;
 }
 
+const MINUTO = 60_000;
+
 export async function buscarCepAction(cep: string) {
+  await exigirRateLimit("cep", { limite: 10, janelaMs: MINUTO });
   return buscarCep(cep);
 }
 
 export async function geocodeReversoAction(lat: number, lng: number) {
+  await exigirRateLimit("geo", { limite: 10, janelaMs: MINUTO });
   return reverseGeocode(lat, lng);
 }
 
 export async function assinarUploadFotoSolicitacaoAction(input: {
   filename: string;
   contentType: string;
+  contentLength: number;
 }) {
+  await exigirRateLimit("upload-solicitacao", {
+    limite: 20,
+    janelaMs: 10 * MINUTO,
+  });
   return uploadServiceSolicitacaoR2().assinarUploadFoto(input);
+}
+
+/** Rate-limit + captcha; devolve a mensagem de bloqueio ou null se passou. */
+async function bloqueioAntiAbuso(form: FormData): Promise<string | null> {
+  try {
+    await exigirRateLimit("criar-solicitacao", {
+      limite: 5,
+      janelaMs: 60 * MINUTO,
+    });
+  } catch (e) {
+    if (e instanceof RateLimitExcedidoError) return e.message;
+    throw e;
+  }
+
+  const captcha = await verificarTurnstile(
+    form.get("cf-turnstile-response") as string | null,
+  );
+  if (!captcha.valido) {
+    return "Não foi possível confirmar que você não é um robô. Recarregue a página e tente de novo.";
+  }
+  return null;
 }
 
 export async function criarSolicitacaoAction(
   _prev: SolicitarState,
   form: FormData,
 ): Promise<SolicitarState> {
+  const bloqueio = await bloqueioAntiAbuso(form);
+  if (bloqueio) return { erro: bloqueio };
+
   const categorias = lerCategoriasForm(form);
   const fotosKeys = lerFotosKeysForm(form);
   const dataDesejada = lerDataDesejadaForm(form);

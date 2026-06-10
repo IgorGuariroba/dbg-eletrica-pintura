@@ -6,7 +6,11 @@ import type { UploadAssinatura } from "./aprovacao-presencial";
 export interface AssinarInput {
   filename: string;
   contentType: string;
+  /** Tamanho exato do arquivo em bytes — assinado na URL como teto do PUT. */
+  contentLength: number;
 }
+
+export const TAMANHO_MAX_FOTO_BYTES = 10 * 1024 * 1024;
 
 export interface AssinarOutput {
   uploadUrl: string;
@@ -162,12 +166,19 @@ export function uploadAssinaturaOsR2(): UploadAssinatura {
 export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
   if (cached) return cached;
   cached = {
-    async assinarUploadFoto({ filename, contentType }) {
+    async assinarUploadFoto({ filename, contentType, contentLength }) {
       const tipo = contentType.toLowerCase();
       if (!TIPOS_PERMITIDOS.has(tipo)) {
         throw new Error(
           "tipo de imagem não permitido (use JPG, PNG, WEBP ou AVIF)",
         );
+      }
+      if (
+        !Number.isInteger(contentLength) ||
+        contentLength <= 0 ||
+        contentLength > TAMANHO_MAX_FOTO_BYTES
+      ) {
+        throw new Error("foto deve ter entre 1 byte e 10MB");
       }
       void filename;
       const ext = EXT_POR_TIPO[tipo];
@@ -179,8 +190,14 @@ export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
           Bucket: bucket,
           Key: key,
           ContentType: tipo,
+          ContentLength: contentLength,
         }),
-        { expiresIn: 300 },
+        {
+          expiresIn: 300,
+          // Inclui content-length nos SignedHeaders: o PUT só é aceito pelo
+          // R2 se enviar exatamente o tamanho assinado.
+          signableHeaders: new Set(["content-length"]),
+        },
       );
       return { uploadUrl, key };
     },

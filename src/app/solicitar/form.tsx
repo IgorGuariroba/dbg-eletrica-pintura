@@ -7,6 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import Script from "next/script";
 import { Camera, MapPin, Mic, Square, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -122,6 +123,8 @@ export interface SolicitarFormProps {
   /** Categorias pré-selecionadas (ex.: landing de um serviço). */
   categoriasIniciais?: Categoria[];
 }
+
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 const CONSENT_LABEL_PUBLICO =
   "Concordo em compartilhar meus dados (nome, WhatsApp, endereço, fotos) com a DBG para análise da solicitação, conforme a LGPD. Posso pedir a remoção a qualquer momento.";
@@ -278,6 +281,11 @@ export function SolicitarForm({
     const restantes = Math.max(0, 5 - fotos.length);
     const arr = Array.from(files).slice(0, restantes);
     if (arr.length === 0) return;
+    const grande = arr.find((f) => f.size > 10 * 1024 * 1024);
+    if (grande) {
+      setErroLocal(`"${grande.name}" passa de 10MB — reduza a foto e tente de novo`);
+      return;
+    }
     setEnviandoFoto(true);
     try {
       await Promise.all(
@@ -285,6 +293,7 @@ export function SolicitarForm({
           const { uploadUrl, key } = await assinarUploadFotoSolicitacaoAction({
             filename: file.name,
             contentType: file.type,
+            contentLength: file.size,
           });
           const res = await fetch(uploadUrl, {
             method: "PUT",
@@ -722,6 +731,20 @@ export function SolicitarForm({
         </label>
         <input type="hidden" name="lgpdAceito" value={lgpd ? "true" : "false"} />
       </div>
+
+      {turnstileSiteKey && (
+        <>
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            strategy="lazyOnload"
+          />
+          <div
+            className="cf-turnstile"
+            data-sitekey={turnstileSiteKey}
+            data-theme="auto"
+          />
+        </>
+      )}
 
       {(state.erro || erroLocal) && (
         <p className="text-sm text-destructive" role="alert">
