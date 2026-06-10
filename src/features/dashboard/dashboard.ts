@@ -5,7 +5,7 @@ import type { NotaTecnicoView } from "@/marketing/nota-tecnico-repo";
 import type { ResumoFinanceiro } from "@/features/financeiro/financeiro";
 import type { estadoOsEnum } from "@/db/schema";
 import { rankearTecnicos } from "./ranking";
-import { calcularPct, calcularMrr } from "./calculos";
+import { calcularPct, calcularMrr, montarFunil, type FunilEstagio } from "./calculos";
 
 export type EstadoOs = (typeof estadoOsEnum.enumValues)[number];
 
@@ -22,6 +22,9 @@ export interface SerieDia {
 
 // Janela (em dias) da série temporal de OS exibida no card de Operação.
 const JANELA_SERIE_DIAS = 14;
+
+// Quantos serviços exibir nos rankings de "mais pedidos" (Marketing/Catálogo).
+const LIMITE_MAIS_PEDIDOS = 5;
 
 export interface UsuarioDashboard {
   membroId: string;
@@ -50,10 +53,21 @@ export interface CardOperacao {
   serie: SerieDia[];
 }
 
+export interface ServicoPedido {
+  servicoId: string;
+  nome: string;
+  total: number;
+}
+
 export interface CardMarketing {
   notaMediaGeral: number | null;
   alertasPendentes: number;
   ranking: NotaTecnicoView[];
+  funil: FunilEstagio[];
+  servicosMaisPedidos: ServicoPedido[];
+  remarketing: { ativo: boolean; enviadosMes: number };
+  indicacoesMes: number;
+  creditosResgatadosMes: string;
 }
 
 export interface CardGarantias {
@@ -121,6 +135,13 @@ export interface DashboardRepo {
   obterNotaMediaGeral(): Promise<number | null>;
   contarAlertasPendentes(): Promise<number>;
   listarNotasPorTecnico(): Promise<NotaTecnicoView[]>;
+  contarSubmissoes30d(): Promise<number>;
+  contarOrcamentosEnviados30d(): Promise<number>;
+  listarServicosMaisPedidos(limite: number): Promise<ServicoPedido[]>;
+  remarketingAtivo(): Promise<boolean>;
+  contarRemarketingEnviadoMes(): Promise<number>;
+  contarIndicacoesMes(): Promise<number>;
+  somarCreditosResgatadosMes(): Promise<string>;
   contarChamadosGarantiaAbertos(): Promise<number>;
   contarChamadosGarantiaResolvidosNoMes(): Promise<number>;
   contarGarantiasAtivas(): Promise<number>;
@@ -181,16 +202,43 @@ export async function montarDashboard(
   }
 
   if (podeAcessarModulo("MARKETING", usuario)) {
-    const [notaMediaGeral, alertasPendentes, notasTecnicos] = await Promise.all([
+    const [
+      notaMediaGeral,
+      alertasPendentes,
+      notasTecnicos,
+      submissoes,
+      orcados,
+      aprovados,
+      concluidos,
+      servicosMaisPedidos,
+      remarketingLigado,
+      remarketingEnviadosMes,
+      indicacoesMes,
+      creditosResgatadosMes,
+    ] = await Promise.all([
       repo.obterNotaMediaGeral(),
       repo.contarAlertasPendentes(),
       repo.listarNotasPorTecnico(),
+      repo.contarSubmissoes30d(),
+      repo.contarOrcamentosEnviados30d(),
+      repo.contarOsAprovadas30d(),
+      repo.contarOsConcluidas30d(),
+      repo.listarServicosMaisPedidos(LIMITE_MAIS_PEDIDOS),
+      repo.remarketingAtivo(),
+      repo.contarRemarketingEnviadoMes(),
+      repo.contarIndicacoesMes(),
+      repo.somarCreditosResgatadosMes(),
     ]);
 
     dash.marketing = {
       notaMediaGeral,
       alertasPendentes,
       ranking: rankearTecnicos(notasTecnicos, { minAvaliacoes: 5, topN: 5 }),
+      funil: montarFunil({ submissoes, orcados, aprovados, concluidos }),
+      servicosMaisPedidos,
+      remarketing: { ativo: remarketingLigado, enviadosMes: remarketingEnviadosMes },
+      indicacoesMes,
+      creditosResgatadosMes,
     };
   }
 

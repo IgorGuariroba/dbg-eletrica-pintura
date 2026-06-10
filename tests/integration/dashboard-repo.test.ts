@@ -21,6 +21,39 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
   let transicaoIds: string[] = [];
   let planoIds: string[] = [];
   let assinaturaIds: string[] = [];
+  let servicoIds: string[] = [];
+  let gatilhosRemarketing: string[] = [];
+
+  async function seedServico(nome: string) {
+    const [s] = await dbRaw
+      .insert(schema.servico)
+      .values({ nome, categoria: "ELETRICA", precoBase: "100.00", unidade: "PONTO" })
+      .returning();
+    servicoIds.push(s.id);
+    return s.id;
+  }
+
+  async function seedOrcamentoComItens(
+    osId: string,
+    itens: { servicoId: string }[],
+  ) {
+    const r = Math.random().toString(36).slice(2, 10);
+    const [orc] = await dbRaw
+      .insert(schema.orcamento)
+      .values({ osId, tokenAprovacao: `apr-${r}`, total: "100.00", validoAte: new Date(Date.now() + 7 * 864e5) })
+      .returning();
+    orcamentoIds.push(orc.id);
+    for (const it of itens) {
+      await dbRaw.insert(schema.orcamentoItem).values({
+        orcamentoId: orc.id,
+        servicoId: it.servicoId,
+        quantidade: "1",
+        precoUnitario: "100.00",
+        subtotal: "100.00",
+      });
+    }
+    return orc.id;
+  }
 
   async function seedClienteSimples() {
     const r = Math.random().toString(36).slice(2, 10);
@@ -150,6 +183,8 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     transicaoIds = [];
     planoIds = [];
     assinaturaIds = [];
+    servicoIds = [];
+    gatilhosRemarketing = [];
   });
 
   afterAll(async () => {
@@ -197,7 +232,16 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
       await dbRaw.delete(schema.plano).where(inArray(schema.plano.id, planoIds));
     }
     if (clienteIds.length) {
+      // credito_movimentacao, indicacao e remarketing_enviado caem por cascade.
       await dbRaw.delete(schema.cliente).where(inArray(schema.cliente.id, clienteIds));
+    }
+    if (servicoIds.length) {
+      await dbRaw.delete(schema.servico).where(inArray(schema.servico.id, servicoIds));
+    }
+    if (gatilhosRemarketing.length) {
+      await dbRaw
+        .delete(schema.configRemarketing)
+        .where(inArray(schema.configRemarketing.gatilho, gatilhosRemarketing));
     }
     if (membroIds.length) {
       await dbRaw.delete(schema.membro).where(inArray(schema.membro.id, membroIds));
@@ -589,5 +633,57 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
 
     expect(await repo.contarAssinaturasAtivasInicioMes()).toBeGreaterThanOrEqual(1);
     expect(await repo.contarAssinaturasCanceladasNoMes()).toBeGreaterThanOrEqual(1);
+  });
+
+  it("#66: submissões e orçamentos em 30d contam o que foi semeado", async () => {
+    const os = await seedOs("ELETRICA", "ORCADA"); // cria solicitacao (submissão)
+    await seedOrcamentoComItens(os, []); // orçamento enviado
+
+    expect(await repo.contarSubmissoes30d()).toBeGreaterThanOrEqual(1);
+    expect(await repo.contarOrcamentosEnviados30d()).toBeGreaterThanOrEqual(1);
+  });
+
+  it("#66: serviços mais pedidos agregam itens de orçamento por serviço", async () => {
+    const svc = await seedServico(`Srv ${Math.random().toString(36).slice(2, 8)}`);
+    const os = await seedOs("ELETRICA", "ORCADA");
+    await seedOrcamentoComItens(os, [{ servicoId: svc }, { servicoId: svc }]);
+
+    const mais = await repo.listarServicosMaisPedidos(50);
+    const meu = mais.find((m) => m.servicoId === svc);
+    expect(meu).toBeDefined();
+    expect(meu!.total).toBeGreaterThanOrEqual(2);
+  });
+
+  it("#66: créditos resgatados, indicações e remarketing do mês refletem o semeado", async () => {
+    const indicador = await seedClienteSimples();
+    const indicado = await seedClienteSimples();
+
+    await dbRaw.insert(schema.creditoMovimentacao).values({
+      clienteId: indicador,
+      valor: "30.00",
+      tipo: "CONSUMIDO",
+      paymentId: `pay-${Math.random().toString(36).slice(2, 10)}`,
+    });
+    await dbRaw.insert(schema.indicacao).values({
+      indicadorId: indicador,
+      indicadoId: indicado,
+    });
+    const gatilho = `g-${Math.random().toString(36).slice(2, 10)}`;
+    gatilhosRemarketing.push(gatilho);
+    await dbRaw.insert(schema.configRemarketing).values({
+      gatilho,
+      ativo: true,
+      prazosDias: [7],
+    });
+    await dbRaw.insert(schema.remarketingEnviado).values({
+      gatilho,
+      clienteId: indicador,
+      contexto: `ctx-${Math.random().toString(36).slice(2, 8)}`,
+    });
+
+    expect(Number(await repo.somarCreditosResgatadosMes())).toBeGreaterThanOrEqual(30);
+    expect(await repo.contarIndicacoesMes()).toBeGreaterThanOrEqual(1);
+    expect(await repo.contarRemarketingEnviadoMes()).toBeGreaterThanOrEqual(1);
+    expect(await repo.remarketingAtivo()).toBe(true);
   });
 });

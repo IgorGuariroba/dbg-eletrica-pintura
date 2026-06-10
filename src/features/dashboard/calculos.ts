@@ -22,3 +22,34 @@ export function calcularMrr(ativas: { preco: string }[]): string {
   );
   return (centavos / 100).toFixed(2);
 }
+
+export interface FunilEstagio {
+  nome: "submissoes" | "orcados" | "aprovados" | "concluidos";
+  total: number;
+  conversao: number | null; // fração relativa à etapa anterior (1ª = null)
+}
+
+/**
+ * Funil de marketing de 4 estágios (submissões→orçados→aprovados→concluídos).
+ * A conversão de cada etapa é seu total dividido pelo total da etapa anterior;
+ * a 1ª etapa (topo) não tem anterior, logo `conversao = null`. (O estágio de
+ * "visitas à landing" fica fora por ora — não há instrumentação de pageview.)
+ */
+export function montarFunil(totais: {
+  submissoes: number;
+  orcados: number;
+  aprovados: number;
+  concluidos: number;
+}): FunilEstagio[] {
+  const etapas: { nome: FunilEstagio["nome"]; total: number }[] = [
+    { nome: "submissoes", total: totais.submissoes },
+    { nome: "orcados", total: totais.orcados },
+    { nome: "aprovados", total: totais.aprovados },
+    { nome: "concluidos", total: totais.concluidos },
+  ];
+  return etapas.map((etapa, i) => ({
+    nome: etapa.nome,
+    total: etapa.total,
+    conversao: i === 0 ? null : calcularPct(etapa.total, etapas[i - 1].total),
+  }));
+}

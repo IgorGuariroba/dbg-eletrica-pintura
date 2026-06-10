@@ -28,6 +28,13 @@ function repoFake(over: Partial<DashboardRepo> = {}): DashboardRepo {
     obterNotaMediaGeral: vi.fn(async () => null),
     contarAlertasPendentes: vi.fn(async () => 0),
     listarNotasPorTecnico: vi.fn(async () => []),
+    contarSubmissoes30d: vi.fn(async () => 0),
+    contarOrcamentosEnviados30d: vi.fn(async () => 0),
+    listarServicosMaisPedidos: vi.fn(async () => []),
+    remarketingAtivo: vi.fn(async () => false),
+    contarRemarketingEnviadoMes: vi.fn(async () => 0),
+    contarIndicacoesMes: vi.fn(async () => 0),
+    somarCreditosResgatadosMes: vi.fn(async () => "0.00"),
     contarChamadosGarantiaAbertos: vi.fn(async () => 0),
     contarChamadosGarantiaResolvidosNoMes: vi.fn(async () => 0),
     contarGarantiasAtivas: vi.fn(async () => 0),
@@ -170,7 +177,7 @@ describe("montarDashboard", () => {
     });
 
     const dashCom = await montarDashboard(usuario({ modulos: ["MARKETING"] }), repo);
-    expect(dashCom.marketing).toEqual({
+    expect(dashCom.marketing).toMatchObject({
       notaMediaGeral: 4.2,
       alertasPendentes: 2,
       ranking: [],
@@ -178,6 +185,43 @@ describe("montarDashboard", () => {
 
     const dashSem = await montarDashboard(usuario({ modulos: [] }), repo);
     expect(dashSem.marketing).toBeUndefined();
+  });
+
+  it("card Marketing monta o funil (submissões→orçados→aprovados→concluídos) em 30d", async () => {
+    const repo = repoFake({
+      contarSubmissoes30d: vi.fn(async () => 100),
+      contarOrcamentosEnviados30d: vi.fn(async () => 60),
+      contarOsAprovadas30d: vi.fn(async () => 30),
+      contarOsConcluidas30d: vi.fn(async () => 24),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["MARKETING"] }), repo);
+
+    expect(dash.marketing?.funil).toEqual([
+      { nome: "submissoes", total: 100, conversao: null },
+      { nome: "orcados", total: 60, conversao: 0.6 },
+      { nome: "aprovados", total: 30, conversao: 0.5 },
+      { nome: "concluidos", total: 24, conversao: 0.8 },
+    ]);
+  });
+
+  it("card Marketing traz mais pedidos, remarketing, indicações e créditos resgatados", async () => {
+    const maisPedidos = [
+      { servicoId: "s1", nome: "Tomada", total: 12 },
+      { servicoId: "s2", nome: "Pintura sala", total: 7 },
+    ];
+    const repo = repoFake({
+      listarServicosMaisPedidos: vi.fn(async () => maisPedidos),
+      remarketingAtivo: vi.fn(async () => true),
+      contarRemarketingEnviadoMes: vi.fn(async () => 18),
+      contarIndicacoesMes: vi.fn(async () => 5),
+      somarCreditosResgatadosMes: vi.fn(async () => "150.00"),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["MARKETING"] }), repo);
+
+    expect(dash.marketing?.servicosMaisPedidos).toEqual(maisPedidos);
+    expect(dash.marketing?.remarketing).toEqual({ ativo: true, enviadosMes: 18 });
+    expect(dash.marketing?.indicacoesMes).toBe(5);
+    expect(dash.marketing?.creditosResgatadosMes).toBe("150.00");
   });
 
   it("membro com módulo GARANTIAS vê card de Garantias, e sem o módulo não vê", async () => {

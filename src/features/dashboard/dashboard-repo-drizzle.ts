@@ -11,6 +11,13 @@ import {
   alertaAvaliacao,
   assinatura,
   plano,
+  solicitacao,
+  orcamento,
+  orcamentoItem,
+  configRemarketing,
+  remarketingEnviado,
+  indicacao,
+  creditoMovimentacao,
 } from "@/db/schema";
 import type { Categoria } from "@/operacao/fila-repo";
 import type { DashboardRepo } from "./dashboard";
@@ -167,6 +174,72 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
     },
     listarNotasPorTecnico() {
       return criarNotaTecnicoRepoDrizzle(db).listarNotasPorTecnico();
+    },
+    async contarSubmissoes30d() {
+      const [{ value }] = await db
+        .select({ value: count() })
+        .from(solicitacao)
+        .where(gte(solicitacao.criadoEm, sql`now() - interval '30 days'`));
+      return Number(value);
+    },
+    async contarOrcamentosEnviados30d() {
+      const [{ value }] = await db
+        .select({ value: count() })
+        .from(orcamento)
+        .where(gte(orcamento.criadoEm, sql`now() - interval '30 days'`));
+      return Number(value);
+    },
+    async listarServicosMaisPedidos(limite: number) {
+      const linhas = await db
+        .select({
+          servicoId: servico.id,
+          nome: servico.nome,
+          total: count(orcamentoItem.id),
+        })
+        .from(orcamentoItem)
+        .innerJoin(servico, eq(servico.id, orcamentoItem.servicoId))
+        .groupBy(servico.id, servico.nome)
+        .orderBy(sql`count(${orcamentoItem.id}) desc`)
+        .limit(limite);
+      return linhas.map((l) => ({
+        servicoId: l.servicoId,
+        nome: l.nome,
+        total: Number(l.total),
+      }));
+    },
+    async remarketingAtivo() {
+      const [row] = await db
+        .select({ value: count() })
+        .from(configRemarketing)
+        .where(eq(configRemarketing.ativo, true));
+      return Number(row?.value ?? 0) > 0;
+    },
+    async contarRemarketingEnviadoMes() {
+      const [{ value }] = await db
+        .select({ value: count() })
+        .from(remarketingEnviado)
+        .where(gte(remarketingEnviado.criadoEm, sql`date_trunc('month', now())`));
+      return Number(value);
+    },
+    async contarIndicacoesMes() {
+      const [{ value }] = await db
+        .select({ value: count() })
+        .from(indicacao)
+        .where(gte(indicacao.criadoEm, sql`date_trunc('month', now())`));
+      return Number(value);
+    },
+    async somarCreditosResgatadosMes() {
+      // "Resgate" = crédito consumido (abatido de um pagamento) no mês corrente.
+      const [{ value }] = await db
+        .select({ value: sql<string | null>`sum(${creditoMovimentacao.valor})` })
+        .from(creditoMovimentacao)
+        .where(
+          and(
+            eq(creditoMovimentacao.tipo, "CONSUMIDO"),
+            gte(creditoMovimentacao.criadoEm, sql`date_trunc('month', now())`),
+          ),
+        );
+      return value ? Number(value).toFixed(2) : "0.00";
     },
     async contarChamadosGarantiaAbertos() {
       const [{ value }] = await db

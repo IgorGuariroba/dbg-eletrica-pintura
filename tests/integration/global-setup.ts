@@ -77,10 +77,21 @@ export default async function setup() {
 
   // Assinaturas de teste: `assinatura` referencia cliente E plano (FK restrict),
   // então apagar antes deles. `assinatura_evento` não tem FK (preapproval "pre-").
+  // Nem toda assinatura de teste tem preapprovalIdMp "pre-%" (ex.: dashboard
+  // semeia direto com preapproval nulo), então também removemos as que apontam
+  // para planos de teste ("Plano %"), senão o delete do plano quebra por FK.
   await db
     .delete(assinaturaEvento)
     .where(like(assinaturaEvento.preapprovalIdMp, "pre-%"));
+  const planosTeste = await db
+    .select({ id: plano.id })
+    .from(plano)
+    .where(like(plano.nome, "Plano %"));
+  const planoIdsTeste = planosTeste.map((p) => p.id);
   await db.delete(assinatura).where(like(assinatura.preapprovalIdMp, "pre-%"));
+  if (planoIdsTeste.length) {
+    await db.delete(assinatura).where(inArray(assinatura.planoId, planoIdsTeste));
+  }
   await db.delete(plano).where(like(plano.nome, "Plano %"));
 
   // Clientes semeados ("Cli ", "Teste ", "A ", "A novo ").
