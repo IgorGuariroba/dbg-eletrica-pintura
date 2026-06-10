@@ -39,6 +39,7 @@ export async function geocodeReversoAction(lat: number, lng: number) {
 export async function assinarUploadFotoSolicitacaoAction(input: {
   filename: string;
   contentType: string;
+  contentLength: number;
 }) {
   await exigirRateLimit("upload-solicitacao", {
     limite: 20,

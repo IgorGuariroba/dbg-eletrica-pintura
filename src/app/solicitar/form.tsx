@@ -278,6 +278,11 @@ export function SolicitarForm({
     const restantes = Math.max(0, 5 - fotos.length);
     const arr = Array.from(files).slice(0, restantes);
     if (arr.length === 0) return;
+    const grande = arr.find((f) => f.size > 10 * 1024 * 1024);
+    if (grande) {
+      setErroLocal(`"${grande.name}" passa de 10MB — reduza a foto e tente de novo`);
+      return;
+    }
     setEnviandoFoto(true);
     try {
       await Promise.all(
@@ -285,6 +290,7 @@ export function SolicitarForm({
           const { uploadUrl, key } = await assinarUploadFotoSolicitacaoAction({
             filename: file.name,
             contentType: file.type,
+            contentLength: file.size,
           });
           const res = await fetch(uploadUrl, {
             method: "PUT",
