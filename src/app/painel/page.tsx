@@ -1,12 +1,12 @@
 import { db } from "@/db/client";
-import { montarDashboard } from "@/features/dashboard/dashboard";
+import { montarDashboardCacheado } from "@/features/dashboard/dashboard-cacheado";
 import { criarDashboardRepoDrizzle } from "@/features/dashboard/dashboard-repo-drizzle";
 import { DashboardCards } from "@/features/dashboard/components/dashboard-cards";
 import { exigirFila } from "./guard";
 
 export default async function PainelPage() {
   const { usuario, nome } = await exigirFila();
-  const dashboard = await montarDashboard(
+  const dashboard = await montarDashboardCacheado(
     usuario,
     criarDashboardRepoDrizzle(db),
   );
