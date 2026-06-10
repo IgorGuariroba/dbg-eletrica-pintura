@@ -3,9 +3,9 @@ import { MessageCircle } from "lucide-react";
 import { urlWhatsApp, REGIAO_ATENDIMENTO } from "@/lib/contato";
 
 const LINKS_NAVEGACAO = [
-  { href: "/#servicos", label: "Serviços e preços" },
+  { href: "/servicos", label: "Serviços e preços" },
   { href: "/#portfolio", label: "Trabalhos realizados" },
-  { href: "/#equipe", label: "Nossa equipe" },
+  { href: "/equipe", label: "Nossa equipe" },
   { href: "/#como-funciona", label: "Como funciona" },
   { href: "/planos", label: "Planos de manutenção" },
 ] as const;
