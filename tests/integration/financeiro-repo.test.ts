@@ -147,6 +147,9 @@ describe.skipIf(!hasDb)("FinanceiroRepo Drizzle", () => {
         valor: "200.00",
         metodo: "pix",
         status: "approved",
+        // Data fixa: sem ela o default now() cai na janela "vazia" da Fatia 7
+        // no dia em que o CI rodar em 2026-06-10 (bomba-relógio de data).
+        criadoEm: new Date("2026-03-01T12:00:00Z"),
       });
 
     // 2. OS com estado = 'PAGA'
@@ -295,9 +298,10 @@ describe.skipIf(!hasDb)("FinanceiroRepo Drizzle", () => {
   });
 
   it("Fatia 7: resumoPeriodo calcula ticketMedio corretamente e retorna 0.00 se sem pagamentos", async () => {
-    // 1. Período sem pagamentos
-    const inicioVazio = new Date("2026-06-10T00:00:00Z");
-    const fimVazio = new Date("2026-06-10T23:59:59Z");
+    // 1. Período sem pagamentos — janela no passado remoto: nenhum seed com
+    // criadoEm default (now()) consegue cair nela, em qualquer data de run.
+    const inicioVazio = new Date("1999-01-01T00:00:00Z");
+    const fimVazio = new Date("1999-01-01T23:59:59Z");
     const resumoVazio = await repo.resumoPeriodo({ inicio: inicioVazio, fim: fimVazio });
     expect(resumoVazio.faturamento).toBe("0.00");
     expect(resumoVazio.ticketMedio).toBe("0.00");
