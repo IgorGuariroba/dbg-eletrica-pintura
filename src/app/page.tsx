@@ -122,7 +122,7 @@ export default async function Home() {
       <SiteHeader />
       <Hero bairros={bairros} />
       <Diferenciais metricas={metricas} />
-      <Portfolio fotos={portfolio} />
+      <Portfolio fotos={portfolio} limite={6} />
       <ServicosGrid servicos={servicos} limitePorCategoria={3} />
       <ComoFunciona />
       <Equipe tecnicos={tecnicos} compacta />

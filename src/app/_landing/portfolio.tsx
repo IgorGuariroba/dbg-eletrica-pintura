@@ -12,8 +12,19 @@ const CATEGORIA_LABEL: Record<string, string> = {
   DRYWALL: "Drywall",
 };
 
-export function Portfolio({ fotos }: { fotos: FotoPortfolioView[] }) {
+interface Props {
+  fotos: FotoPortfolioView[];
+  /**
+   * Máximo de fotos na landing principal (carga cognitiva baixa).
+   * Omitido = todas as fotos públicas carregadas.
+   */
+  limite?: number;
+}
+
+export function Portfolio({ fotos, limite }: Props) {
   if (fotos.length === 0) return null;
+
+  const visiveis = limite != null ? fotos.slice(0, limite) : fotos;
 
   return (
     <section id="portfolio" className="bg-muted">
@@ -28,38 +39,39 @@ export function Portfolio({ fotos }: { fotos: FotoPortfolioView[] }) {
           </p>
         </div>
 
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {fotos.map((f) => (
-              <li
-                key={f.id}
-                className="rounded-lg border bg-card overflow-hidden"
-              >
-                <div className="relative aspect-square bg-muted">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={f.url}
-                    alt={`${CATEGORIA_LABEL[f.categoria] ?? f.categoria} — foto ${
-                      f.tipo === "ANTES" ? "antes" : "depois"
-                    }`}
-                    loading="lazy"
-                    className="size-full object-cover"
-                  />
-                  <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                    {f.tipo === "ANTES" ? "Antes" : "Depois"}
-                  </span>
-                </div>
-                <div className="p-3">
-                  <span className="text-xs font-medium">
-                    {CATEGORIA_LABEL[f.categoria] ?? f.categoria}
-                  </span>
-                  {f.tecnicoNome && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      por {f.tecnicoNome}
-                    </p>
-                  )}
-                </div>
-              </li>
-            ))}
+        {/* Masonry: colunas CSS; fotos em altura natural para o fluxo variar. */}
+        <ul className="columns-2 sm:columns-3 gap-4">
+          {visiveis.map((f) => (
+            <li
+              key={f.id}
+              className="mb-4 break-inside-avoid rounded-lg border bg-card overflow-hidden"
+            >
+              <div className="relative bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={f.url}
+                  alt={`${CATEGORIA_LABEL[f.categoria] ?? f.categoria} — foto ${
+                    f.tipo === "ANTES" ? "antes" : "depois"
+                  }`}
+                  loading="lazy"
+                  className="w-full h-auto"
+                />
+                <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                  {f.tipo === "ANTES" ? "Antes" : "Depois"}
+                </span>
+              </div>
+              <div className="p-3">
+                <span className="text-xs font-medium">
+                  {CATEGORIA_LABEL[f.categoria] ?? f.categoria}
+                </span>
+                {f.tecnicoNome && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    por {f.tecnicoNome}
+                  </p>
+                )}
+              </div>
+            </li>
+          ))}
         </ul>
       </div>
     </section>
