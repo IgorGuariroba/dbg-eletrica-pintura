@@ -11,9 +11,12 @@ import {
 const TTL_MS = 60_000;
 const cache = criarCacheTtl<Dashboard>({ ttlMs: TTL_MS });
 
-// A chave captura tudo que altera a saída do dashboard: papel, módulos e a
-// identidade do técnico (card Técnico depende de membroId/especialidades).
-// Dois usuários com a mesma assinatura veem o mesmo painel — compartilhar é seguro.
+// A chave captura tudo que altera a saída do dashboard. `membroId` e
+// `especialidades` são OBRIGATÓRIOS: o card Técnico mostra as OS atribuídas
+// àquele membro e a fila das suas especialidades — omiti-los faria um técnico
+// ver os dados de outro. Na prática isso torna o cache ~1 entrada por pessoa
+// logada; o ganho real é absorver refreshes do MESMO usuário dentro de 60s
+// (o `criarCacheTtl` varre entradas expiradas para limitar a memória).
 function chaveCache(u: UsuarioDashboard): string {
   return JSON.stringify({
     role: u.role,
