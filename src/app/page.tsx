@@ -4,13 +4,21 @@ import { criarServicoRepoDrizzle } from "@/catalogo/servico-repo-drizzle";
 import { db } from "@/db/client";
 import type { Servico } from "@/catalogo/servico-repo";
 import { Hero } from "./_landing/hero";
+import { Diferenciais } from "./_landing/diferenciais";
+import { ComoFunciona } from "./_landing/como-funciona";
 import { ServicosGrid } from "./_landing/servicos-grid";
 import { Portfolio } from "./_landing/portfolio";
 import { Avaliacoes } from "./_landing/avaliacoes";
+import { CtaFinal } from "./_landing/cta-final";
 import { SiteHeader } from "./_landing/site-header";
 import { SiteFooter } from "./_landing/site-footer";
 import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
 import { criarPortfolioRepoDrizzle } from "@/marketing/portfolio-repo-drizzle";
+import { criarDepoimentosQueryDrizzle } from "@/marketing/landing/depoimentos-query-drizzle";
+import { criarMetricasPublicasQueryDrizzle } from "@/marketing/landing/metricas-publicas-query-drizzle";
+import type { MetricasPublicas } from "@/marketing/landing/metricas-publicas-query";
+import type { DepoimentoCandidato } from "@/marketing/landing/depoimentos-query";
+import { listarBairrosAtendidos } from "@/operacao/cobertura-query";
 import { urlPublicaFoto } from "@/marketing/copiador-r2";
 import { Equipe } from "./_landing/equipe";
 import type { FotoPortfolioView } from "./_landing/portfolio";
@@ -59,9 +67,42 @@ async function carregarPortfolio(): Promise<FotoPortfolioView[]> {
   }
 }
 
+async function carregarDepoimentos(): Promise<DepoimentoCandidato[]> {
+  try {
+    return await criarDepoimentosQueryDrizzle(db).listarCandidatos(3);
+  } catch (err) {
+    console.error("Erro ao carregar depoimentos:", err);
+    return [];
+  }
+}
+
+async function carregarMetricas(): Promise<MetricasPublicas> {
+  try {
+    return await criarMetricasPublicasQueryDrizzle(db).obter();
+  } catch (err) {
+    console.error("Erro ao carregar métricas públicas:", err);
+    return { osConcluidas: 0, notaMedia: null, totalAvaliacoes: 0 };
+  }
+}
+
+async function carregarBairros(): Promise<string[]> {
+  try {
+    return await listarBairrosAtendidos();
+  } catch (err) {
+    console.error("Erro ao carregar bairros atendidos:", err);
+    return [];
+  }
+}
+
 export default async function Home() {
-  const servicos = await carregarServicos();
-  const portfolio = await carregarPortfolio();
+  const [servicos, portfolio, depoimentos, metricas, bairros] =
+    await Promise.all([
+      carregarServicos(),
+      carregarPortfolio(),
+      carregarDepoimentos(),
+      carregarMetricas(),
+      carregarBairros(),
+    ]);
 
   let tecnicos: import("@/equipe/membro-repo").Membro[] = [];
   try {
@@ -75,16 +116,19 @@ export default async function Home() {
   } catch (err) {
     console.error("Erro ao carregar técnicos:", err);
   }
- 
+
   return (
     <>
       <SiteHeader />
-      <Hero />
-      <ServicosGrid servicos={servicos} />
+      <Hero bairros={bairros} />
+      <Diferenciais metricas={metricas} />
       <Portfolio fotos={portfolio} />
+      <ServicosGrid servicos={servicos} />
+      <ComoFunciona />
       <Equipe tecnicos={tecnicos} />
-      <Avaliacoes />
-      <SiteFooter />
+      <Avaliacoes depoimentos={depoimentos} />
+      <CtaFinal />
+      <SiteFooter bairros={bairros} />
     </>
   );
 }

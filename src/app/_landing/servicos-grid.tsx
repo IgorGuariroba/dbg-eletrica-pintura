@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
+import type { Route } from "next";
 import type { Servico } from "@/catalogo/servico-repo";
 import { formatBRL } from "@/lib/utils";
 
@@ -46,43 +48,58 @@ export function ServicosGrid({ servicos }: { servicos: Servico[] }) {
               {LABEL_CATEGORIA[cat]}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map((s) => (
-                <article
-                  key={s.id}
-                  className="rounded-lg border bg-card overflow-hidden flex flex-col"
-                >
-                  {s.fotoUrl ? (
-                    <div className="relative aspect-video bg-muted">
-                      <Image
-                        src={s.fotoUrl}
-                        alt={s.nome}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-video bg-muted" aria-hidden />
-                  )}
-                  <div className="p-4 flex-1 flex flex-col">
-                    <h4 className="font-medium">{s.nome}</h4>
-                    <div className="mt-auto pt-3 flex items-baseline justify-between">
-                      <span className="text-xl font-bold tabular-nums">
-                        {formatBRL(s.precoBase)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {LABEL_UNIDADE[s.unidade]}
-                      </span>
-                    </div>
-                    {s.prazoGarantiaMeses > 0 && (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Garantia de {s.prazoGarantiaMeses}{" "}
-                        {s.prazoGarantiaMeses === 1 ? "mês" : "meses"}
-                      </p>
+              {items.map((s) => {
+                const conteudo = (
+                  <>
+                    {s.fotoUrl ? (
+                      <div className="relative aspect-video bg-muted">
+                        <Image
+                          src={s.fotoUrl}
+                          alt={s.nome}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-video bg-muted" aria-hidden />
                     )}
-                  </div>
-                </article>
-              ))}
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h4 className="font-medium">{s.nome}</h4>
+                      <div className="mt-auto pt-3 flex items-baseline justify-between">
+                        <span className="text-xl font-bold tabular-nums">
+                          {formatBRL(s.precoBase)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {LABEL_UNIDADE[s.unidade]}
+                        </span>
+                      </div>
+                      {s.prazoGarantiaMeses > 0 && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Garantia de {s.prazoGarantiaMeses}{" "}
+                          {s.prazoGarantiaMeses === 1 ? "mês" : "meses"}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                );
+                const classeCard =
+                  "rounded-lg border bg-card overflow-hidden flex flex-col";
+                // Serviço com slug tem landing própria — card vira link.
+                return s.slug ? (
+                  <Link
+                    key={s.id}
+                    href={`/servicos/${s.slug}` as Route}
+                    className={`${classeCard} transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+                  >
+                    {conteudo}
+                  </Link>
+                ) : (
+                  <article key={s.id} className={classeCard}>
+                    {conteudo}
+                  </article>
+                );
+              })}
             </div>
           </div>
           );

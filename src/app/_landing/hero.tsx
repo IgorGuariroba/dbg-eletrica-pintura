@@ -1,8 +1,20 @@
 import Link from "next/link";
-import { ShieldCheck, Clock, Star } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { REGIAO_ATENDIMENTO } from "@/lib/contato";
 
-export function Hero() {
+const MAX_BAIRROS_VISIVEIS = 4;
+
+function textoCobertura(bairros: string[]): string {
+  if (bairros.length === 0) return `Atendemos ${REGIAO_ATENDIMENTO}`;
+  const visiveis = bairros.slice(0, MAX_BAIRROS_VISIVEIS).join(", ");
+  const resto = bairros.length - MAX_BAIRROS_VISIVEIS;
+  return resto > 0
+    ? `Atendemos ${visiveis} e mais ${resto} ${resto === 1 ? "bairro" : "bairros"}`
+    : `Atendemos ${visiveis}`;
+}
+
+export function Hero({ bairros }: { bairros: string[] }) {
   return (
     <section className="relative isolate overflow-hidden bg-gradient-to-b from-background to-muted">
       <div className="container mx-auto px-4 py-16 md:py-24 max-w-5xl">
@@ -25,29 +37,13 @@ export function Hero() {
             href="#servicos"
             className={buttonVariants({ size: "lg", variant: "outline" })}
           >
-            Ver serviços
+            Ver serviços e preços
           </Link>
         </div>
-        <ul className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <li className="flex items-start gap-2">
-            <ShieldCheck className="size-4 mt-0.5 text-foreground" />
-            <span>
-              <strong>Garantia formal</strong> de mão de obra em todo serviço
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Clock className="size-4 mt-0.5 text-foreground" />
-            <span>
-              <strong>Agendamento digital</strong> sem precisar ligar
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Star className="size-4 mt-0.5 text-foreground" />
-            <span>
-              <strong>Avaliação por OS</strong> — você dá a nota do técnico
-            </span>
-          </li>
-        </ul>
+        <p className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="size-4 shrink-0" aria-hidden />
+          {textoCobertura(bairros)}
+        </p>
       </div>
     </section>
   );

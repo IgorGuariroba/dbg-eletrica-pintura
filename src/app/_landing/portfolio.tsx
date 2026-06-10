@@ -13,23 +13,22 @@ const CATEGORIA_LABEL: Record<string, string> = {
 };
 
 export function Portfolio({ fotos }: { fotos: FotoPortfolioView[] }) {
+  if (fotos.length === 0) return null;
+
   return (
-    <section className="bg-muted">
+    <section id="portfolio" className="bg-muted">
       <div className="container mx-auto px-4 py-16 max-w-5xl">
         <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold">Portfólio</h2>
+          <h2 className="text-2xl md:text-3xl font-bold">
+            Trabalhos de verdade
+          </h2>
           <p className="text-muted-foreground text-sm md:text-base mt-2">
             Fotos reais de serviços concluídos, publicadas com permissão do
             cliente.
           </p>
         </div>
 
-        {fotos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Galeria em breve — estamos selecionando os melhores trabalhos.
-          </p>
-        ) : (
-          <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {fotos.map((f) => (
               <li
                 key={f.id}
@@ -45,6 +44,9 @@ export function Portfolio({ fotos }: { fotos: FotoPortfolioView[] }) {
                     loading="lazy"
                     className="size-full object-cover"
                   />
+                  <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                    {f.tipo === "ANTES" ? "Antes" : "Depois"}
+                  </span>
                 </div>
                 <div className="p-3">
                   <span className="text-xs font-medium">
@@ -58,8 +60,7 @@ export function Portfolio({ fotos }: { fotos: FotoPortfolioView[] }) {
                 </div>
               </li>
             ))}
-          </ul>
-        )}
+        </ul>
       </div>
     </section>
   );
