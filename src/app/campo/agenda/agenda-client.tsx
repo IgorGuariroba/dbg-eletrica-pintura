@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarDays, MapPin, Clock, ArrowRight, RefreshCw } from "lucide-react";
 import { rotularCategoria, rotularEstadoOperacao, varianteEstado } from "@/operacao/rotulo-estado";
+import { agruparPorDiaSP } from "@/lib/agrupar-por-dia";
 import { carregarAgendaAction } from "./actions";
 
 interface ItemAgenda {
@@ -32,18 +33,6 @@ const fmtHora = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
   timeZone: TZ,
 });
-
-function agruparPorDia(itens: ItemAgenda[]) {
-  const grupos = new Map<string, { rotulo: string; data: Date; itens: ItemAgenda[] }>();
-  for (const item of itens) {
-    const d = new Date(item.agendadoPara);
-    const chave = d.toLocaleDateString("en-CA", { timeZone: TZ });
-    const grupo = grupos.get(chave) ?? { rotulo: fmtDia.format(d), data: d, itens: [] };
-    grupo.itens.push(item);
-    grupos.set(chave, grupo);
-  }
-  return [...grupos.values()].sort((a, b) => a.data.getTime() - b.data.getTime());
-}
 
 export function AgendaTecnicoClient({
   itensIniciais,
@@ -70,7 +59,7 @@ export function AgendaTecnicoClient({
     return () => clearInterval(interval);
   }, []);
 
-  const grupos = agruparPorDia(itens);
+  const grupos = agruparPorDiaSP(itens, (item) => item.agendadoPara);
 
   return (
     <div className="space-y-6">
@@ -105,9 +94,9 @@ export function AgendaTecnicoClient({
       ) : (
         <div className="space-y-6">
           {grupos.map((grupo) => (
-            <div key={grupo.rotulo} className="space-y-3">
+            <div key={grupo.data.toISOString()} className="space-y-3">
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground capitalize">
-                {grupo.rotulo}
+                {fmtDia.format(grupo.data)}
               </h2>
               <div className="space-y-3">
                 {grupo.itens.map((os) => (

@@ -138,7 +138,7 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
     const escolhido = slots[0];
     expect(escolhido).toBeDefined();
 
-    await service.reagendarAdmin(os, "admin@dbg.com.br", escolhido.inicio);
+    await service.reagendarAdmin(os, "admin@dbg.com.br", escolhido.inicio, "Cliente pediu novo horário");
 
     const [row] = await dbRaw
       .select({
@@ -159,6 +159,7 @@ describe.skipIf(!hasDb)("Agendamento admin/técnico (adapter Drizzle) Integratio
     expect(trans).toHaveLength(1);
     expect(trans[0].estadoNovo).toBe("AGENDADA");
     expect(trans[0].atorEmail).toBe("admin@dbg.com.br");
+    expect(trans[0].motivo).toBe("Cliente pediu novo horário");
   });
 
   it("cancelarAdmin libera a OS para APROVADA e zera técnico/horário (liberarAgendamento)", async () => {

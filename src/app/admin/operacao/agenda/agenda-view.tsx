@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, Search, Trash2, CalendarClock, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { rotularCategoria, rotularEstadoOperacao, varianteEstado } from "@/operacao/rotulo-estado";
+import { agruparPorDiaSP } from "@/lib/agrupar-por-dia";
 import { cancelarLoteAction, listarSlotsOsAdminAction, reagendarLinhaAction } from "./actions";
 
 interface ItemAgendaView {
@@ -64,6 +65,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
   const [reagendarOsId, setReagendarOsId] = useState<string | null>(null);
   const [slots, setSlots] = useState<{ inicioISO: string }[]>([]);
   const [slotSelecionado, setSlotSelecionado] = useState<string | null>(null);
+  const [motivoReagendar, setMotivoReagendar] = useState("");
   const [carregandoSlots, setCarregandoSlots] = useState(false);
   const [reagendando, startReagendar] = useTransition();
 
@@ -144,14 +146,15 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
   const abrirReagendar = async (osId: string) => {
     setReagendarOsId(osId);
     setSlotSelecionado(null);
+    setMotivoReagendar("");
     setReagendarOpen(true);
     setCarregandoSlots(true);
 
     try {
       const res = await listarSlotsOsAdminAction(osId);
       setSlots(res);
-    } catch (err: any) {
-      toast.error(err.message ?? "Erro ao carregar slots");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao carregar slots");
       setReagendarOpen(false);
     } finally {
       setCarregandoSlots(false);
@@ -160,9 +163,13 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
 
   const executarReagendar = () => {
     if (!reagendarOsId || !slotSelecionado) return;
+    if (motivoReagendar.trim().length < 10) {
+      toast.error("O motivo deve conter ao menos 10 caracteres.");
+      return;
+    }
 
     startReagendar(async () => {
-      const res = await reagendarLinhaAction(reagendarOsId, slotSelecionado);
+      const res = await reagendarLinhaAction(reagendarOsId, slotSelecionado, motivoReagendar);
       if (res.erro) {
         toast.error(res.erro);
       } else {
@@ -344,7 +351,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
                       </div>
                       <div>
                         <span className="text-muted-foreground block">Serviço</span>
-                        <Badge variant="outline" className="mt-0.5 text-[10px]">
+                        <Badge variant="outline" className="mt-0.5 text-xs">
                           {rotularCategoria(item.categoria)}
                         </Badge>
                       </div>
@@ -392,7 +399,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
               placeholder="Digite o motivo do cancelamento..."
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-24"
             />
           </div>
           <DialogFooter>
@@ -400,7 +407,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
               variant="outline"
               disabled={cancelando}
               onClick={() => setCancelOpen(false)}
-              className="cursor-pointer"
+              className="h-11 sm:h-9 cursor-pointer"
             >
               Voltar
             </Button>
@@ -408,7 +415,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
               variant="destructive"
               disabled={motivo.trim().length < 10 || cancelando}
               onClick={executarCancelar}
-              className="font-bold cursor-pointer"
+              className="h-11 sm:h-9 font-bold cursor-pointer"
             >
               {cancelando ? "Cancelando..." : "Confirmar Cancelamento"}
             </Button>
@@ -422,7 +429,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
           <DialogHeader>
             <DialogTitle>Reagendar Visita</DialogTitle>
             <DialogDescription>
-              Selecione um dos horários disponíveis para alocar esta Ordem de Serviço.
+              Selecione um dos horários disponíveis e informe o motivo do reagendamento (mínimo 10 caracteres).
             </DialogDescription>
           </DialogHeader>
 
@@ -450,34 +457,19 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
 
             {!carregandoSlots &&
               slots.length > 0 &&
-              (() => {
-                // Agrupa
-                const grupos = new Map<string, { rotulo: string; slots: { inicioISO: string }[] }>();
-                for (const slot of slots) {
-                  const d = new Date(slot.inicioISO);
-                  const chave = d.toLocaleDateString("en-CA", { timeZone: TZ });
-                  const grupo = grupos.get(chave) ?? {
-                    rotulo: fmtDia.format(d),
-                    slots: [] as { inicioISO: string }[],
-                  };
-                  grupo.slots.push(slot);
-                  grupos.set(chave, grupo);
-                }
-                const listaGrupos = [...grupos.values()];
-
-                return listaGrupos.map((grupo) => (
-                  <div key={grupo.rotulo} className="space-y-2">
+              agruparPorDiaSP(slots, (s) => s.inicioISO).map((grupo) => (
+                  <div key={grupo.data.toISOString()} className="space-y-2">
                     <p className="text-xs font-bold uppercase text-muted-foreground capitalize">
-                      {grupo.rotulo}
+                      {fmtDia.format(grupo.data)}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {grupo.slots.map((slot) => (
+                      {grupo.itens.map((slot) => (
                         <Button
                           key={slot.inicioISO}
                           type="button"
                           size="sm"
                           variant={slotSelecionado === slot.inicioISO ? "default" : "outline"}
-                          className="h-8 text-xs cursor-pointer"
+                          className="h-11 sm:h-8 text-xs cursor-pointer"
                           onClick={() => setSlotSelecionado(slot.inicioISO)}
                         >
                           {fmtHora.format(new Date(slot.inicioISO))}
@@ -485,23 +477,29 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
                       ))}
                     </div>
                   </div>
-                ));
-              })()}
+                ))}
           </div>
+
+          <Textarea
+            placeholder="Digite o motivo do reagendamento..."
+            value={motivoReagendar}
+            onChange={(e) => setMotivoReagendar(e.target.value)}
+            className="min-h-24"
+          />
 
           <DialogFooter className="border-t pt-4">
             <Button
               variant="outline"
               disabled={reagendando}
               onClick={() => setReagendarOpen(false)}
-              className="cursor-pointer"
+              className="h-11 sm:h-9 cursor-pointer"
             >
               Voltar
             </Button>
             <Button
-              disabled={!slotSelecionado || reagendando}
+              disabled={!slotSelecionado || motivoReagendar.trim().length < 10 || reagendando}
               onClick={executarReagendar}
-              className="font-bold cursor-pointer"
+              className="h-11 sm:h-9 font-bold cursor-pointer"
             >
               {reagendando ? "Reagendando..." : "Confirmar Reagendamento"}
             </Button>

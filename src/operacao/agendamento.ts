@@ -75,6 +75,7 @@ export class CancelamentoEmExecucaoError extends Error {
 
 export interface AgendamentoService {
   obterSlotsCliente(token: string, osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]>;
+  obterSlotsAdmin(osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]>;
   agendarCliente(token: string, osId: string, horario: Date): Promise<void>;
   cancelarCliente(token: string, osId: string, whatsapp: string): Promise<void>;
   reagendarCliente(
@@ -93,7 +94,7 @@ export interface AgendamentoService {
   ): Promise<void>;
   cancelarTecnico(osId: string, tecnicoId: string, email: string, motivo: string): Promise<void>;
 
-  reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date): Promise<void>;
+  reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date, motivo: string): Promise<void>;
   cancelarAdmin(osId: string, adminEmail: string, motivo?: string): Promise<void>;
   cancelarLoteAdmin(
     osIds: string[],
@@ -126,16 +127,9 @@ export class AgendamentoServiceImpl implements AgendamentoService {
     });
   }
 
-  async obterSlotsCliente(token: string, osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]> {
-    const os = await this.repo.buscarOsComToken(token, osId);
-    if (!os) {
-      throw new OsInexistenteError();
-    }
-    if (os.estado !== "APROVADA") {
-      throw new OsNaoAgendavelError();
-    }
-
-    const rawSlots = await this.calcularGradeSlots(os.categoria, os.clienteAssinante);
+  /** Achata a grade em horários únicos, preservando a flag de prioridade. */
+  private async gradeUnica(categoria: Categoria, assinante: boolean) {
+    const rawSlots = await this.calcularGradeSlots(categoria, assinante);
 
     const vistos = new Set<number>();
     const unicos: { inicio: Date; prioridade?: boolean }[] = [];
@@ -151,6 +145,30 @@ export class AgendamentoServiceImpl implements AgendamentoService {
     }
 
     return unicos;
+  }
+
+  async obterSlotsCliente(token: string, osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]> {
+    const os = await this.repo.buscarOsComToken(token, osId);
+    if (!os) {
+      throw new OsInexistenteError();
+    }
+    if (os.estado !== "APROVADA") {
+      throw new OsNaoAgendavelError();
+    }
+
+    return this.gradeUnica(os.categoria, os.clienteAssinante);
+  }
+
+  async obterSlotsAdmin(osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]> {
+    const os = await this.repo.buscarOs(osId);
+    if (!os) {
+      throw new OsInexistenteError();
+    }
+    if (!REAGENDAVEIS_ADMIN.includes(os.estado)) {
+      throw new OsNaoAgendavelError("OS não está em estado reagendável (pré-execução)");
+    }
+
+    return this.gradeUnica(os.categoria, os.clienteAssinante);
   }
 
   async agendarCliente(token: string, osId: string, horario: Date): Promise<void> {
@@ -303,7 +321,12 @@ export class AgendamentoServiceImpl implements AgendamentoService {
     });
   }
 
-  async reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date): Promise<void> {
+  async reagendarAdmin(osId: string, adminEmail: string, novoHorario: Date, motivo: string): Promise<void> {
+    const motivoLimpo = motivo?.trim() ?? "";
+    if (motivoLimpo.length < 10) {
+      throw new MotivoObrigatorioError();
+    }
+
     const os = await this.repo.buscarOs(osId);
     if (!os) {
       throw new OsInexistenteError();
@@ -322,7 +345,7 @@ export class AgendamentoServiceImpl implements AgendamentoService {
       estadoAnterior: os.estado,
       estadoNovo: "AGENDADA",
       atorEmail: adminEmail,
-      motivo: "Reagendamento administrativo",
+      motivo: motivoLimpo,
       em: new Date(),
     });
   }
@@ -383,8 +406,12 @@ export class AgendamentoServiceImpl implements AgendamentoService {
         });
 
         resultados.push({ osId, ok: true });
-      } catch (err: any) {
-        resultados.push({ osId, ok: false, erro: err.message ?? "Erro desconhecido" });
+      } catch (err) {
+        resultados.push({
+          osId,
+          ok: false,
+          erro: err instanceof Error ? err.message : "Erro desconhecido",
+        });
       }
     }
 

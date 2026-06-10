@@ -319,7 +319,7 @@ describe("AgendamentoService - Admin Operations", () => {
     vi.setSystemTime(agora);
 
     // 1. Admin Reagendar (técnico resolvido pela grade)
-    await service.reagendarAdmin("os-1", "admin@dbg.com.br", novoSlot);
+    await service.reagendarAdmin("os-1", "admin@dbg.com.br", novoSlot, "Cliente pediu novo horário");
     expect(repo.salvarAgendamento).toHaveBeenCalledWith(
       "os-1",
       novoSlot,
@@ -328,7 +328,7 @@ describe("AgendamentoService - Admin Operations", () => {
         estadoAnterior: "AGENDADA",
         estadoNovo: "AGENDADA",
         atorEmail: "admin@dbg.com.br",
-        motivo: "Reagendamento administrativo",
+        motivo: "Cliente pediu novo horário",
         em: agora,
       })
     );
@@ -675,11 +675,37 @@ describe("AgendamentoService - cancelarTecnico", () => {
   });
 });
 
+describe("AgendamentoService - obterSlotsAdmin", () => {
+  it("retorna a grade para OS AGENDADA (estado pré-execução), caso típico do reagendamento admin", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "AGENDADA" })) });
+    const service = criarAgendamentoService(repo);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T00:00:00.000Z"));
+
+    const slots = await service.obterSlotsAdmin("os-1");
+
+    expect(slots.length).toBeGreaterThan(0);
+    expect(slots[0].inicio.toISOString()).toBe("2026-06-01T11:00:00.000Z");
+    vi.useRealTimers();
+  });
+
+  it("lança OsInexistenteError quando a OS não existe", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(service.obterSlotsAdmin("os-x")).rejects.toThrow(OsInexistenteError);
+  });
+
+  it("lança OsNaoAgendavelError quando a OS não está em estado pré-execução", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "EM_EXECUCAO" })) });
+    const service = criarAgendamentoService(repo);
+    await expect(service.obterSlotsAdmin("os-1")).rejects.toThrow(OsNaoAgendavelError);
+  });
+});
+
 describe("AgendamentoService - reagendarAdmin (validação contra a grade)", () => {
   it("lança OsInexistenteError quando a OS não existe", async () => {
     const service = criarAgendamentoService(criarFakeRepo());
     await expect(
-      service.reagendarAdmin("os-x", "admin@dbg.com.br", new Date())
+      service.reagendarAdmin("os-x", "admin@dbg.com.br", new Date(), "Motivo suficientemente longo")
     ).rejects.toThrow(OsInexistenteError);
   });
 
@@ -687,7 +713,7 @@ describe("AgendamentoService - reagendarAdmin (validação contra a grade)", () 
     const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "EM_EXECUCAO" })) });
     const service = criarAgendamentoService(repo);
     await expect(
-      service.reagendarAdmin("os-1", "admin@dbg.com.br", new Date())
+      service.reagendarAdmin("os-1", "admin@dbg.com.br", new Date(), "Motivo suficientemente longo")
     ).rejects.toThrow(OsNaoAgendavelError);
   });
 
@@ -697,9 +723,18 @@ describe("AgendamentoService - reagendarAdmin (validação contra a grade)", () 
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-01T10:00:00Z"));
     await expect(
-      service.reagendarAdmin("os-1", "admin@dbg.com.br", new Date("2026-06-01T03:00:00Z"))
+      service.reagendarAdmin("os-1", "admin@dbg.com.br", new Date("2026-06-01T03:00:00Z"), "Motivo suficientemente longo")
     ).rejects.toThrow(SlotNaoEncontradoError);
     vi.useRealTimers();
+  });
+
+  it("lança MotivoObrigatorioError quando o motivo tem menos de 10 caracteres", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "AGENDADA" })) });
+    const service = criarAgendamentoService(repo);
+    await expect(
+      service.reagendarAdmin("os-1", "admin@dbg.com.br", new Date("2026-06-08T11:00:00.000Z"), "curto")
+    ).rejects.toThrow(MotivoObrigatorioError);
+    expect(repo.salvarAgendamento).not.toHaveBeenCalled();
   });
 
   it("resolve o técnico a partir do slot escolhido na grade", async () => {
@@ -708,12 +743,12 @@ describe("AgendamentoService - reagendarAdmin (validação contra a grade)", () 
     const novoSlot = new Date("2026-06-08T11:00:00.000Z"); // segunda 08:00 SP, presente na grade fake
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-01T10:00:00Z"));
-    await service.reagendarAdmin("os-1", "admin@dbg.com.br", novoSlot);
+    await service.reagendarAdmin("os-1", "admin@dbg.com.br", novoSlot, "Motivo suficientemente longo");
     expect(repo.salvarAgendamento).toHaveBeenCalledWith(
       "os-1",
       novoSlot,
       "tec-1",
-      expect.objectContaining({ estadoNovo: "AGENDADA", motivo: "Reagendamento administrativo" })
+      expect.objectContaining({ estadoNovo: "AGENDADA", motivo: "Motivo suficientemente longo" })
     );
     vi.useRealTimers();
   });

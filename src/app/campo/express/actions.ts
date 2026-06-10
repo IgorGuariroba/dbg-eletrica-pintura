@@ -75,7 +75,7 @@ export async function criarSolicitacaoExpressAction(
         tecnicoId: tecnico.membroId,
       },
     });
-  } catch (e: any) {
+  } catch (e) {
     return { erro: e instanceof Error ? e.message : "Erro ao criar solicitação" };
   }
 

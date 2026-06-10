@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { agruparPorDiaSP } from "@/lib/agrupar-por-dia";
 import {
   listarSlotsOsAction,
   agendarOsAction,
@@ -32,19 +33,6 @@ const fmtHora = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
   timeZone: TZ,
 });
-
-/** Agrupa os slots por dia (no fuso de SP) preservando a ordem cronológica. */
-function agruparPorDia(slots: SlotOferecido[]) {
-  const grupos = new Map<string, { rotulo: string; slots: SlotOferecido[] }>();
-  for (const slot of slots) {
-    const d = new Date(slot.inicioISO);
-    const chave = d.toLocaleDateString("en-CA", { timeZone: TZ });
-    const grupo = grupos.get(chave) ?? { rotulo: fmtDia.format(d), slots: [] };
-    grupo.slots.push(slot);
-    grupos.set(chave, grupo);
-  }
-  return [...grupos.values()];
-}
 
 function mensagemErro(e: unknown): string {
   return e instanceof Error ? e.message : "Não foi possível agendar";
@@ -90,7 +78,7 @@ export function AgendarOs({ token, osId }: { token: string; osId: string }) {
     });
   }
 
-  const grupos = slots ? agruparPorDia(slots) : [];
+  const grupos = slots ? agruparPorDiaSP(slots, (s) => s.inicioISO) : [];
 
   return (
     <Dialog open={aberto} onOpenChange={setAberto}>
@@ -132,12 +120,12 @@ export function AgendarOs({ token, osId }: { token: string; osId: string }) {
 
           {!carregando &&
             grupos.map((grupo) => (
-              <div key={grupo.rotulo} className="space-y-2">
+              <div key={grupo.data.toISOString()} className="space-y-2">
                 <p className="text-sm font-semibold capitalize">
-                  {grupo.rotulo}
+                  {fmtDia.format(grupo.data)}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {grupo.slots.map((slot) => (
+                  {grupo.itens.map((slot) => (
                     <Button
                       key={slot.inicioISO}
                       type="button"
