@@ -29,6 +29,10 @@ jobs:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ci
           POSTGRES_DB: ci
+        # Porta exposta ao runner: migrations rodam via TCP direto (driver pg,
+        # ver scripts/ci-migrate.mjs) — só o runtime dos testes passa pelo proxy.
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd "pg_isready -U ci"
           --health-interval 10s
@@ -43,6 +47,9 @@ jobs:
     env:
       DATABASE_URL: postgres://ci:ci@localhost:5432/ci?sslmode=disable
       NEON_LOCAL_PROXY: localhost:4444
+      # Banco por arquivo de teste de integração: destrava a suíte em paralelo
+      # sem nenhum compartilhamento de banco (tests/setup/worker-db.ts).
+      CI_DB_PER_FILE: "1"
       # Segredo do webhook Mercado Pago: bate com o fallback do teste
       # (pagamento-route.test.ts) para a validação HMAC fechar.
       MP_WEBHOOK_SECRET: test_webhook_secret_dev
@@ -65,17 +72,19 @@ jobs:
       - run: pnpm typecheck
 
       # Aplica o schema (migrations commitadas) antes da suíte de integração,
-      # via migrator neon-http (respeita o proxy local; ver scripts/ci-migrate.mjs).
+      # via TCP direto na porta exposta do service postgres, e cria os bancos
+      # por arquivo de teste (CI_DB_PER_FILE; ver scripts/ci-migrate.mjs).
       - run: pnpm db:migrate:ci
 
-      # Integração roda sequencial (truncate-por-arquivo exige sem paralelismo)
-      # e com timeout maior (round-trips HTTP via proxy são mais lentos).
+      # unit roda com paralelismo total; integração paraleliza por worker com
+      # banco próprio (ver projects no vitest.config.ts).
       - run: pnpm test:coverage:ci
 
   e2e:
     name: Playwright smoke
     runs-on: ubuntu-latest
-    needs: lint-typecheck-unit
+    # Sem `needs`: roda em paralelo ao job principal — wall time do CI vira o
+    # máximo dos jobs em vez da soma.
     container:
       image: mcr.microsoft.com/playwright:v1.49.1-noble
     env:
@@ -112,7 +121,7 @@ jobs:
   build:
     name: Next.js build
     runs-on: ubuntu-latest
-    needs: lint-typecheck-unit
+    # Sem `needs`: roda em paralelo ao job principal.
     env:
       AUTH_SECRET: ci-secret-ci-secret-ci-secret-ci-secret
       AUTH_GOOGLE_ID: ci
