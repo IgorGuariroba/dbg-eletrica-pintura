@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { agruparPorDiaSP } from "@/lib/agrupar-por-dia";
 import { listarSlotsOsPortalAction, reagendarOsClienteAction } from "../actions";
 
 const TZ = "America/Sao_Paulo";
@@ -26,18 +27,6 @@ interface SlotOferecido {
   inicioISO: string;
 }
 
-function agruparPorDia(slots: SlotOferecido[]) {
-  const grupos = new Map<string, { rotulo: string; slots: SlotOferecido[] }>();
-  for (const slot of slots) {
-    const d = new Date(slot.inicioISO);
-    const chave = d.toLocaleDateString("en-CA", { timeZone: TZ });
-    const grupo = grupos.get(chave) ?? { rotulo: fmtDia.format(d), slots: [] };
-    grupo.slots.push(slot);
-    grupos.set(chave, grupo);
-  }
-  return [...grupos.values()];
-}
-
 export function ReagendarOsClientForm({
   osId,
   solicitacaoId,
@@ -56,8 +45,8 @@ export function ReagendarOsClientForm({
       try {
         const res = await listarSlotsOsPortalAction(osId);
         setSlots(res);
-      } catch (err: any) {
-        toast.error(err.message ?? "Erro ao carregar horários");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Erro ao carregar horários");
         setSlots([]);
       } finally {
         setCarregando(false);
@@ -79,7 +68,7 @@ export function ReagendarOsClientForm({
     });
   }
 
-  const grupos = slots ? agruparPorDia(slots) : [];
+  const grupos = slots ? agruparPorDiaSP(slots, (s) => s.inicioISO) : [];
 
   return (
     <div className="space-y-6">
@@ -108,13 +97,13 @@ export function ReagendarOsClientForm({
 
         {!carregando &&
           grupos.map((grupo) => (
-            <div key={grupo.rotulo} className="space-y-3">
+            <div key={grupo.data.toISOString()} className="space-y-3">
               <p className="text-sm font-semibold capitalize text-foreground/80 flex items-center gap-2">
                 <span className="inline-block size-1.5 rounded-full bg-primary" />
-                {grupo.rotulo}
+                {fmtDia.format(grupo.data)}
               </p>
               <div className="flex flex-wrap gap-2 pl-3">
-                {grupo.slots.map((slot) => {
+                {grupo.itens.map((slot) => {
                   const dataSlot = new Date(slot.inicioISO);
                   const selecionadoAtualmente = selecionado === slot.inicioISO;
                   return (
@@ -123,7 +112,7 @@ export function ReagendarOsClientForm({
                       type="button"
                       size="sm"
                       variant={selecionadoAtualmente ? "default" : "outline"}
-                      className={`h-9 min-w-[70px] font-medium transition-all cursor-pointer ${
+                      className={`h-9 min-w-18 font-medium transition-all cursor-pointer ${
                         selecionadoAtualmente
                           ? "shadow-md scale-105"
                           : "hover:border-primary/50 hover:bg-primary/5"

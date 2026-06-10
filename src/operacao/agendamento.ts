@@ -388,8 +388,12 @@ export class AgendamentoServiceImpl implements AgendamentoService {
         });
 
         resultados.push({ osId, ok: true });
-      } catch (err: any) {
-        resultados.push({ osId, ok: false, erro: err.message ?? "Erro desconhecido" });
+      } catch (err) {
+        resultados.push({
+          osId,
+          ok: false,
+          erro: err instanceof Error ? err.message : "Erro desconhecido",
+        });
       }
     }
 

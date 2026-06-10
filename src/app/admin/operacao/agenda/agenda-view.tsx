@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, Search, Trash2, CalendarClock, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { rotularCategoria, rotularEstadoOperacao, varianteEstado } from "@/operacao/rotulo-estado";
+import { agruparPorDiaSP } from "@/lib/agrupar-por-dia";
 import { cancelarLoteAction, listarSlotsOsAdminAction, reagendarLinhaAction } from "./actions";
 
 interface ItemAgendaView {
@@ -152,8 +153,8 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
     try {
       const res = await listarSlotsOsAdminAction(osId);
       setSlots(res);
-    } catch (err: any) {
-      toast.error(err.message ?? "Erro ao carregar slots");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao carregar slots");
       setReagendarOpen(false);
     } finally {
       setCarregandoSlots(false);
@@ -350,7 +351,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
                       </div>
                       <div>
                         <span className="text-muted-foreground block">Serviço</span>
-                        <Badge variant="outline" className="mt-0.5 text-[10px]">
+                        <Badge variant="outline" className="mt-0.5 text-xs">
                           {rotularCategoria(item.categoria)}
                         </Badge>
                       </div>
@@ -398,7 +399,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
               placeholder="Digite o motivo do cancelamento..."
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-24"
             />
           </div>
           <DialogFooter>
@@ -456,28 +457,13 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
 
             {!carregandoSlots &&
               slots.length > 0 &&
-              (() => {
-                // Agrupa
-                const grupos = new Map<string, { rotulo: string; slots: { inicioISO: string }[] }>();
-                for (const slot of slots) {
-                  const d = new Date(slot.inicioISO);
-                  const chave = d.toLocaleDateString("en-CA", { timeZone: TZ });
-                  const grupo = grupos.get(chave) ?? {
-                    rotulo: fmtDia.format(d),
-                    slots: [] as { inicioISO: string }[],
-                  };
-                  grupo.slots.push(slot);
-                  grupos.set(chave, grupo);
-                }
-                const listaGrupos = [...grupos.values()];
-
-                return listaGrupos.map((grupo) => (
-                  <div key={grupo.rotulo} className="space-y-2">
+              agruparPorDiaSP(slots, (s) => s.inicioISO).map((grupo) => (
+                  <div key={grupo.data.toISOString()} className="space-y-2">
                     <p className="text-xs font-bold uppercase text-muted-foreground capitalize">
-                      {grupo.rotulo}
+                      {fmtDia.format(grupo.data)}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {grupo.slots.map((slot) => (
+                      {grupo.itens.map((slot) => (
                         <Button
                           key={slot.inicioISO}
                           type="button"
@@ -491,8 +477,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
                       ))}
                     </div>
                   </div>
-                ));
-              })()}
+                ))}
           </div>
 
           <Textarea
