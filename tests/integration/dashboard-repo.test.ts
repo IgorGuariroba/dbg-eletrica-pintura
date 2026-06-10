@@ -11,6 +11,7 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
   let schema: typeof import("@/db/schema");
   let clienteIds: string[] = [];
   let solicitacaoIds: string[] = [];
+  let osIds: string[] = [];
   let membroIds: string[] = [];
   let alertaIds: string[] = [];
   let avaliacaoIds: string[] = [];
@@ -18,6 +19,85 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
   let pagamentoIds: { paymentId: string; osId: string }[] = [];
   let orcamentoIds: string[] = [];
   let transicaoIds: string[] = [];
+  let planoIds: string[] = [];
+  let assinaturaIds: string[] = [];
+  let servicoIds: string[] = [];
+  let gatilhosRemarketing: string[] = [];
+
+  async function seedServico(nome: string) {
+    const [s] = await dbRaw
+      .insert(schema.servico)
+      .values({ nome, categoria: "ELETRICA", precoBase: "100.00", unidade: "PONTO" })
+      .returning();
+    servicoIds.push(s.id);
+    return s.id;
+  }
+
+  async function seedOrcamentoComItens(
+    osId: string,
+    itens: { servicoId: string }[],
+  ) {
+    const r = Math.random().toString(36).slice(2, 10);
+    const [orc] = await dbRaw
+      .insert(schema.orcamento)
+      .values({ osId, tokenAprovacao: `apr-${r}`, total: "100.00", validoAte: new Date(Date.now() + 7 * 864e5) })
+      .returning();
+    orcamentoIds.push(orc.id);
+    for (const it of itens) {
+      await dbRaw.insert(schema.orcamentoItem).values({
+        orcamentoId: orc.id,
+        servicoId: it.servicoId,
+        quantidade: "1",
+        precoUnitario: "100.00",
+        subtotal: "100.00",
+      });
+    }
+    return orc.id;
+  }
+
+  async function seedClienteSimples() {
+    const r = Math.random().toString(36).slice(2, 10);
+    const [cli] = await dbRaw
+      .insert(schema.cliente)
+      .values({
+        nome: `Cli ${r}`,
+        whatsapp: String(Math.floor(1e12 + Math.random() * 9e12)),
+      })
+      .returning();
+    clienteIds.push(cli.id);
+    return cli.id;
+  }
+
+  async function seedPlano(preco: string) {
+    const r = Math.random().toString(36).slice(2, 10);
+    const [p] = await dbRaw
+      .insert(schema.plano)
+      .values({ nome: `Plano ${r}`, preco })
+      .returning();
+    planoIds.push(p.id);
+    return p.id;
+  }
+
+  async function seedAssinatura(values: {
+    clienteId: string;
+    planoId: string;
+    status: "ATIVA" | "CANCELADA" | "PENDENTE";
+    inicio?: Date | null;
+    canceladoEm?: Date | null;
+  }) {
+    const [a] = await dbRaw
+      .insert(schema.assinatura)
+      .values({
+        clienteId: values.clienteId,
+        planoId: values.planoId,
+        status: values.status,
+        inicio: values.inicio ?? null,
+        canceladoEm: values.canceladoEm ?? null,
+      })
+      .returning();
+    assinaturaIds.push(a.id);
+    return a.id;
+  }
 
   async function seedTecnico() {
     const r = Math.random().toString(36).slice(2, 10);
@@ -76,6 +156,7 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
       .returning();
     clienteIds.push(cli.id);
     solicitacaoIds.push(sol.id);
+    osIds.push(os.id);
     return os.id;
   }
 
@@ -92,6 +173,7 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
   beforeEach(() => {
     clienteIds = [];
     solicitacaoIds = [];
+    osIds = [];
     membroIds = [];
     alertaIds = [];
     avaliacaoIds = [];
@@ -99,6 +181,10 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     pagamentoIds = [];
     orcamentoIds = [];
     transicaoIds = [];
+    planoIds = [];
+    assinaturaIds = [];
+    servicoIds = [];
+    gatilhosRemarketing = [];
   });
 
   afterAll(async () => {
@@ -108,6 +194,12 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     }
     if (avaliacaoIds.length) {
       await dbRaw.delete(schema.avaliacao).where(inArray(schema.avaliacao.id, avaliacaoIds));
+    }
+    // Defensivo: testes paralelos varrem OS CONCLUIDA e podem anexar avaliações
+    // às nossas OS semeadas (jobs globais). Remove qualquer avaliação que ainda
+    // referencie nossas OS antes de deletá-las, evitando violação de FK.
+    if (osIds.length) {
+      await dbRaw.delete(schema.avaliacao).where(inArray(schema.avaliacao.osId, osIds));
     }
     if (chamadoIds.length) {
       await dbRaw.delete(schema.garantiaChamado).where(inArray(schema.garantiaChamado.id, chamadoIds));
@@ -133,8 +225,23 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
         .delete(schema.solicitacao)
         .where(inArray(schema.solicitacao.id, solicitacaoIds));
     }
+    if (assinaturaIds.length) {
+      await dbRaw.delete(schema.assinatura).where(inArray(schema.assinatura.id, assinaturaIds));
+    }
+    if (planoIds.length) {
+      await dbRaw.delete(schema.plano).where(inArray(schema.plano.id, planoIds));
+    }
     if (clienteIds.length) {
+      // credito_movimentacao, indicacao e remarketing_enviado caem por cascade.
       await dbRaw.delete(schema.cliente).where(inArray(schema.cliente.id, clienteIds));
+    }
+    if (servicoIds.length) {
+      await dbRaw.delete(schema.servico).where(inArray(schema.servico.id, servicoIds));
+    }
+    if (gatilhosRemarketing.length) {
+      await dbRaw
+        .delete(schema.configRemarketing)
+        .where(inArray(schema.configRemarketing.gatilho, gatilhosRemarketing));
     }
     if (membroIds.length) {
       await dbRaw.delete(schema.membro).where(inArray(schema.membro.id, membroIds));
@@ -395,5 +502,239 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     const n2 = notas.find(n => n.tecnicoId === tec2);
     expect(n2?.media).toBe(4);
     expect(n2?.total).toBe(1); // a inválida não soma no total
+  });
+
+  it("#66: concluídas em 30d conta OS com transição→CONCLUIDA na janela", async () => {
+    const osRecente = await seedOs("ELETRICA", "CONCLUIDA");
+    const [tRecente] = await dbRaw.insert(schema.transicaoOs).values({
+      osId: osRecente,
+      estadoAnterior: "EM_EXECUCAO",
+      estadoNovo: "CONCLUIDA",
+      atorEmail: "teste@dbg.test",
+      em: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 dias atrás
+    }).returning();
+    transicaoIds.push(tRecente.id);
+
+    // Fora da janela (40 dias atrás) — não conta.
+    const osAntiga = await seedOs("ELETRICA", "CONCLUIDA");
+    const [tAntiga] = await dbRaw.insert(schema.transicaoOs).values({
+      osId: osAntiga,
+      estadoAnterior: "EM_EXECUCAO",
+      estadoNovo: "CONCLUIDA",
+      atorEmail: "teste@dbg.test",
+      em: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
+    }).returning();
+    transicaoIds.push(tAntiga.id);
+
+    expect(await repo.contarOsConcluidas30d()).toBeGreaterThanOrEqual(1);
+  });
+
+  it("#66: contagem por estado devolve totais agrupados refletindo o semeado", async () => {
+    await seedOs("ELETRICA", "ORCADA");
+    const porEstado = await repo.contarOsPorEstado();
+
+    const orcada = porEstado.find((e) => e.estado === "ORCADA");
+    expect(orcada).toBeDefined();
+    expect(orcada!.total).toBeGreaterThanOrEqual(1);
+    // Estados sem nenhuma OS não aparecem na lista (group by).
+    porEstado.forEach((e) => expect(e.total).toBeGreaterThan(0));
+  });
+
+  it("#66: série por dia cobre toda a janela e soma criadas/concluídas de hoje", async () => {
+    await seedOs("PINTURA", "NOVA"); // criada hoje
+    const os = await seedOs("PINTURA", "CONCLUIDA");
+    const [t] = await dbRaw.insert(schema.transicaoOs).values({
+      osId: os,
+      estadoAnterior: "EM_EXECUCAO",
+      estadoNovo: "CONCLUIDA",
+      atorEmail: "teste@dbg.test",
+      em: new Date(), // concluída hoje
+    }).returning();
+    transicaoIds.push(t.id);
+
+    const serie = await repo.serieOsPorDia(14);
+    expect(serie).toHaveLength(14); // janela completa, sem buracos
+    const hoje = serie[serie.length - 1];
+    expect(hoje.criadas).toBeGreaterThanOrEqual(2);
+    expect(hoje.concluidas).toBeGreaterThanOrEqual(1);
+  });
+
+  it("#66: tempo médio NOVA→PAGA é um número não-nulo quando há OS paga", async () => {
+    const os = await seedOs("ELETRICA", "PAGA");
+    const [t] = await dbRaw.insert(schema.transicaoOs).values({
+      osId: os,
+      estadoAnterior: "CONCLUIDA",
+      estadoNovo: "PAGA",
+      atorEmail: "teste@dbg.test",
+      em: new Date(),
+    }).returning();
+    transicaoIds.push(t.id);
+
+    // DB de integração não é hermético (outros arquivos semeiam OS pagas em
+    // paralelo), então a média absoluta não é determinística. O que provamos
+    // aqui é que a query (join + extract epoch + avg) roda e devolve um número
+    // quando há ao menos uma OS paga; o cálculo exato é coberto pelo unit.
+    const segundos = await repo.tempoMedioNovaPagaSegundos();
+    expect(segundos).not.toBeNull();
+    expect(typeof segundos).toBe("number");
+    expect(Number.isFinite(segundos)).toBe(true);
+  });
+
+  it("#66 [AC]: MRR deixa de contar a assinatura quando ela é cancelada no fim do ciclo", async () => {
+    // Preço único por run para isolar nossa assinatura na lista compartilhada.
+    const preco = ((900000 + Math.floor(Math.random() * 99999)) / 100).toFixed(2);
+    const cliente = await seedClienteSimples();
+    const plano = await seedPlano(preco);
+    const assinatura = await seedAssinatura({
+      clienteId: cliente,
+      planoId: plano,
+      status: "ATIVA",
+      inicio: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    });
+
+    const contar = async () =>
+      (await repo.listarAssinaturasAtivasComPreco()).filter((a) => a.preco === preco)
+        .length;
+
+    expect(await contar()).toBe(1); // ativa → entra no MRR
+
+    // Efetivação do cancelamento no fim do ciclo: status vira CANCELADA.
+    const { eq } = await import("drizzle-orm");
+    await dbRaw
+      .update(schema.assinatura)
+      .set({ status: "CANCELADA", canceladoEm: new Date() })
+      .where(eq(schema.assinatura.id, assinatura));
+
+    expect(await contar()).toBe(0); // cancelada → sai do MRR (cai pelo preço dela)
+  });
+
+  it("#66 [AC]: churn conta canceladas no mês e ativas no início do mês", async () => {
+    const agora = new Date();
+    const inicioMesPassado = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
+    const cliente = await seedClienteSimples();
+    const plano = await seedPlano("120.00");
+
+    // Ativa desde o mês passado, sem cancelamento → conta como "ativa no início do mês".
+    await seedAssinatura({
+      clienteId: cliente,
+      planoId: plano,
+      status: "ATIVA",
+      inicio: inicioMesPassado,
+    });
+
+    // Cancelada neste mês → conta no numerador do churn.
+    await seedAssinatura({
+      clienteId: cliente,
+      planoId: plano,
+      status: "CANCELADA",
+      inicio: inicioMesPassado,
+      canceladoEm: agora,
+    });
+
+    expect(await repo.contarAssinaturasAtivasInicioMes()).toBeGreaterThanOrEqual(1);
+    expect(await repo.contarAssinaturasCanceladasNoMes()).toBeGreaterThanOrEqual(1);
+  });
+
+  it("#66: submissões e orçamentos em 30d contam o que foi semeado", async () => {
+    const os = await seedOs("ELETRICA", "ORCADA"); // cria solicitacao (submissão)
+    await seedOrcamentoComItens(os, []); // orçamento enviado
+
+    expect(await repo.contarSubmissoes30d()).toBeGreaterThanOrEqual(1);
+    expect(await repo.contarOrcamentosEnviados30d()).toBeGreaterThanOrEqual(1);
+  });
+
+  it("#66: serviços mais pedidos agregam itens de orçamento por serviço", async () => {
+    const svc = await seedServico(`Srv ${Math.random().toString(36).slice(2, 8)}`);
+    const os = await seedOs("ELETRICA", "ORCADA");
+    await seedOrcamentoComItens(os, [{ servicoId: svc }, { servicoId: svc }]);
+
+    const mais = await repo.listarServicosMaisPedidos(50);
+    const meu = mais.find((m) => m.servicoId === svc);
+    expect(meu).toBeDefined();
+    expect(meu!.total).toBeGreaterThanOrEqual(2);
+  });
+
+  it("#66: créditos resgatados, indicações e remarketing do mês refletem o semeado", async () => {
+    const indicador = await seedClienteSimples();
+    const indicado = await seedClienteSimples();
+
+    await dbRaw.insert(schema.creditoMovimentacao).values({
+      clienteId: indicador,
+      valor: "30.00",
+      tipo: "CONSUMIDO",
+      paymentId: `pay-${Math.random().toString(36).slice(2, 10)}`,
+    });
+    await dbRaw.insert(schema.indicacao).values({
+      indicadorId: indicador,
+      indicadoId: indicado,
+    });
+    const gatilho = `g-${Math.random().toString(36).slice(2, 10)}`;
+    gatilhosRemarketing.push(gatilho);
+    await dbRaw.insert(schema.configRemarketing).values({
+      gatilho,
+      ativo: true,
+      prazosDias: [7],
+    });
+    await dbRaw.insert(schema.remarketingEnviado).values({
+      gatilho,
+      clienteId: indicador,
+      contexto: `ctx-${Math.random().toString(36).slice(2, 8)}`,
+    });
+
+    expect(Number(await repo.somarCreditosResgatadosMes())).toBeGreaterThanOrEqual(30);
+    expect(await repo.contarIndicacoesMes()).toBeGreaterThanOrEqual(1);
+    expect(await repo.contarRemarketingEnviadoMes()).toBeGreaterThanOrEqual(1);
+    expect(await repo.remarketingAtivo()).toBe(true);
+  });
+
+  it("#66: OS por técnico no mês e última atribuição refletem o semeado", async () => {
+    const comOs = await seedTecnico();
+    const semOs = await seedTecnico();
+    await seedOs("ELETRICA", "NOVA", comOs);
+
+    const porTecnico = await repo.listarOsPorTecnicoMes();
+    const meu = porTecnico.find((t) => t.tecnicoId === comOs);
+    expect(meu).toBeDefined();
+    expect(meu!.total).toBeGreaterThanOrEqual(1);
+
+    const atividade = await repo.listarTecnicosComUltimaAtribuicao();
+    const ativo = atividade.find((t) => t.tecnicoId === comOs);
+    const ocioso = atividade.find((t) => t.tecnicoId === semOs);
+    expect(ativo?.ultimaAtribuicao).toBeInstanceOf(Date); // recebeu OS hoje
+    expect(ocioso?.ultimaAtribuicao).toBeNull(); // nunca recebeu
+  });
+
+  it("#66: chamados no mês e OS PAGA elegíveis à garantia (taxa de acionamento)", async () => {
+    const osElegivel = await seedOs("ELETRICA", "PAGA", null, 12); // prazo > 0
+    await seedOs("ELETRICA", "PAGA", null, 0); // prazo 0 → não elegível
+    const [ch] = await dbRaw.insert(schema.garantiaChamado).values({
+      osOrigemId: osElegivel,
+      descricao: "Chamado acionamento",
+      fotoUrl: "https://foto.com",
+      criadoPor: "cliente",
+      canal: "WHATSAPP",
+      status: "pendente",
+    }).returning();
+    chamadoIds.push(ch.id);
+
+    expect(await repo.contarChamadosGarantiaNoMes()).toBeGreaterThanOrEqual(1);
+    expect(await repo.contarOsPagaElegiveisGarantia()).toBeGreaterThanOrEqual(1);
+  });
+
+  it("#66: serviços sem demanda e preço médio por categoria", async () => {
+    const semDemanda = await seedServico(`Srv ${Math.random().toString(36).slice(2, 8)}`);
+    const comDemanda = await seedServico(`Srv ${Math.random().toString(36).slice(2, 8)}`);
+    const os = await seedOs("ELETRICA", "ORCADA");
+    await seedOrcamentoComItens(os, [{ servicoId: comDemanda }]); // orçado agora
+
+    const sem = await repo.listarServicosSemDemanda(90);
+    const ids = sem.map((s) => s.servicoId);
+    expect(ids).toContain(semDemanda); // nunca orçado → sem demanda
+    expect(ids).not.toContain(comDemanda); // orçado nos últimos 90d
+
+    const precos = await repo.precoMedioPorCategoria();
+    const eletrica = precos.find((p) => p.categoria === "ELETRICA");
+    expect(eletrica).toBeDefined();
+    expect(Number(eletrica!.precoMedio)).toBeGreaterThan(0);
   });
 });

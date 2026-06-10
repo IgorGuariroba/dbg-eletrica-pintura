@@ -28,6 +28,9 @@ export default async function setup() {
     servico,
     solicitacao,
     garantiaChamado,
+    avaliacao,
+    alertaAvaliacao,
+    tratativa,
     assinatura,
     assinaturaEvento,
     plano,
@@ -54,6 +57,14 @@ export default async function setup() {
       await db.delete(pagamento).where(inArray(pagamento.osId, osIds));
       // orcamentoItem cai por cascade ao apagar o orçamento.
       await db.delete(orcamento).where(inArray(orcamento.osId, osIds));
+      // tratativa, alertaAvaliacao e avaliacao têm FK `restrict` para a OS —
+      // apagar antes dela. Testes de avaliação (e jobs globais que varrem OS
+      // CONCLUIDA) deixam essas linhas órfãs; sem isto, o delete da OS quebra
+      // por violação de FK. Ordem: tratativa → alerta → avaliacao (depoimentos
+      // de landing caem por cascade ao remover a avaliação).
+      await db.delete(tratativa).where(inArray(tratativa.osId, osIds));
+      await db.delete(alertaAvaliacao).where(inArray(alertaAvaliacao.osId, osIds));
+      await db.delete(avaliacao).where(inArray(avaliacao.osId, osIds));
     }
     await db
       .delete(ordemServico)
@@ -66,10 +77,21 @@ export default async function setup() {
 
   // Assinaturas de teste: `assinatura` referencia cliente E plano (FK restrict),
   // então apagar antes deles. `assinatura_evento` não tem FK (preapproval "pre-").
+  // Nem toda assinatura de teste tem preapprovalIdMp "pre-%" (ex.: dashboard
+  // semeia direto com preapproval nulo), então também removemos as que apontam
+  // para planos de teste ("Plano %"), senão o delete do plano quebra por FK.
   await db
     .delete(assinaturaEvento)
     .where(like(assinaturaEvento.preapprovalIdMp, "pre-%"));
+  const planosTeste = await db
+    .select({ id: plano.id })
+    .from(plano)
+    .where(like(plano.nome, "Plano %"));
+  const planoIdsTeste = planosTeste.map((p) => p.id);
   await db.delete(assinatura).where(like(assinatura.preapprovalIdMp, "pre-%"));
+  if (planoIdsTeste.length) {
+    await db.delete(assinatura).where(inArray(assinatura.planoId, planoIdsTeste));
+  }
   await db.delete(plano).where(like(plano.nome, "Plano %"));
 
   // Clientes semeados ("Cli ", "Teste ", "A ", "A novo ").

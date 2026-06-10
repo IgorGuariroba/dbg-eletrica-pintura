@@ -2,7 +2,42 @@ import { podeAcessarModulo } from "@/auth/require-modulo";
 import type { Modulo, Role } from "@/auth/role-detection";
 import type { Categoria } from "@/operacao/fila-repo";
 import type { NotaTecnicoView } from "@/marketing/nota-tecnico-repo";
+import type { ResumoFinanceiro } from "@/features/financeiro/financeiro";
+import type { estadoOsEnum } from "@/db/schema";
 import { rankearTecnicos } from "./ranking";
+import {
+  calcularPct,
+  calcularMrr,
+  montarFunil,
+  tecnicosOciosos,
+  type FunilEstagio,
+  type TecnicoAtividade,
+} from "./calculos";
+
+export type EstadoOs = (typeof estadoOsEnum.enumValues)[number];
+
+export interface FunilEstado {
+  estado: EstadoOs;
+  total: number;
+}
+
+export interface SerieDia {
+  dia: string; // YYYY-MM-DD
+  criadas: number;
+  concluidas: number;
+}
+
+// Janela (em dias) da série temporal de OS exibida no card de Operação.
+const JANELA_SERIE_DIAS = 14;
+
+// Quantos serviços exibir nos rankings de "mais pedidos" (Marketing/Catálogo).
+const LIMITE_MAIS_PEDIDOS = 5;
+
+// Dias sem OS atribuída a partir dos quais um técnico é considerado ocioso.
+const DIAS_OCIOSIDADE = 7;
+
+// Dias sem aparecer em orçamento a partir dos quais um serviço é "sem demanda".
+const DIAS_SEM_DEMANDA = 90;
 
 export interface UsuarioDashboard {
   membroId: string;
@@ -21,31 +56,89 @@ export interface CardOperacao {
     totalOrcadas: number;
     pct: number | null;
   };
+  taxaConclusao?: {
+    concluidas: number;
+    aprovadas: number;
+    pct: number | null;
+  };
+  tempoMedioNovaPagaSegundos: number | null;
+  funilEstados: FunilEstado[];
+  serie: SerieDia[];
+}
+
+export interface ServicoPedido {
+  servicoId: string;
+  nome: string;
+  total: number;
 }
 
 export interface CardMarketing {
   notaMediaGeral: number | null;
   alertasPendentes: number;
   ranking: NotaTecnicoView[];
+  funil: FunilEstagio[];
+  servicosMaisPedidos: ServicoPedido[];
+  remarketing: { ativo: boolean; enviadosMes: number };
+  indicacoesMes: number;
+  creditosResgatadosMes: string;
 }
 
 export interface CardGarantias {
   chamadosAbertos: number;
   resolvidosNoMes: number;
   ativas: number;
+  taxaAcionamento: {
+    chamados: number;
+    elegiveis: number;
+    pct: number | null;
+  };
+}
+
+export interface FaturamentoPeriodos {
+  dia: ResumoFinanceiro;
+  semana: ResumoFinanceiro;
+  mes: ResumoFinanceiro;
 }
 
 export interface CardFinanceiro {
   inadimplenciaMais7Dias: number;
+  mrr: string;
+  churn: {
+    canceladasNoMes: number;
+    ativasInicioMes: number;
+    pct: number | null;
+  };
+  faturamento: FaturamentoPeriodos;
+}
+
+export interface ServicoSemDemanda {
+  servicoId: string;
+  nome: string;
+}
+
+export interface PrecoMedioCategoria {
+  categoria: Categoria;
+  precoMedio: string;
 }
 
 export interface CardCatalogo {
   servicosAtivos: number;
+  maisPedidos: ServicoPedido[];
+  semDemanda: ServicoSemDemanda[];
+  precoMedioPorCategoria: PrecoMedioCategoria[];
+}
+
+export interface OsPorTecnico {
+  tecnicoId: string;
+  nome: string;
+  total: number;
 }
 
 export interface CardEquipe {
   tecnicosAtivos: number;
   membrosInternos: number;
+  osPorTecnicoMes: OsPorTecnico[];
+  ociosos: TecnicoAtividade[];
 }
 
 export interface CardTecnico {
@@ -65,8 +158,12 @@ export interface Dashboard {
 
 export interface DashboardRepo {
   contarServicosAtivos(): Promise<number>;
+  listarServicosSemDemanda(dias: number): Promise<ServicoSemDemanda[]>;
+  precoMedioPorCategoria(): Promise<PrecoMedioCategoria[]>;
   contarTecnicosAtivos(): Promise<number>;
   contarMembrosInternos(): Promise<number>;
+  listarOsPorTecnicoMes(): Promise<OsPorTecnico[]>;
+  listarTecnicosComUltimaAtribuicao(): Promise<TecnicoAtividade[]>;
   contarOsCriadasHoje(): Promise<number>;
   contarOsNovasNaFila(): Promise<number>;
   contarOsAguardandoAprovacao(): Promise<number>;
@@ -74,13 +171,30 @@ export interface DashboardRepo {
   contarMinhaFila(especialidades: Categoria[]): Promise<number>;
   contarOsOrcadas30d(): Promise<number>;
   contarOsAprovadas30d(): Promise<number>;
+  contarOsConcluidas30d(): Promise<number>;
+  tempoMedioNovaPagaSegundos(): Promise<number | null>;
+  contarOsPorEstado(): Promise<FunilEstado[]>;
+  serieOsPorDia(dias: number): Promise<SerieDia[]>;
   obterNotaMediaGeral(): Promise<number | null>;
   contarAlertasPendentes(): Promise<number>;
   listarNotasPorTecnico(): Promise<NotaTecnicoView[]>;
+  contarSubmissoes30d(): Promise<number>;
+  contarOrcamentosEnviados30d(): Promise<number>;
+  listarServicosMaisPedidos(limite: number): Promise<ServicoPedido[]>;
+  remarketingAtivo(): Promise<boolean>;
+  contarRemarketingEnviadoMes(): Promise<number>;
+  contarIndicacoesMes(): Promise<number>;
+  somarCreditosResgatadosMes(): Promise<string>;
   contarChamadosGarantiaAbertos(): Promise<number>;
   contarChamadosGarantiaResolvidosNoMes(): Promise<number>;
   contarGarantiasAtivas(): Promise<number>;
+  contarChamadosGarantiaNoMes(): Promise<number>;
+  contarOsPagaElegiveisGarantia(): Promise<number>;
   contarInadimplenciaMais7Dias(): Promise<number>;
+  listarAssinaturasAtivasComPreco(): Promise<{ preco: string }[]>;
+  contarAssinaturasCanceladasNoMes(): Promise<number>;
+  contarAssinaturasAtivasInicioMes(): Promise<number>;
+  resumoFaturamento(): Promise<FaturamentoPeriodos>;
 }
 
 export async function montarDashboard(
@@ -96,15 +210,21 @@ export async function montarDashboard(
       aguardandoAprovacao,
       totalOrcadas,
       aprovadas,
+      concluidas,
+      tempoMedioNovaPagaSegundos,
+      funilEstados,
+      serie,
     ] = await Promise.all([
       repo.contarOsCriadasHoje(),
       repo.contarOsNovasNaFila(),
       repo.contarOsAguardandoAprovacao(),
       repo.contarOsOrcadas30d(),
       repo.contarOsAprovadas30d(),
+      repo.contarOsConcluidas30d(),
+      repo.tempoMedioNovaPagaSegundos(),
+      repo.contarOsPorEstado(),
+      repo.serieOsPorDia(JANELA_SERIE_DIAS),
     ]);
-
-    const pct = totalOrcadas === 0 ? null : aprovadas / totalOrcadas;
 
     dash.operacao = {
       criadasHoje,
@@ -113,54 +233,137 @@ export async function montarDashboard(
       taxaAprovacao: {
         aprovadas,
         totalOrcadas,
-        pct,
+        pct: calcularPct(aprovadas, totalOrcadas),
       },
+      taxaConclusao: {
+        concluidas,
+        aprovadas,
+        pct: calcularPct(concluidas, aprovadas),
+      },
+      tempoMedioNovaPagaSegundos,
+      funilEstados,
+      serie,
     };
   }
 
   if (podeAcessarModulo("MARKETING", usuario)) {
-    const [notaMediaGeral, alertasPendentes, notasTecnicos] = await Promise.all([
+    const [
+      notaMediaGeral,
+      alertasPendentes,
+      notasTecnicos,
+      submissoes,
+      orcados,
+      aprovados,
+      concluidos,
+      servicosMaisPedidos,
+      remarketingLigado,
+      remarketingEnviadosMes,
+      indicacoesMes,
+      creditosResgatadosMes,
+    ] = await Promise.all([
       repo.obterNotaMediaGeral(),
       repo.contarAlertasPendentes(),
       repo.listarNotasPorTecnico(),
+      repo.contarSubmissoes30d(),
+      repo.contarOrcamentosEnviados30d(),
+      repo.contarOsAprovadas30d(),
+      repo.contarOsConcluidas30d(),
+      repo.listarServicosMaisPedidos(LIMITE_MAIS_PEDIDOS),
+      repo.remarketingAtivo(),
+      repo.contarRemarketingEnviadoMes(),
+      repo.contarIndicacoesMes(),
+      repo.somarCreditosResgatadosMes(),
     ]);
 
     dash.marketing = {
       notaMediaGeral,
       alertasPendentes,
       ranking: rankearTecnicos(notasTecnicos, { minAvaliacoes: 5, topN: 5 }),
+      funil: montarFunil({ submissoes, orcados, aprovados, concluidos }),
+      servicosMaisPedidos,
+      remarketing: { ativo: remarketingLigado, enviadosMes: remarketingEnviadosMes },
+      indicacoesMes,
+      creditosResgatadosMes,
     };
   }
 
   if (podeAcessarModulo("GARANTIAS", usuario)) {
-    const [chamadosAbertos, resolvidosNoMes, ativas] = await Promise.all([
-      repo.contarChamadosGarantiaAbertos(),
-      repo.contarChamadosGarantiaResolvidosNoMes(),
-      repo.contarGarantiasAtivas(),
-    ]);
+    const [chamadosAbertos, resolvidosNoMes, ativas, chamadosNoMes, elegiveis] =
+      await Promise.all([
+        repo.contarChamadosGarantiaAbertos(),
+        repo.contarChamadosGarantiaResolvidosNoMes(),
+        repo.contarGarantiasAtivas(),
+        repo.contarChamadosGarantiaNoMes(),
+        repo.contarOsPagaElegiveisGarantia(),
+      ]);
 
     dash.garantias = {
       chamadosAbertos,
       resolvidosNoMes,
       ativas,
+      taxaAcionamento: {
+        chamados: chamadosNoMes,
+        elegiveis,
+        pct: calcularPct(chamadosNoMes, elegiveis),
+      },
     };
   }
 
   if (podeAcessarModulo("FINANCEIRO", usuario)) {
-    const inadimplenciaMais7Dias = await repo.contarInadimplenciaMais7Dias();
+    const [
+      inadimplenciaMais7Dias,
+      ativas,
+      canceladasNoMes,
+      ativasInicioMes,
+      faturamento,
+    ] = await Promise.all([
+      repo.contarInadimplenciaMais7Dias(),
+      repo.listarAssinaturasAtivasComPreco(),
+      repo.contarAssinaturasCanceladasNoMes(),
+      repo.contarAssinaturasAtivasInicioMes(),
+      repo.resumoFaturamento(),
+    ]);
     dash.financeiro = {
       inadimplenciaMais7Dias,
+      mrr: calcularMrr(ativas),
+      churn: {
+        canceladasNoMes,
+        ativasInicioMes,
+        pct: calcularPct(canceladasNoMes, ativasInicioMes),
+      },
+      faturamento,
     };
   }
 
   if (podeAcessarModulo("CATALOGO", usuario)) {
-    dash.catalogo = { servicosAtivos: await repo.contarServicosAtivos() };
+    const [servicosAtivos, maisPedidos, semDemanda, precoMedioPorCategoria] =
+      await Promise.all([
+        repo.contarServicosAtivos(),
+        repo.listarServicosMaisPedidos(LIMITE_MAIS_PEDIDOS),
+        repo.listarServicosSemDemanda(DIAS_SEM_DEMANDA),
+        repo.precoMedioPorCategoria(),
+      ]);
+    dash.catalogo = {
+      servicosAtivos,
+      maisPedidos,
+      semDemanda,
+      precoMedioPorCategoria,
+    };
   }
 
   if (podeAcessarModulo("EQUIPE", usuario)) {
+    const [tecnicosAtivos, membrosInternos, osPorTecnicoMes, atividade] =
+      await Promise.all([
+        repo.contarTecnicosAtivos(),
+        repo.contarMembrosInternos(),
+        repo.listarOsPorTecnicoMes(),
+        repo.listarTecnicosComUltimaAtribuicao(),
+      ]);
     dash.equipe = {
-      tecnicosAtivos: await repo.contarTecnicosAtivos(),
-      membrosInternos: await repo.contarMembrosInternos(),
+      tecnicosAtivos,
+      membrosInternos,
+      osPorTecnicoMes,
+      ociosos: tecnicosOciosos(atividade, DIAS_OCIOSIDADE, new Date()),
     };
   }
 
