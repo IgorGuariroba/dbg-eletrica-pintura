@@ -686,4 +686,21 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     expect(await repo.contarRemarketingEnviadoMes()).toBeGreaterThanOrEqual(1);
     expect(await repo.remarketingAtivo()).toBe(true);
   });
+
+  it("#66: OS por técnico no mês e última atribuição refletem o semeado", async () => {
+    const comOs = await seedTecnico();
+    const semOs = await seedTecnico();
+    await seedOs("ELETRICA", "NOVA", comOs);
+
+    const porTecnico = await repo.listarOsPorTecnicoMes();
+    const meu = porTecnico.find((t) => t.tecnicoId === comOs);
+    expect(meu).toBeDefined();
+    expect(meu!.total).toBeGreaterThanOrEqual(1);
+
+    const atividade = await repo.listarTecnicosComUltimaAtribuicao();
+    const ativo = atividade.find((t) => t.tecnicoId === comOs);
+    const ocioso = atividade.find((t) => t.tecnicoId === semOs);
+    expect(ativo?.ultimaAtribuicao).toBeInstanceOf(Date); // recebeu OS hoje
+    expect(ocioso?.ultimaAtribuicao).toBeNull(); // nunca recebeu
+  });
 });

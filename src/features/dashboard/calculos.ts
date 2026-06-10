@@ -53,3 +53,27 @@ export function montarFunil(totais: {
     conversao: i === 0 ? null : calcularPct(etapa.total, etapas[i - 1].total),
   }));
 }
+
+export interface TecnicoAtividade {
+  tecnicoId: string;
+  nome: string;
+  ultimaAtribuicao: Date | null;
+}
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/**
+ * Técnicos ociosos: sem nenhuma OS atribuída, ou cuja última atribuição já
+ * passou de `diasLimite` dias. Recebe `agora` injetado para ser determinístico.
+ */
+export function tecnicosOciosos(
+  tecnicos: TecnicoAtividade[],
+  diasLimite: number,
+  agora: Date,
+): TecnicoAtividade[] {
+  return tecnicos.filter((t) => {
+    if (t.ultimaAtribuicao === null) return true;
+    const diasDesde = (agora.getTime() - t.ultimaAtribuicao.getTime()) / MS_POR_DIA;
+    return diasDesde >= diasLimite;
+  });
+}

@@ -5,7 +5,14 @@ import type { NotaTecnicoView } from "@/marketing/nota-tecnico-repo";
 import type { ResumoFinanceiro } from "@/features/financeiro/financeiro";
 import type { estadoOsEnum } from "@/db/schema";
 import { rankearTecnicos } from "./ranking";
-import { calcularPct, calcularMrr, montarFunil, type FunilEstagio } from "./calculos";
+import {
+  calcularPct,
+  calcularMrr,
+  montarFunil,
+  tecnicosOciosos,
+  type FunilEstagio,
+  type TecnicoAtividade,
+} from "./calculos";
 
 export type EstadoOs = (typeof estadoOsEnum.enumValues)[number];
 
@@ -25,6 +32,9 @@ const JANELA_SERIE_DIAS = 14;
 
 // Quantos serviços exibir nos rankings de "mais pedidos" (Marketing/Catálogo).
 const LIMITE_MAIS_PEDIDOS = 5;
+
+// Dias sem OS atribuída a partir dos quais um técnico é considerado ocioso.
+const DIAS_OCIOSIDADE = 7;
 
 export interface UsuarioDashboard {
   membroId: string;
@@ -97,9 +107,17 @@ export interface CardCatalogo {
   servicosAtivos: number;
 }
 
+export interface OsPorTecnico {
+  tecnicoId: string;
+  nome: string;
+  total: number;
+}
+
 export interface CardEquipe {
   tecnicosAtivos: number;
   membrosInternos: number;
+  osPorTecnicoMes: OsPorTecnico[];
+  ociosos: TecnicoAtividade[];
 }
 
 export interface CardTecnico {
@@ -121,6 +139,8 @@ export interface DashboardRepo {
   contarServicosAtivos(): Promise<number>;
   contarTecnicosAtivos(): Promise<number>;
   contarMembrosInternos(): Promise<number>;
+  listarOsPorTecnicoMes(): Promise<OsPorTecnico[]>;
+  listarTecnicosComUltimaAtribuicao(): Promise<TecnicoAtividade[]>;
   contarOsCriadasHoje(): Promise<number>;
   contarOsNovasNaFila(): Promise<number>;
   contarOsAguardandoAprovacao(): Promise<number>;
@@ -287,9 +307,18 @@ export async function montarDashboard(
   }
 
   if (podeAcessarModulo("EQUIPE", usuario)) {
+    const [tecnicosAtivos, membrosInternos, osPorTecnicoMes, atividade] =
+      await Promise.all([
+        repo.contarTecnicosAtivos(),
+        repo.contarMembrosInternos(),
+        repo.listarOsPorTecnicoMes(),
+        repo.listarTecnicosComUltimaAtribuicao(),
+      ]);
     dash.equipe = {
-      tecnicosAtivos: await repo.contarTecnicosAtivos(),
-      membrosInternos: await repo.contarMembrosInternos(),
+      tecnicosAtivos,
+      membrosInternos,
+      osPorTecnicoMes,
+      ociosos: tecnicosOciosos(atividade, DIAS_OCIOSIDADE, new Date()),
     };
   }
 

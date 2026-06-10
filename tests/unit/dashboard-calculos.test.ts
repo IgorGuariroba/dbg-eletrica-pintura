@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { calcularPct, calcularMrr, montarFunil } from "@/features/dashboard/calculos";
+import {
+  calcularPct,
+  calcularMrr,
+  montarFunil,
+  tecnicosOciosos,
+} from "@/features/dashboard/calculos";
 
 describe("calcularPct", () => {
   it("retorna a fração numerador/denominador", () => {
@@ -49,5 +54,32 @@ describe("montarFunil", () => {
   it("conversão é null quando a etapa anterior é zero (sem base)", () => {
     const funil = montarFunil({ submissoes: 0, orcados: 0, aprovados: 0, concluidos: 0 });
     expect(funil.map((e) => e.conversao)).toEqual([null, null, null, null]);
+  });
+});
+
+describe("tecnicosOciosos", () => {
+  const agora = new Date("2026-06-09T12:00:00Z");
+
+  it("inclui técnico sem nenhuma atribuição (ultimaAtribuicao null)", () => {
+    const ociosos = tecnicosOciosos(
+      [{ tecnicoId: "t1", nome: "Ana", ultimaAtribuicao: null }],
+      7,
+      agora,
+    );
+    expect(ociosos.map((t) => t.tecnicoId)).toEqual(["t1"]);
+  });
+
+  it("inclui quem não recebe OS há pelo menos N dias e exclui quem recebeu há menos", () => {
+    const ha10dias = new Date("2026-05-30T12:00:00Z");
+    const ha2dias = new Date("2026-06-07T12:00:00Z");
+    const ociosos = tecnicosOciosos(
+      [
+        { tecnicoId: "t1", nome: "Ana", ultimaAtribuicao: ha10dias },
+        { tecnicoId: "t2", nome: "Bia", ultimaAtribuicao: ha2dias },
+      ],
+      7,
+      agora,
+    );
+    expect(ociosos.map((t) => t.tecnicoId)).toEqual(["t1"]);
   });
 });

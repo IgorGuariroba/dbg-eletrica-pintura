@@ -48,6 +48,37 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
     contarMembrosInternos() {
       return contar(membro, and(possuiModulo, eq(membro.ativo, true)));
     },
+    async listarOsPorTecnicoMes() {
+      const linhas = await db
+        .select({ tecnicoId: membro.id, nome: membro.nome, total: count(ordemServico.id) })
+        .from(ordemServico)
+        .innerJoin(membro, eq(membro.id, ordemServico.tecnicoId))
+        .where(gte(ordemServico.criadoEm, sql`date_trunc('month', now())`))
+        .groupBy(membro.id, membro.nome)
+        .orderBy(sql`count(${ordemServico.id}) desc`);
+      return linhas.map((l) => ({
+        tecnicoId: l.tecnicoId,
+        nome: l.nome,
+        total: Number(l.total),
+      }));
+    },
+    async listarTecnicosComUltimaAtribuicao() {
+      const linhas = await db
+        .select({
+          tecnicoId: membro.id,
+          nome: membro.nome,
+          ultimaAtribuicao: sql<string | null>`max(${ordemServico.criadoEm})`,
+        })
+        .from(membro)
+        .leftJoin(ordemServico, eq(ordemServico.tecnicoId, membro.id))
+        .where(and(eq(membro.isTecnico, true), eq(membro.ativo, true)))
+        .groupBy(membro.id, membro.nome);
+      return linhas.map((l) => ({
+        tecnicoId: l.tecnicoId,
+        nome: l.nome,
+        ultimaAtribuicao: l.ultimaAtribuicao ? new Date(l.ultimaAtribuicao) : null,
+      }));
+    },
     contarOsCriadasHoje() {
       return contar(ordemServico, gte(ordemServico.criadoEm, sql`date_trunc('day', now())`));
     },

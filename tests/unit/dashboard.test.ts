@@ -14,6 +14,8 @@ function repoFake(over: Partial<DashboardRepo> = {}): DashboardRepo {
     contarServicosAtivos: vi.fn(async () => 0),
     contarTecnicosAtivos: vi.fn(async () => 0),
     contarMembrosInternos: vi.fn(async () => 0),
+    listarOsPorTecnicoMes: vi.fn(async () => []),
+    listarTecnicosComUltimaAtribuicao: vi.fn(async () => []),
     contarOsCriadasHoje: vi.fn(async () => 0),
     contarOsNovasNaFila: vi.fn(async () => 0),
     contarOsAguardandoAprovacao: vi.fn(async () => 0),
@@ -80,8 +82,27 @@ describe("montarDashboard", () => {
     });
     const dash = await montarDashboard(usuario({ modulos: ["EQUIPE"] }), repo);
 
-    expect(dash.equipe).toEqual({ tecnicosAtivos: 4, membrosInternos: 2 });
+    expect(dash.equipe).toMatchObject({ tecnicosAtivos: 4, membrosInternos: 2 });
     expect(dash.catalogo).toBeUndefined();
+  });
+
+  it("card de Equipe traz OS por técnico no mês e os técnicos ociosos", async () => {
+    const osPorTecnico = [
+      { tecnicoId: "t1", nome: "Ana", total: 8 },
+      { tecnicoId: "t2", nome: "Bia", total: 3 },
+    ];
+    const repo = repoFake({
+      listarOsPorTecnicoMes: vi.fn(async () => osPorTecnico),
+      // t1 nunca recebeu OS → ocioso; t2 recebeu hoje → ativo.
+      listarTecnicosComUltimaAtribuicao: vi.fn(async () => [
+        { tecnicoId: "t1", nome: "Ana", ultimaAtribuicao: null },
+        { tecnicoId: "t2", nome: "Bia", ultimaAtribuicao: new Date() },
+      ]),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["EQUIPE"] }), repo);
+
+    expect(dash.equipe?.osPorTecnicoMes).toEqual(osPorTecnico);
+    expect(dash.equipe?.ociosos.map((t) => t.tecnicoId)).toEqual(["t1"]);
   });
 
   it("membro com módulo OPERACAO vê o card de Operação com taxa de aprovação", async () => {
