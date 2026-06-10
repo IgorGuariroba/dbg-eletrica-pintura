@@ -13,20 +13,25 @@ import { uploadFotoGarantia } from "@/operacao/r2-privado";
 
 const service = criarAgendamentoService(criarAgendamentoRepoDrizzle(db));
 
+/** Resolve o token da solicitação dona da OS — credencial usada pelo service de agendamento. */
+async function tokenDaOs(osId: string): Promise<string> {
+  const [row] = await db
+    .select({ token: solicitacao.token })
+    .from(ordemServico)
+    .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
+    .where(eq(ordemServico.id, osId))
+    .limit(1);
+
+  if (!row) throw new Error("OS não encontrada");
+  return row.token;
+}
+
 export async function cancelarOsClienteAction(osId: string): Promise<{ erro?: string }> {
   try {
     const user = await exigirPortal();
+    const token = await tokenDaOs(osId);
 
-    const [row] = await db
-      .select({ token: solicitacao.token })
-      .from(ordemServico)
-      .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
-      .where(eq(ordemServico.id, osId))
-      .limit(1);
-
-    if (!row) throw new Error("OS não encontrada");
-
-    await service.cancelarCliente(row.token, osId, user.whatsapp!);
+    await service.cancelarCliente(token, osId, user.whatsapp!);
     revalidatePath("/portal");
     return { erro: undefined };
   } catch (err) {
@@ -41,17 +46,9 @@ export async function cancelarOsClienteAction(osId: string): Promise<{ erro?: st
 export async function listarSlotsOsPortalAction(osId: string) {
   try {
     await exigirPortal();
+    const token = await tokenDaOs(osId);
 
-    const [row] = await db
-      .select({ token: solicitacao.token })
-      .from(ordemServico)
-      .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
-      .where(eq(ordemServico.id, osId))
-      .limit(1);
-
-    if (!row) throw new Error("OS não encontrada");
-
-    const slots = await service.obterSlotsCliente(row.token, osId);
+    const slots = await service.obterSlotsCliente(token, osId);
 
     return slots.map((s) => ({
       inicioISO: s.inicio.toISOString(),
@@ -68,17 +65,9 @@ export async function reagendarOsClienteAction(
 ): Promise<{ erro?: string }> {
   try {
     const user = await exigirPortal();
+    const token = await tokenDaOs(osId);
 
-    const [row] = await db
-      .select({ token: solicitacao.token })
-      .from(ordemServico)
-      .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
-      .where(eq(ordemServico.id, osId))
-      .limit(1);
-
-    if (!row) throw new Error("OS não encontrada");
-
-    await service.reagendarCliente(row.token, osId, user.whatsapp!, new Date(novoSlotISO));
+    await service.reagendarCliente(token, osId, user.whatsapp!, new Date(novoSlotISO));
 
     revalidatePath("/portal");
     return { erro: undefined };
