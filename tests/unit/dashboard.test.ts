@@ -5,6 +5,10 @@ import type {
   UsuarioDashboard,
 } from "@/features/dashboard/dashboard";
 
+function vazio() {
+  return { faturamento: "0.00", ticketMedio: "0.00", qtdPagamentos: 0 };
+}
+
 function repoFake(over: Partial<DashboardRepo> = {}): DashboardRepo {
   return {
     contarServicosAtivos: vi.fn(async () => 0),
@@ -28,6 +32,14 @@ function repoFake(over: Partial<DashboardRepo> = {}): DashboardRepo {
     contarChamadosGarantiaResolvidosNoMes: vi.fn(async () => 0),
     contarGarantiasAtivas: vi.fn(async () => 0),
     contarInadimplenciaMais7Dias: vi.fn(async () => 0),
+    listarAssinaturasAtivasComPreco: vi.fn(async () => []),
+    contarAssinaturasCanceladasNoMes: vi.fn(async () => 0),
+    contarAssinaturasAtivasInicioMes: vi.fn(async () => 0),
+    resumoFaturamento: vi.fn(async () => ({
+      dia: vazio(),
+      semana: vazio(),
+      mes: vazio(),
+    })),
     ...over,
   };
 }
@@ -192,12 +204,50 @@ describe("montarDashboard", () => {
     });
 
     const dashCom = await montarDashboard(usuario({ modulos: ["FINANCEIRO"] }), repo);
-    expect(dashCom.financeiro).toEqual({
+    expect(dashCom.financeiro).toMatchObject({
       inadimplenciaMais7Dias: 4,
     });
 
     const dashSem = await montarDashboard(usuario({ modulos: [] }), repo);
     expect(dashSem.financeiro).toBeUndefined();
+  });
+
+  it("card Financeiro expõe o MRR somado das assinaturas ativas", async () => {
+    const repo = repoFake({
+      listarAssinaturasAtivasComPreco: vi.fn(async () => [
+        { preco: "99.90" },
+        { preco: "149.90" },
+      ]),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["FINANCEIRO"] }), repo);
+
+    expect(dash.financeiro?.mrr).toBe("249.80");
+  });
+
+  it("card Financeiro calcula o churn mensal (canceladas / ativas no início do mês)", async () => {
+    const repo = repoFake({
+      contarAssinaturasCanceladasNoMes: vi.fn(async () => 3),
+      contarAssinaturasAtivasInicioMes: vi.fn(async () => 12),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["FINANCEIRO"] }), repo);
+
+    expect(dash.financeiro?.churn).toEqual({
+      canceladasNoMes: 3,
+      ativasInicioMes: 12,
+      pct: 0.25,
+    });
+  });
+
+  it("card Financeiro traz o faturamento (com ticket médio) por dia/semana/mês", async () => {
+    const faturamento = {
+      dia: { faturamento: "100.00", ticketMedio: "50.00", qtdPagamentos: 2 },
+      semana: { faturamento: "700.00", ticketMedio: "70.00", qtdPagamentos: 10 },
+      mes: { faturamento: "3000.00", ticketMedio: "60.00", qtdPagamentos: 50 },
+    };
+    const repo = repoFake({ resumoFaturamento: vi.fn(async () => faturamento) });
+    const dash = await montarDashboard(usuario({ modulos: ["FINANCEIRO"] }), repo);
+
+    expect(dash.financeiro?.faturamento).toEqual(faturamento);
   });
 
   it("técnico sempre vê o card Técnico, mesmo sem módulos", async () => {

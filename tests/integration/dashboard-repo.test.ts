@@ -19,6 +19,52 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
   let pagamentoIds: { paymentId: string; osId: string }[] = [];
   let orcamentoIds: string[] = [];
   let transicaoIds: string[] = [];
+  let planoIds: string[] = [];
+  let assinaturaIds: string[] = [];
+
+  async function seedClienteSimples() {
+    const r = Math.random().toString(36).slice(2, 10);
+    const [cli] = await dbRaw
+      .insert(schema.cliente)
+      .values({
+        nome: `Cli ${r}`,
+        whatsapp: String(Math.floor(1e12 + Math.random() * 9e12)),
+      })
+      .returning();
+    clienteIds.push(cli.id);
+    return cli.id;
+  }
+
+  async function seedPlano(preco: string) {
+    const r = Math.random().toString(36).slice(2, 10);
+    const [p] = await dbRaw
+      .insert(schema.plano)
+      .values({ nome: `Plano ${r}`, preco })
+      .returning();
+    planoIds.push(p.id);
+    return p.id;
+  }
+
+  async function seedAssinatura(values: {
+    clienteId: string;
+    planoId: string;
+    status: "ATIVA" | "CANCELADA" | "PENDENTE";
+    inicio?: Date | null;
+    canceladoEm?: Date | null;
+  }) {
+    const [a] = await dbRaw
+      .insert(schema.assinatura)
+      .values({
+        clienteId: values.clienteId,
+        planoId: values.planoId,
+        status: values.status,
+        inicio: values.inicio ?? null,
+        canceladoEm: values.canceladoEm ?? null,
+      })
+      .returning();
+    assinaturaIds.push(a.id);
+    return a.id;
+  }
 
   async function seedTecnico() {
     const r = Math.random().toString(36).slice(2, 10);
@@ -102,6 +148,8 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     pagamentoIds = [];
     orcamentoIds = [];
     transicaoIds = [];
+    planoIds = [];
+    assinaturaIds = [];
   });
 
   afterAll(async () => {
@@ -141,6 +189,12 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
       await dbRaw
         .delete(schema.solicitacao)
         .where(inArray(schema.solicitacao.id, solicitacaoIds));
+    }
+    if (assinaturaIds.length) {
+      await dbRaw.delete(schema.assinatura).where(inArray(schema.assinatura.id, assinaturaIds));
+    }
+    if (planoIds.length) {
+      await dbRaw.delete(schema.plano).where(inArray(schema.plano.id, planoIds));
     }
     if (clienteIds.length) {
       await dbRaw.delete(schema.cliente).where(inArray(schema.cliente.id, clienteIds));
@@ -480,5 +534,60 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     expect(segundos).not.toBeNull();
     expect(typeof segundos).toBe("number");
     expect(Number.isFinite(segundos)).toBe(true);
+  });
+
+  it("#66 [AC]: MRR deixa de contar a assinatura quando ela é cancelada no fim do ciclo", async () => {
+    // Preço único por run para isolar nossa assinatura na lista compartilhada.
+    const preco = ((900000 + Math.floor(Math.random() * 99999)) / 100).toFixed(2);
+    const cliente = await seedClienteSimples();
+    const plano = await seedPlano(preco);
+    const assinatura = await seedAssinatura({
+      clienteId: cliente,
+      planoId: plano,
+      status: "ATIVA",
+      inicio: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    });
+
+    const contar = async () =>
+      (await repo.listarAssinaturasAtivasComPreco()).filter((a) => a.preco === preco)
+        .length;
+
+    expect(await contar()).toBe(1); // ativa → entra no MRR
+
+    // Efetivação do cancelamento no fim do ciclo: status vira CANCELADA.
+    const { eq } = await import("drizzle-orm");
+    await dbRaw
+      .update(schema.assinatura)
+      .set({ status: "CANCELADA", canceladoEm: new Date() })
+      .where(eq(schema.assinatura.id, assinatura));
+
+    expect(await contar()).toBe(0); // cancelada → sai do MRR (cai pelo preço dela)
+  });
+
+  it("#66 [AC]: churn conta canceladas no mês e ativas no início do mês", async () => {
+    const agora = new Date();
+    const inicioMesPassado = new Date(agora.getFullYear(), agora.getMonth() - 1, 1);
+    const cliente = await seedClienteSimples();
+    const plano = await seedPlano("120.00");
+
+    // Ativa desde o mês passado, sem cancelamento → conta como "ativa no início do mês".
+    await seedAssinatura({
+      clienteId: cliente,
+      planoId: plano,
+      status: "ATIVA",
+      inicio: inicioMesPassado,
+    });
+
+    // Cancelada neste mês → conta no numerador do churn.
+    await seedAssinatura({
+      clienteId: cliente,
+      planoId: plano,
+      status: "CANCELADA",
+      inicio: inicioMesPassado,
+      canceladoEm: agora,
+    });
+
+    expect(await repo.contarAssinaturasAtivasInicioMes()).toBeGreaterThanOrEqual(1);
+    expect(await repo.contarAssinaturasCanceladasNoMes()).toBeGreaterThanOrEqual(1);
   });
 });

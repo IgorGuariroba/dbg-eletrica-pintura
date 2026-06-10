@@ -9,3 +9,16 @@ export function calcularPct(numerador: number, denominador: number): number | nu
   if (denominador === 0) return null;
   return numerador / denominador;
 }
+
+/**
+ * MRR = soma dos preços das assinaturas ativas. Soma em centavos (inteiros)
+ * para evitar erro de ponto flutuante, devolvendo string decimal com 2 casas
+ * (mesmo formato monetário usado em todo o domínio).
+ */
+export function calcularMrr(ativas: { preco: string }[]): string {
+  const centavos = ativas.reduce(
+    (acc, a) => acc + Math.round(parseFloat(a.preco) * 100),
+    0,
+  );
+  return (centavos / 100).toFixed(2);
+}

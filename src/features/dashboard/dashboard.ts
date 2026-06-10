@@ -2,9 +2,10 @@ import { podeAcessarModulo } from "@/auth/require-modulo";
 import type { Modulo, Role } from "@/auth/role-detection";
 import type { Categoria } from "@/operacao/fila-repo";
 import type { NotaTecnicoView } from "@/marketing/nota-tecnico-repo";
+import type { ResumoFinanceiro } from "@/features/financeiro/financeiro";
 import type { estadoOsEnum } from "@/db/schema";
 import { rankearTecnicos } from "./ranking";
-import { calcularPct } from "./calculos";
+import { calcularPct, calcularMrr } from "./calculos";
 
 export type EstadoOs = (typeof estadoOsEnum.enumValues)[number];
 
@@ -61,8 +62,21 @@ export interface CardGarantias {
   ativas: number;
 }
 
+export interface FaturamentoPeriodos {
+  dia: ResumoFinanceiro;
+  semana: ResumoFinanceiro;
+  mes: ResumoFinanceiro;
+}
+
 export interface CardFinanceiro {
   inadimplenciaMais7Dias: number;
+  mrr: string;
+  churn: {
+    canceladasNoMes: number;
+    ativasInicioMes: number;
+    pct: number | null;
+  };
+  faturamento: FaturamentoPeriodos;
 }
 
 export interface CardCatalogo {
@@ -111,6 +125,10 @@ export interface DashboardRepo {
   contarChamadosGarantiaResolvidosNoMes(): Promise<number>;
   contarGarantiasAtivas(): Promise<number>;
   contarInadimplenciaMais7Dias(): Promise<number>;
+  listarAssinaturasAtivasComPreco(): Promise<{ preco: string }[]>;
+  contarAssinaturasCanceladasNoMes(): Promise<number>;
+  contarAssinaturasAtivasInicioMes(): Promise<number>;
+  resumoFaturamento(): Promise<FaturamentoPeriodos>;
 }
 
 export async function montarDashboard(
@@ -191,9 +209,28 @@ export async function montarDashboard(
   }
 
   if (podeAcessarModulo("FINANCEIRO", usuario)) {
-    const inadimplenciaMais7Dias = await repo.contarInadimplenciaMais7Dias();
+    const [
+      inadimplenciaMais7Dias,
+      ativas,
+      canceladasNoMes,
+      ativasInicioMes,
+      faturamento,
+    ] = await Promise.all([
+      repo.contarInadimplenciaMais7Dias(),
+      repo.listarAssinaturasAtivasComPreco(),
+      repo.contarAssinaturasCanceladasNoMes(),
+      repo.contarAssinaturasAtivasInicioMes(),
+      repo.resumoFaturamento(),
+    ]);
     dash.financeiro = {
       inadimplenciaMais7Dias,
+      mrr: calcularMrr(ativas),
+      churn: {
+        canceladasNoMes,
+        ativasInicioMes,
+        pct: calcularPct(canceladasNoMes, ativasInicioMes),
+      },
+      faturamento,
     };
   }
 

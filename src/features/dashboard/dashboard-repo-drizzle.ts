@@ -9,10 +9,13 @@ import {
   pagamento,
   avaliacao,
   alertaAvaliacao,
+  assinatura,
+  plano,
 } from "@/db/schema";
 import type { Categoria } from "@/operacao/fila-repo";
 import type { DashboardRepo } from "./dashboard";
 import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo-drizzle";
+import { criarFinanceiroRepoDrizzle } from "@/features/financeiro/financeiro-repo-drizzle";
 
 export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
   async function contar(
@@ -196,6 +199,58 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
             sql`${ordemServico.prazoGarantiaMeses} > 0`,
             sql`${pagamento.criadoEm} + (${ordemServico.prazoGarantiaMeses} * interval '1 month') > now()`
           )
+        );
+      return Number(value);
+    },
+    async listarAssinaturasAtivasComPreco() {
+      return db
+        .select({ preco: plano.preco })
+        .from(assinatura)
+        .innerJoin(plano, eq(plano.id, assinatura.planoId))
+        .where(eq(assinatura.status, "ATIVA"));
+    },
+    async contarAssinaturasCanceladasNoMes() {
+      const [{ value }] = await db
+        .select({ value: count() })
+        .from(assinatura)
+        .where(
+          and(
+            eq(assinatura.status, "CANCELADA"),
+            gte(assinatura.canceladoEm, sql`date_trunc('month', now())`),
+          ),
+        );
+      return Number(value);
+    },
+    async resumoFaturamento() {
+      // Reaproveita o resumoPeriodo do módulo Financeiro (faturamento + ticket
+      // médio), aplicado às janelas dia/semana/mês até agora.
+      const financeiro = criarFinanceiroRepoDrizzle(db);
+      const agora = new Date();
+      const inicioDia = new Date(agora);
+      inicioDia.setHours(0, 0, 0, 0);
+      const inicioSemana = new Date(inicioDia);
+      // Semana começa na segunda-feira (ISO): recua até o dia 1 (segunda).
+      const diaSemana = (inicioSemana.getDay() + 6) % 7;
+      inicioSemana.setDate(inicioSemana.getDate() - diaSemana);
+      const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+      const [dia, semana, mes] = await Promise.all([
+        financeiro.resumoPeriodo({ inicio: inicioDia, fim: agora }),
+        financeiro.resumoPeriodo({ inicio: inicioSemana, fim: agora }),
+        financeiro.resumoPeriodo({ inicio: inicioMes, fim: agora }),
+      ]);
+      return { dia, semana, mes };
+    },
+    async contarAssinaturasAtivasInicioMes() {
+      // Assinatura ativa no 1º instante do mês: iniciada antes do início do mês
+      // e ainda não cancelada naquele momento (cancelada depois, ou nunca).
+      const [{ value }] = await db
+        .select({ value: count() })
+        .from(assinatura)
+        .where(
+          sql`${assinatura.inicio} is not null
+            and ${assinatura.inicio} < date_trunc('month', now())
+            and (${assinatura.canceladoEm} is null
+                 or ${assinatura.canceladoEm} >= date_trunc('month', now()))`,
         );
       return Number(value);
     },
