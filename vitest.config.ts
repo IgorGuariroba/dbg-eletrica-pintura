@@ -9,18 +9,49 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: [
-      "tests/unit/**/*.test.ts",
-      "tests/unit/**/*.test.tsx",
-      "tests/integration/**/*.test.ts",
-    ],
     globals: false,
-    // Redireciona o driver Neon ao proxy local quando NEON_LOCAL_PROXY existe
-    // (CI/docker); no-op caso contrário. Roda antes de cada arquivo de teste.
-    setupFiles: ["./tests/setup/neon-proxy.ts", "./tests/setup/db-reset.ts"],
-    // Varre lixo de seeds de runs anteriores antes de spawnar os workers,
-    // evitando que a janela `limit` da fila caia em OS órfãs (ver global-setup).
-    globalSetup: ["./tests/integration/global-setup.ts"],
+    // Dois projetos para dar a cada camada o paralelismo certo:
+    // - unit: sem banco, paralelismo total de arquivos (default do vitest).
+    // - integration: truncate-por-arquivo (db-reset) exige arquivos
+    //   sequenciais dentro de cada worker; round-trips HTTP via proxy
+    //   pedem timeout maior.
+    // A cobertura é unificada no nível raiz — o gate vê as duas suítes.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          include: ["tests/unit/**/*.test.ts", "tests/unit/**/*.test.tsx"],
+          // Sem banco nem estado global entre arquivos: pular o isolamento
+          // por arquivo corta o overhead de contexto. Reverter se flakar.
+          isolate: false,
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          include: ["tests/integration/**/*.test.ts"],
+          // Ordem importa: worker-db reescreve DATABASE_URL para o banco do
+          // worker (CI) antes de neon-proxy/db-reset tocarem no driver.
+          setupFiles: [
+            "./tests/setup/worker-db.ts",
+            "./tests/setup/neon-proxy.ts",
+            "./tests/setup/db-reset.ts",
+          ],
+          // Varre lixo de seeds de runs anteriores antes de spawnar os
+          // workers, evitando que a janela `limit` da fila caia em OS órfãs
+          // (ver global-setup).
+          globalSetup: ["./tests/integration/global-setup.ts"],
+          // Com banco por arquivo (CI_DB_PER_FILE), arquivos rodam em
+          // paralelo — nenhum compartilhamento de banco entre arquivos. Sem
+          // a env (local, banco único), sequencial: o truncate-por-arquivo
+          // de um worker atropelaria os demais.
+          fileParallelism: Boolean(process.env.CI_DB_PER_FILE),
+          testTimeout: 20_000,
+        },
+      },
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary"],
