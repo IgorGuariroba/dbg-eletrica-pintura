@@ -216,13 +216,23 @@ describe.skipIf(!hasDb)("HistoricoRepo Drizzle", () => {
 
   it("pagina histórico em blocos de 20 mantendo total", async () => {
     const whatsapp = "5511999990006";
-    for (let i = 0; i < 25; i += 1) {
-      await semearSolicitacao({
-        whatsapp,
-        token: `portal-paginada-${i}`,
-        criadoEm: new Date(Date.UTC(2026, 0, i + 1, 10, 0, 0)),
-      });
-    }
+    // Primeira sequencial (cria e cacheia o cliente no Map); demais em
+    // paralelo — 25 seeds sequenciais via proxy HTTP estouram o testTimeout
+    // quando o CI roda com workers em paralelo.
+    await semearSolicitacao({
+      whatsapp,
+      token: "portal-paginada-0",
+      criadoEm: new Date(Date.UTC(2026, 0, 1, 10, 0, 0)),
+    });
+    await Promise.all(
+      Array.from({ length: 24 }, (_, j) =>
+        semearSolicitacao({
+          whatsapp,
+          token: `portal-paginada-${j + 1}`,
+          criadoEm: new Date(Date.UTC(2026, 0, j + 2, 10, 0, 0)),
+        }),
+      ),
+    );
 
     const primeira = await repo.listar(whatsapp, { limit: 20, offset: 0 });
     const segunda = await repo.listar(whatsapp, { limit: 20, offset: 20 });
