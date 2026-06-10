@@ -21,13 +21,57 @@ interface Props {
   limite?: number;
 }
 
-export function Portfolio({ fotos, limite }: Props) {
-  if (fotos.length === 0) return null;
+const FOTOS_PADRAO: FotoPortfolioView[] = [
+  {
+    id: "default-1",
+    url: "/images/portfolio/14-forro-gesso-led-residencial.jpeg",
+    categoria: "DRYWALL",
+    tipo: "DEPOIS",
+    tecnicoNome: "Equipe DBG",
+  },
+  {
+    id: "default-2",
+    url: "/images/portfolio/16-estrutura-drywall-divisorias.jpeg",
+    categoria: "DRYWALL",
+    tipo: "ANTES",
+    tecnicoNome: "Equipe DBG",
+  },
+  {
+    id: "default-3",
+    url: "/images/portfolio/17-quarto-forro-iluminacao-indireta.jpeg",
+    categoria: "DRYWALL",
+    tipo: "DEPOIS",
+    tecnicoNome: "Equipe DBG",
+  },
+  {
+    id: "default-4",
+    url: "/images/portfolio/04-academia-allp-iluminacao-led.jpeg",
+    categoria: "ELETRICA",
+    tipo: "DEPOIS",
+    tecnicoNome: "Equipe DBG",
+  },
+  {
+    id: "default-5",
+    url: "/images/portfolio/05-reparo-parede-obra.jpeg",
+    categoria: "PINTURA",
+    tipo: "ANTES",
+    tecnicoNome: "Equipe DBG",
+  },
+  {
+    id: "default-6",
+    url: "/images/portfolio/08-academia-area-musculacao-led.jpeg",
+    categoria: "ELETRICA",
+    tipo: "DEPOIS",
+    tecnicoNome: "Equipe DBG",
+  },
+];
 
-  const visiveis = limite != null ? fotos.slice(0, limite) : fotos;
+export function Portfolio({ fotos, limite }: Props) {
+  const listaFotos = fotos.length > 0 ? fotos : FOTOS_PADRAO;
+  const visiveis = limite != null ? listaFotos.slice(0, limite) : listaFotos;
 
   return (
-    <section id="portfolio" className="bg-muted">
+    <section id="portfolio" className="bg-muted scroll-mt-24">
       <div className="container mx-auto px-4 py-16 max-w-5xl">
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold">
@@ -40,7 +84,7 @@ export function Portfolio({ fotos, limite }: Props) {
         </div>
 
         {/* Masonry: colunas CSS; fotos em altura natural para o fluxo variar. */}
-        <ul className="columns-2 sm:columns-3 gap-4">
+        <ul className="columns-1 md:columns-2 gap-4">
           {visiveis.map((f) => (
             <li
               key={f.id}

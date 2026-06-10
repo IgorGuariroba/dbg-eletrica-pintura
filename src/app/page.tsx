@@ -69,7 +69,7 @@ async function carregarPortfolio(): Promise<FotoPortfolioView[]> {
 
 async function carregarDepoimentos(): Promise<DepoimentoCandidato[]> {
   try {
-    return await criarDepoimentosQueryDrizzle(db).listarCandidatos(3);
+    return await criarDepoimentosQueryDrizzle(db).listarCandidatos(10);
   } catch (err) {
     console.error("Erro ao carregar depoimentos:", err);
     return [];
