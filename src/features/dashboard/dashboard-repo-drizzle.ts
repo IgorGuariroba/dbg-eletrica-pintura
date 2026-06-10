@@ -188,7 +188,10 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
           sql`(select os_id, min(em) as em from transicao_os where estado_novo = 'PAGA' group by os_id) paga`,
           sql`paga.os_id = ${ordemServico.id}`,
         );
-      return value === null ? null : Number(value);
+      // avg sobre conjunto vazio (nenhuma OS paga) volta NULL → null. O guard
+      // cobre null/undefined e qualquer valor não-finito, jamais expondo NaN.
+      const n = Number(value);
+      return value == null || !Number.isFinite(n) ? null : n;
     },
     async contarOsPorEstado() {
       const linhas = await db
