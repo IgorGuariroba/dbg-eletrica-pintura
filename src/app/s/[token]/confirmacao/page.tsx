@@ -92,6 +92,12 @@ export default async function ConfirmacaoPage({
           <li>
             <strong>Categorias:</strong> {categoriasLabel}
           </li>
+          {/* Página pública (qualquer um com o link): só cidade/UF — nunca
+              logradouro, número ou fotos (PII). */}
+          <li>
+            <strong>Cidade:</strong> {solicitacao.endereco.cidade}/
+            {solicitacao.endereco.uf}
+          </li>
           <li>
             <strong>Ordens de serviço criadas:</strong> {ordens.length}
           </li>
