@@ -38,7 +38,7 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
     <section
       id="diferenciais"
       aria-label="Por que escolher a DBG"
-      className="border-y bg-card"
+      className="border-y bg-card scroll-mt-24"
     >
       <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
         {(mostrarNota || mostrarConcluidas) && (

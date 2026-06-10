@@ -253,6 +253,11 @@
   }
 }
 
-html, body {
+/* min-height (não height): body precisa crescer com o conteúdo,
+   senão position:sticky para de grudar após 1 viewport de scroll. */
+html {
   height: 100%;
+}
+body {
+  min-height: 100%;
 }

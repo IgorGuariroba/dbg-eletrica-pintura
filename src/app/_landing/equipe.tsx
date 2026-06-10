@@ -36,7 +36,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: Membro[] }) {
   const restantes = tecnicos.length - visiveis.length;
 
   return (
-    <section id="equipe" className="py-16 bg-background">
+    <section id="equipe" className="py-16 bg-background scroll-mt-24">
       <div className="mx-auto max-w-5xl px-4 md:px-6 text-center space-y-6">
         <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
           Conheça Nossa Equipe
@@ -137,7 +137,7 @@ export function Equipe({ tecnicos, compacta }: Props) {
   if (compacta) return <EquipeCompacta tecnicos={tecnicos} />;
 
   return (
-    <section id="equipe" className="py-16 md:py-24 bg-background">
+    <section id="equipe" className="py-16 md:py-24 bg-background scroll-mt-24">
       <div className="mx-auto max-w-5xl px-4 md:px-6 space-y-12">
         <div className="text-center space-y-3">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">

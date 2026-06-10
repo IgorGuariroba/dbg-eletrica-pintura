@@ -27,7 +27,7 @@ export function ComoFunciona() {
   return (
     <section
       id="como-funciona"
-      className="container mx-auto px-4 py-16 max-w-5xl"
+      className="container mx-auto px-4 py-16 max-w-5xl scroll-mt-24"
     >
       <div className="mb-8 text-center">
         <h2 className="text-2xl md:text-3xl font-bold">Como funciona</h2>
