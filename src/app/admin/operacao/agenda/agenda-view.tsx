@@ -407,7 +407,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
               variant="outline"
               disabled={cancelando}
               onClick={() => setCancelOpen(false)}
-              className="cursor-pointer"
+              className="h-11 sm:h-9 cursor-pointer"
             >
               Voltar
             </Button>
@@ -415,7 +415,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
               variant="destructive"
               disabled={motivo.trim().length < 10 || cancelando}
               onClick={executarCancelar}
-              className="font-bold cursor-pointer"
+              className="h-11 sm:h-9 font-bold cursor-pointer"
             >
               {cancelando ? "Cancelando..." : "Confirmar Cancelamento"}
             </Button>
@@ -469,7 +469,7 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
                           type="button"
                           size="sm"
                           variant={slotSelecionado === slot.inicioISO ? "default" : "outline"}
-                          className="h-8 text-xs cursor-pointer"
+                          className="h-11 sm:h-8 text-xs cursor-pointer"
                           onClick={() => setSlotSelecionado(slot.inicioISO)}
                         >
                           {fmtHora.format(new Date(slot.inicioISO))}
@@ -492,14 +492,14 @@ export function AdminAgendaView({ itensIniciais }: { itensIniciais: ItemAgendaVi
               variant="outline"
               disabled={reagendando}
               onClick={() => setReagendarOpen(false)}
-              className="cursor-pointer"
+              className="h-11 sm:h-9 cursor-pointer"
             >
               Voltar
             </Button>
             <Button
               disabled={!slotSelecionado || motivoReagendar.trim().length < 10 || reagendando}
               onClick={executarReagendar}
-              className="font-bold cursor-pointer"
+              className="h-11 sm:h-9 font-bold cursor-pointer"
             >
               {reagendando ? "Reagendando..." : "Confirmar Reagendamento"}
             </Button>

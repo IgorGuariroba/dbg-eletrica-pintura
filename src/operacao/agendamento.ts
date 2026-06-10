@@ -75,6 +75,7 @@ export class CancelamentoEmExecucaoError extends Error {
 
 export interface AgendamentoService {
   obterSlotsCliente(token: string, osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]>;
+  obterSlotsAdmin(osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]>;
   agendarCliente(token: string, osId: string, horario: Date): Promise<void>;
   cancelarCliente(token: string, osId: string, whatsapp: string): Promise<void>;
   reagendarCliente(
@@ -126,16 +127,9 @@ export class AgendamentoServiceImpl implements AgendamentoService {
     });
   }
 
-  async obterSlotsCliente(token: string, osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]> {
-    const os = await this.repo.buscarOsComToken(token, osId);
-    if (!os) {
-      throw new OsInexistenteError();
-    }
-    if (os.estado !== "APROVADA") {
-      throw new OsNaoAgendavelError();
-    }
-
-    const rawSlots = await this.calcularGradeSlots(os.categoria, os.clienteAssinante);
+  /** Achata a grade em horários únicos, preservando a flag de prioridade. */
+  private async gradeUnica(categoria: Categoria, assinante: boolean) {
+    const rawSlots = await this.calcularGradeSlots(categoria, assinante);
 
     const vistos = new Set<number>();
     const unicos: { inicio: Date; prioridade?: boolean }[] = [];
@@ -151,6 +145,30 @@ export class AgendamentoServiceImpl implements AgendamentoService {
     }
 
     return unicos;
+  }
+
+  async obterSlotsCliente(token: string, osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]> {
+    const os = await this.repo.buscarOsComToken(token, osId);
+    if (!os) {
+      throw new OsInexistenteError();
+    }
+    if (os.estado !== "APROVADA") {
+      throw new OsNaoAgendavelError();
+    }
+
+    return this.gradeUnica(os.categoria, os.clienteAssinante);
+  }
+
+  async obterSlotsAdmin(osId: string): Promise<{ inicio: Date; prioridade?: boolean }[]> {
+    const os = await this.repo.buscarOs(osId);
+    if (!os) {
+      throw new OsInexistenteError();
+    }
+    if (!REAGENDAVEIS_ADMIN.includes(os.estado)) {
+      throw new OsNaoAgendavelError("OS não está em estado reagendável (pré-execução)");
+    }
+
+    return this.gradeUnica(os.categoria, os.clienteAssinante);
   }
 
   async agendarCliente(token: string, osId: string, horario: Date): Promise<void> {

@@ -675,6 +675,32 @@ describe("AgendamentoService - cancelarTecnico", () => {
   });
 });
 
+describe("AgendamentoService - obterSlotsAdmin", () => {
+  it("retorna a grade para OS AGENDADA (estado pré-execução), caso típico do reagendamento admin", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "AGENDADA" })) });
+    const service = criarAgendamentoService(repo);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T00:00:00.000Z"));
+
+    const slots = await service.obterSlotsAdmin("os-1");
+
+    expect(slots.length).toBeGreaterThan(0);
+    expect(slots[0].inicio.toISOString()).toBe("2026-06-01T11:00:00.000Z");
+    vi.useRealTimers();
+  });
+
+  it("lança OsInexistenteError quando a OS não existe", async () => {
+    const service = criarAgendamentoService(criarFakeRepo());
+    await expect(service.obterSlotsAdmin("os-x")).rejects.toThrow(OsInexistenteError);
+  });
+
+  it("lança OsNaoAgendavelError quando a OS não está em estado pré-execução", async () => {
+    const repo = criarFakeRepo({ buscarOs: vi.fn(async () => osDados({ estado: "EM_EXECUCAO" })) });
+    const service = criarAgendamentoService(repo);
+    await expect(service.obterSlotsAdmin("os-1")).rejects.toThrow(OsNaoAgendavelError);
+  });
+});
+
 describe("AgendamentoService - reagendarAdmin (validação contra a grade)", () => {
   it("lança OsInexistenteError quando a OS não existe", async () => {
     const service = criarAgendamentoService(criarFakeRepo());

@@ -4,8 +4,6 @@ import { db } from "@/db/client";
 import { exigirOperacao } from "../guard";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
-import { ordemServico, solicitacao } from "@/db/schema";
 import { criarAgendamentoService } from "@/operacao/agendamento";
 import { criarAgendamentoRepoDrizzle } from "@/operacao/agendamento-repo-drizzle";
 
@@ -34,16 +32,7 @@ export async function cancelarLoteAction(
 export async function listarSlotsOsAdminAction(osId: string) {
   await exigirOperacao();
 
-  const [row] = await db
-    .select({ token: solicitacao.token })
-    .from(ordemServico)
-    .innerJoin(solicitacao, eq(ordemServico.solicitacaoId, solicitacao.id))
-    .where(eq(ordemServico.id, osId))
-    .limit(1);
-
-  if (!row) throw new Error("OS não encontrada");
-
-  const slots = await service.obterSlotsCliente(row.token, osId);
+  const slots = await service.obterSlotsAdmin(osId);
 
   return slots.map((s) => ({
     inicioISO: s.inicio.toISOString(),
