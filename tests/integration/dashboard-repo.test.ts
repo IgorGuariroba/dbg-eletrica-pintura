@@ -704,7 +704,7 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     expect(ocioso?.ultimaAtribuicao).toBeNull(); // nunca recebeu
   });
 
-  it("#66: total de chamados e OS PAGA elegíveis à garantia (taxa de acionamento)", async () => {
+  it("#66: chamados no mês e OS PAGA elegíveis à garantia (taxa de acionamento)", async () => {
     const osElegivel = await seedOs("ELETRICA", "PAGA", null, 12); // prazo > 0
     await seedOs("ELETRICA", "PAGA", null, 0); // prazo 0 → não elegível
     const [ch] = await dbRaw.insert(schema.garantiaChamado).values({
@@ -717,7 +717,7 @@ describe.skipIf(!hasDb)("DashboardRepo Drizzle (contadores de OS)", () => {
     }).returning();
     chamadoIds.push(ch.id);
 
-    expect(await repo.contarChamadosGarantiaTotal()).toBeGreaterThanOrEqual(1);
+    expect(await repo.contarChamadosGarantiaNoMes()).toBeGreaterThanOrEqual(1);
     expect(await repo.contarOsPagaElegiveisGarantia()).toBeGreaterThanOrEqual(1);
   });
 

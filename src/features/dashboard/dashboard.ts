@@ -188,7 +188,7 @@ export interface DashboardRepo {
   contarChamadosGarantiaAbertos(): Promise<number>;
   contarChamadosGarantiaResolvidosNoMes(): Promise<number>;
   contarGarantiasAtivas(): Promise<number>;
-  contarChamadosGarantiaTotal(): Promise<number>;
+  contarChamadosGarantiaNoMes(): Promise<number>;
   contarOsPagaElegiveisGarantia(): Promise<number>;
   contarInadimplenciaMais7Dias(): Promise<number>;
   listarAssinaturasAtivasComPreco(): Promise<{ preco: string }[]>;
@@ -288,12 +288,12 @@ export async function montarDashboard(
   }
 
   if (podeAcessarModulo("GARANTIAS", usuario)) {
-    const [chamadosAbertos, resolvidosNoMes, ativas, chamadosTotal, elegiveis] =
+    const [chamadosAbertos, resolvidosNoMes, ativas, chamadosNoMes, elegiveis] =
       await Promise.all([
         repo.contarChamadosGarantiaAbertos(),
         repo.contarChamadosGarantiaResolvidosNoMes(),
         repo.contarGarantiasAtivas(),
-        repo.contarChamadosGarantiaTotal(),
+        repo.contarChamadosGarantiaNoMes(),
         repo.contarOsPagaElegiveisGarantia(),
       ]);
 
@@ -302,9 +302,9 @@ export async function montarDashboard(
       resolvidosNoMes,
       ativas,
       taxaAcionamento: {
-        chamados: chamadosTotal,
+        chamados: chamadosNoMes,
         elegiveis,
-        pct: calcularPct(chamadosTotal, elegiveis),
+        pct: calcularPct(chamadosNoMes, elegiveis),
       },
     };
   }

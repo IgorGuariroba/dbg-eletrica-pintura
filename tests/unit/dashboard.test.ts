@@ -42,7 +42,7 @@ function repoFake(over: Partial<DashboardRepo> = {}): DashboardRepo {
     contarChamadosGarantiaAbertos: vi.fn(async () => 0),
     contarChamadosGarantiaResolvidosNoMes: vi.fn(async () => 0),
     contarGarantiasAtivas: vi.fn(async () => 0),
-    contarChamadosGarantiaTotal: vi.fn(async () => 0),
+    contarChamadosGarantiaNoMes: vi.fn(async () => 0),
     contarOsPagaElegiveisGarantia: vi.fn(async () => 0),
     contarInadimplenciaMais7Dias: vi.fn(async () => 0),
     listarAssinaturasAtivasComPreco: vi.fn(async () => []),
@@ -286,9 +286,9 @@ describe("montarDashboard", () => {
     expect(dashSem.garantias).toBeUndefined();
   });
 
-  it("card de Garantias calcula a taxa de acionamento (chamados / OS PAGA elegíveis)", async () => {
+  it("card de Garantias calcula a taxa de acionamento (chamados no mês / OS PAGA elegíveis)", async () => {
     const repo = repoFake({
-      contarChamadosGarantiaTotal: vi.fn(async () => 3),
+      contarChamadosGarantiaNoMes: vi.fn(async () => 3),
       contarOsPagaElegiveisGarantia: vi.fn(async () => 12),
     });
     const dash = await montarDashboard(usuario({ modulos: ["GARANTIAS"] }), repo);

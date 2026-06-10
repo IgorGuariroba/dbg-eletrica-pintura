@@ -195,7 +195,7 @@ export function DashboardCards({ data }: { data: Dashboard }) {
             <KpiCard label="Resolvidos no mês" value={data.garantias.resolvidosNoMes} />
             <KpiCard label="Garantias ativas" value={data.garantias.ativas} />
             <KpiCard
-              label="Taxa de acionamento"
+              label="Taxa de acionamento (mês)"
               value={pct(data.garantias.taxaAcionamento.pct)}
             />
           </div>

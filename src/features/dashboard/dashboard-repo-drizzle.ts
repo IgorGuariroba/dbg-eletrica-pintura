@@ -326,8 +326,13 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
         );
       return Number(value);
     },
-    async contarChamadosGarantiaTotal() {
-      const [{ value }] = await db.select({ value: count() }).from(garantiaChamado);
+    async contarChamadosGarantiaNoMes() {
+      // Acionamentos abertos no mês corrente — coerente com os demais cards de
+      // Garantias, que também são mensais (resolvidos no mês, etc.).
+      const [{ value }] = await db
+        .select({ value: count() })
+        .from(garantiaChamado)
+        .where(gte(garantiaChamado.criadoEm, sql`date_trunc('month', now())`));
       return Number(value);
     },
     async contarOsPagaElegiveisGarantia() {
