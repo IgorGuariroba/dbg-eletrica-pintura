@@ -84,6 +84,11 @@ export interface CardGarantias {
   chamadosAbertos: number;
   resolvidosNoMes: number;
   ativas: number;
+  taxaAcionamento: {
+    chamados: number;
+    elegiveis: number;
+    pct: number | null;
+  };
 }
 
 export interface FaturamentoPeriodos {
@@ -165,6 +170,8 @@ export interface DashboardRepo {
   contarChamadosGarantiaAbertos(): Promise<number>;
   contarChamadosGarantiaResolvidosNoMes(): Promise<number>;
   contarGarantiasAtivas(): Promise<number>;
+  contarChamadosGarantiaTotal(): Promise<number>;
+  contarOsPagaElegiveisGarantia(): Promise<number>;
   contarInadimplenciaMais7Dias(): Promise<number>;
   listarAssinaturasAtivasComPreco(): Promise<{ preco: string }[]>;
   contarAssinaturasCanceladasNoMes(): Promise<number>;
@@ -263,16 +270,24 @@ export async function montarDashboard(
   }
 
   if (podeAcessarModulo("GARANTIAS", usuario)) {
-    const [chamadosAbertos, resolvidosNoMes, ativas] = await Promise.all([
-      repo.contarChamadosGarantiaAbertos(),
-      repo.contarChamadosGarantiaResolvidosNoMes(),
-      repo.contarGarantiasAtivas(),
-    ]);
+    const [chamadosAbertos, resolvidosNoMes, ativas, chamadosTotal, elegiveis] =
+      await Promise.all([
+        repo.contarChamadosGarantiaAbertos(),
+        repo.contarChamadosGarantiaResolvidosNoMes(),
+        repo.contarGarantiasAtivas(),
+        repo.contarChamadosGarantiaTotal(),
+        repo.contarOsPagaElegiveisGarantia(),
+      ]);
 
     dash.garantias = {
       chamadosAbertos,
       resolvidosNoMes,
       ativas,
+      taxaAcionamento: {
+        chamados: chamadosTotal,
+        elegiveis,
+        pct: calcularPct(chamadosTotal, elegiveis),
+      },
     };
   }
 

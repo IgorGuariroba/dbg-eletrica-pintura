@@ -40,6 +40,8 @@ function repoFake(over: Partial<DashboardRepo> = {}): DashboardRepo {
     contarChamadosGarantiaAbertos: vi.fn(async () => 0),
     contarChamadosGarantiaResolvidosNoMes: vi.fn(async () => 0),
     contarGarantiasAtivas: vi.fn(async () => 0),
+    contarChamadosGarantiaTotal: vi.fn(async () => 0),
+    contarOsPagaElegiveisGarantia: vi.fn(async () => 0),
     contarInadimplenciaMais7Dias: vi.fn(async () => 0),
     listarAssinaturasAtivasComPreco: vi.fn(async () => []),
     contarAssinaturasCanceladasNoMes: vi.fn(async () => 0),
@@ -253,7 +255,7 @@ describe("montarDashboard", () => {
     });
 
     const dashCom = await montarDashboard(usuario({ modulos: ["GARANTIAS"] }), repo);
-    expect(dashCom.garantias).toEqual({
+    expect(dashCom.garantias).toMatchObject({
       chamadosAbertos: 2,
       resolvidosNoMes: 5,
       ativas: 12,
@@ -261,6 +263,20 @@ describe("montarDashboard", () => {
 
     const dashSem = await montarDashboard(usuario({ modulos: [] }), repo);
     expect(dashSem.garantias).toBeUndefined();
+  });
+
+  it("card de Garantias calcula a taxa de acionamento (chamados / OS PAGA elegíveis)", async () => {
+    const repo = repoFake({
+      contarChamadosGarantiaTotal: vi.fn(async () => 3),
+      contarOsPagaElegiveisGarantia: vi.fn(async () => 12),
+    });
+    const dash = await montarDashboard(usuario({ modulos: ["GARANTIAS"] }), repo);
+
+    expect(dash.garantias?.taxaAcionamento).toEqual({
+      chamados: 3,
+      elegiveis: 12,
+      pct: 0.25,
+    });
   });
 
   it("membro com módulo FINANCEIRO vê card Financeiro, e sem o módulo não vê", async () => {

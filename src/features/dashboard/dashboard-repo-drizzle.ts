@@ -291,6 +291,23 @@ export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {
         );
       return Number(value);
     },
+    async contarChamadosGarantiaTotal() {
+      const [{ value }] = await db.select({ value: count() }).from(garantiaChamado);
+      return Number(value);
+    },
+    async contarOsPagaElegiveisGarantia() {
+      const [{ value }] = await db
+        .select({ value: count() })
+        .from(ordemServico)
+        .where(
+          and(
+            eq(ordemServico.estado, "PAGA"),
+            sql`${ordemServico.prazoGarantiaMeses} is not null`,
+            sql`${ordemServico.prazoGarantiaMeses} > 0`,
+          ),
+        );
+      return Number(value);
+    },
     async contarGarantiasAtivas() {
       const [{ value }] = await db
         .select({ value: count() })
