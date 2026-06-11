@@ -55,6 +55,7 @@ export function SiteHeader() {
           <Link
             href="/solicitar"
             className={buttonVariants({
+              variant: "gradient",
               className: "h-11 rounded-full px-4 md:h-8 md:px-3",
             })}
           >

@@ -15,7 +15,10 @@ export function CtaFinal() {
           WhatsApp.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
-          <Link href="/solicitar" className={buttonVariants({ size: "lg" })}>
+          <Link
+            href="/solicitar"
+            className={buttonVariants({ size: "lg", variant: "gradient" })}
+          >
             Solicitar orçamento
           </Link>
           <a
