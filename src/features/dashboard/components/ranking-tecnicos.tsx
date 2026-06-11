@@ -36,7 +36,7 @@ export function RankingTecnicos({ ranking }: RankingTecnicosProps) {
               className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
             >
               <div className="flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-500 text-xs font-semibold text-accent-950">
                   {index + 1}
                 </span>
                 <span className="text-sm font-medium text-foreground">
