@@ -30,7 +30,7 @@ export function ComoFunciona() {
       className="container mx-auto px-4 py-16 max-w-5xl scroll-mt-24"
     >
       <div className="mb-8 text-center">
-        <h2 className="text-2xl md:text-3xl font-bold">Como funciona</h2>
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Como funciona</h2>
       </div>
       <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {PASSOS.map((passo, i) => (

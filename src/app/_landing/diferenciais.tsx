@@ -46,7 +46,7 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
             {mostrarNota && (
               <p className="flex items-center gap-2 text-sm">
                 <Star className="size-4 fill-primary text-primary" />
-                <strong className="text-lg tabular-nums">
+                <strong className="text-lg font-mono font-bold">
                   {metricas.notaMedia!.toFixed(1).replace(".", ",")}
                 </strong>
                 <span className="text-muted-foreground">
@@ -56,7 +56,7 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
             )}
             {mostrarConcluidas && (
               <p className="flex items-center gap-2 text-sm">
-                <strong className="text-lg tabular-nums">
+                <strong className="text-lg font-mono font-bold">
                   {metricas.osConcluidas}
                 </strong>
                 <span className="text-muted-foreground">

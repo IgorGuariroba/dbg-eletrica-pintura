@@ -75,7 +75,7 @@ export function Portfolio({ fotos, limite }: Props) {
     <section id="portfolio" className="bg-muted scroll-mt-24">
       <div className="container mx-auto px-4 py-16 max-w-5xl">
         <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold">
+          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Trabalhos de verdade
           </h2>
           <p className="text-muted-foreground text-sm md:text-base mt-2">

@@ -1,11 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const plexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: "DBG Elétrica e Pintura",
@@ -42,7 +52,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={cn("font-sans", inter.variable)}
+      className={cn("font-sans", plexSans.variable, plexMono.variable)}
       suppressHydrationWarning
     >
       <body className="antialiased">

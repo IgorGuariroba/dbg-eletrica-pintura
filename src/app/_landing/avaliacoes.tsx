@@ -66,7 +66,7 @@ export function Avaliacoes({
   return (
     <section className="container mx-auto px-4 py-16 max-w-5xl overflow-hidden">
       <div className="text-center mb-12">
-        <h2 className="text-2xl md:text-3xl font-bold">O que dizem</h2>
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">O que dizem</h2>
         <p className="text-muted-foreground text-sm md:text-base mt-2">
           Avaliações reais de clientes, coletadas após cada serviço concluído.
         </p>
@@ -144,7 +144,7 @@ export function Avaliacoes({
                     <div className="flex flex-col items-center flex-grow justify-center">
                       <p
                         className={cn(
-                          "text-sm text-foreground/90 leading-relaxed italic max-w-md",
+                          "text-base text-foreground/90 leading-relaxed italic max-w-md",
                           !isExpanded && needsTruncation && "line-clamp-3"
                         )}
                       >

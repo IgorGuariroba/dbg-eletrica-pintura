@@ -22,10 +22,10 @@ export function Hero({ bairros }: { bairros: string[] }) {
           <Star className="size-3 fill-current" />
           Elétrica, Pintura e Drywall residencial
         </p>
-        <h1 className="mt-4 text-3xl md:text-5xl font-bold tracking-tight leading-tight">
+        <h1 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight leading-tight">
           Serviço transparente, com preço fixo e garantia.
         </h1>
-        <p className="mt-3 text-muted-foreground text-base md:text-lg max-w-2xl">
+        <p className="mt-3 text-muted-foreground text-base md:text-lg leading-relaxed max-w-2xl">
           Você sabe o preço antes do técnico chegar. Vê o profissional que vai
           atender. Recebe fotos do antes e depois. Sem surpresa no final.
         </p>

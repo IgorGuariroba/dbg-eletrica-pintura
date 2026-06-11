@@ -60,7 +60,7 @@ export function ServicosGrid({
       className="container mx-auto px-4 py-16 max-w-5xl scroll-mt-24"
     >
       <div className="mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold">{titulo}</h2>
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">{titulo}</h2>
         <p className="text-muted-foreground text-sm md:text-base mt-2">
           {descricao}
         </p>
@@ -99,7 +99,7 @@ export function ServicosGrid({
                     <div className="p-4 flex-1 flex flex-col">
                       <h4 className="font-medium">{s.nome}</h4>
                       <div className="mt-auto pt-3 flex items-baseline justify-between">
-                        <span className="text-xl font-bold tabular-nums">
+                        <span className="text-xl font-bold font-mono">
                           {formatBRL(s.precoBase)}
                         </span>
                         <span className="text-xs text-muted-foreground">
