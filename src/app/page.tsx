@@ -120,7 +120,7 @@ export default async function Home() {
   return (
     <>
       <SiteHeader />
-      <Hero bairros={bairros} />
+      <Hero bairros={bairros} metricas={metricas} />
       <Diferenciais metricas={metricas} />
       <Portfolio fotos={portfolio} limite={6} />
       <ServicosGrid servicos={servicos} limitePorCategoria={3} />
