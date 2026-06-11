@@ -30,7 +30,10 @@ export function Hero({ bairros }: { bairros: string[] }) {
           atender. Recebe fotos do antes e depois. Sem surpresa no final.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/solicitar" className={buttonVariants({ size: "lg" })}>
+          <Link
+            href="/solicitar"
+            className={buttonVariants({ size: "lg", variant: "gradient" })}
+          >
             Solicitar orçamento
           </Link>
           <Link
