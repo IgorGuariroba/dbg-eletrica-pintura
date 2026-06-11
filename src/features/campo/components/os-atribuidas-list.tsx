@@ -107,7 +107,7 @@ export function OsAtribuidasList() {
           "EM_EXECUCAO",
         ].includes(os.estado);
         const conteudo = (
-          <Card className={acionavel ? "transition-colors hover:bg-accent" : ""}>
+          <Card className={acionavel ? "transition-colors hover:bg-muted" : ""}>
             <CardContent className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-base font-semibold">{os.clienteNome}</span>

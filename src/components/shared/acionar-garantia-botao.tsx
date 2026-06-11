@@ -19,9 +19,9 @@ export function AcionarGarantiaBotao({ osId }: AcionarGarantiaBotaoProps) {
         variant="outline"
         size="sm"
         onClick={() => setIsOpen(true)}
-        className="h-8 font-medium cursor-pointer shadow-sm hover:bg-accent flex items-center gap-1.5"
+        className="h-8 font-medium cursor-pointer shadow-sm hover:bg-muted flex items-center gap-1.5"
       >
-        <ShieldAlert className="size-4 text-amber-500" />
+        <ShieldAlert className="size-4 text-warning" />
         Acionar Garantia
       </Button>
 

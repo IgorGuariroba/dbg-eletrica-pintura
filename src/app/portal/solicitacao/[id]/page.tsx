@@ -117,7 +117,7 @@ export default async function PortalSolicitacaoPage({
                         <div className="flex items-center gap-2 mr-2">
                           <Link
                             href={`/portal/os/${os.id}/reagendar` as Route}
-                            className={buttonVariants({ variant: "outline", size: "sm", className: "h-8 font-medium cursor-pointer shadow-sm hover:bg-accent" })}
+                            className={buttonVariants({ variant: "outline", size: "sm", className: "h-8 font-medium cursor-pointer shadow-sm hover:bg-muted" })}
                           >
                             Reagendar
                           </Link>
@@ -139,7 +139,7 @@ export default async function PortalSolicitacaoPage({
                             className={buttonVariants({
                               variant: "ghost",
                               size: "sm",
-                              className: "h-8 font-medium cursor-pointer flex items-center gap-1.5 hover:bg-accent text-muted-foreground hover:text-foreground",
+                              className: "h-8 font-medium cursor-pointer flex items-center gap-1.5 hover:bg-muted text-muted-foreground hover:text-foreground",
                             })}
                           >
                             Acionar via WhatsApp
