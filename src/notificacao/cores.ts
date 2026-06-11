@@ -11,9 +11,9 @@ export const CORES = {
   texto: "#111111", // --foreground
   primaria: "#3CAAF0", // --primary
   primariaTexto: "#FFFFFF", // --primary-foreground
-  mutedBg: "#F2F2F2", // --muted / --secondary
-  mutedTexto: "#888888", // --muted-foreground
-  acento: "#5EBBF5", // --accent
+  mutedBg: "#ECF3F9", // --muted / --secondary
+  mutedTexto: "#616E78", // --muted-foreground
+  acento: "#FF6900", // --accent
   borda: "#E2E8F0", // --border
   destrutiva: "#EF4444", // --destructive
 } as const;

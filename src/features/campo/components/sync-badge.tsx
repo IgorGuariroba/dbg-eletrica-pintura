@@ -115,7 +115,7 @@ export function SyncBadge() {
   // Estado: Sincronizando
   if (isSyncing) {
     return (
-      <Badge variant="secondary" className="gap-1 animate-pulse border-accent bg-accent/10 text-accent">
+      <Badge variant="secondary" className="gap-1 animate-pulse border-accent bg-accent/10 text-accent-700 dark:text-accent-300">
         <Loader2 className="size-3 animate-spin" aria-hidden />
         Sincronizando...
       </Badge>

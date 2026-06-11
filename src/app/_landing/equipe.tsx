@@ -38,7 +38,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: Membro[] }) {
   return (
     <section id="equipe" className="py-16 bg-background scroll-mt-24">
       <div className="mx-auto max-w-5xl px-4 md:px-6 text-center space-y-6">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
           Conheça Nossa Equipe
         </h2>
         <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
@@ -140,7 +140,7 @@ export function Equipe({ tecnicos, compacta }: Props) {
     <section id="equipe" className="py-16 md:py-24 bg-background scroll-mt-24">
       <div className="mx-auto max-w-5xl px-4 md:px-6 space-y-12">
         <div className="text-center space-y-3">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
             Conheça Nossa Equipe
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base leading-relaxed">

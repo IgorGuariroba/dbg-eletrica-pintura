@@ -14,12 +14,12 @@
   --popover-foreground: oklch(0.1776 0 0);
   --primary: var(--primary-700);
   --primary-foreground: oklch(1.0000 0 0);
-  --secondary: oklch(0.96 0 0);
+  --secondary: oklch(0.9560 0.0130 241.2584);
   --secondary-foreground: oklch(0.3867 0 0);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.5370 0 0);
-  --accent: var(--accent-700);
-  --accent-foreground: oklch(1.0000 0 0);
+  --muted: oklch(0.9600 0.0110 241.2584);
+  --muted-foreground: oklch(0.5300 0.0220 241.2584);
+  --accent: oklch(0.96 0.01 241.2584);
+  --accent-foreground: oklch(0.3867 0 0);
   --destructive: oklch(0.5905 0.2078 25.3313);
   --destructive-foreground: oklch(1.0000 0 0);
   --success: oklch(0.5355 0.194 149.2);
@@ -64,22 +64,24 @@
   --primary-900: oklch(0.3250 0.0760 241.2584);
   --primary-950: oklch(0.2300 0.0500 241.2584);
 
-  /* Escala de accent (azul claro h≈238). --accent === --accent-500. */
-  --accent-50: oklch(0.9730 0.0130 238.6063);
-  --accent-100: oklch(0.9430 0.0310 238.6063);
-  --accent-200: oklch(0.8900 0.0580 238.6063);
-  --accent-300: oklch(0.8420 0.0860 238.6063);
-  --accent-400: oklch(0.8000 0.1080 238.6063);
-  --accent-500: oklch(0.7587 0.1216 238.6063);
-  --accent-600: oklch(0.6650 0.1300 238.6063);
-  --accent-700: oklch(0.5550 0.1180 238.6063);
-  --accent-800: oklch(0.4450 0.0930 238.6063);
-  --accent-900: oklch(0.3450 0.0690 238.6063);
-  --accent-950: oklch(0.2450 0.0450 238.6063);
+  /* Escala de accent (laranja quente h≈48): o "10%" da regra 60-30-10 —
+     CTA e destaques. Foreground escuro: branco sobre laranja reprova
+     WCAG AA. --accent === --accent-500. */
+  --accent-50: oklch(0.9800 0.0160 73.6840);
+  --accent-100: oklch(0.9540 0.0380 75.1640);
+  --accent-200: oklch(0.9010 0.0760 70.6970);
+  --accent-300: oklch(0.8370 0.1280 66.2900);
+  --accent-400: oklch(0.7500 0.1830 55.9340);
+  --accent-500: oklch(0.7050 0.2130 47.6040);
+  --accent-600: oklch(0.6460 0.2220 41.1160);
+  --accent-700: oklch(0.5530 0.1950 38.4020);
+  --accent-800: oklch(0.4700 0.1570 37.3040);
+  --accent-900: oklch(0.4080 0.1230 38.1720);
+  --accent-950: oklch(0.2660 0.0790 36.2590);
 
-  --font-sans: Inter, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-serif: Georgia, serif;
-  --font-mono: monospace;
+  --font-mono: var(--font-mono), monospace;
   --radius: 0.5rem;
 
   --shadow-x: 0;
@@ -114,8 +116,8 @@
   --secondary-foreground: oklch(0.6731 0 0);
   --muted: oklch(0.23 0.0227 283.7998);
   --muted-foreground: oklch(0.6731 0 0);
-  --accent: var(--accent-700);
-  --accent-foreground: oklch(1.0000 0 0);
+  --accent: oklch(0.23 0.0227 283.7998);
+  --accent-foreground: oklch(0.9755 0.0045 258.3245);
   --destructive: oklch(0.5905 0.2078 25.3313);
   --destructive-foreground: oklch(1.0000 0 0);
   --success: oklch(0.5355 0.194 149.2);
