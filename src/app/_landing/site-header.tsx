@@ -4,11 +4,13 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MenuMobile, type LinkNavegacao } from "./menu-mobile";
 
+// "/#id" (não "#id"): o header aparece também em /servicos e /equipe,
+// onde âncora sem path não navega de volta para a home.
 const LINKS: LinkNavegacao[] = [
-  { href: "#servicos", label: "Serviços" },
-  { href: "#portfolio", label: "Portfólio" },
-  { href: "#como-funciona", label: "Como funciona" },
-  { href: "#equipe", label: "Equipe" },
+  { href: "/#servicos", label: "Serviços" },
+  { href: "/#portfolio", label: "Portfólio" },
+  { href: "/#como-funciona", label: "Como funciona" },
+  { href: "/#equipe", label: "Equipe" },
 ];
 
 export function SiteHeader() {
@@ -53,8 +55,7 @@ export function SiteHeader() {
           <Link
             href="/solicitar"
             className={buttonVariants({
-              size: "sm",
-              className: "h-11 rounded-full px-4 md:h-7 md:px-2.5",
+              className: "h-11 rounded-full px-4 md:h-8 md:px-3",
             })}
           >
             Solicitar orçamento

@@ -95,7 +95,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: Membro[] }) {
                           <Badge
                             key={esp}
                             variant="outline"
-                            className="text-[10px] uppercase font-bold tracking-wider py-0 px-1.5 border-primary/20 text-primary"
+                            className="text-xs uppercase font-bold tracking-wider py-0 px-1.5 border-primary/20 text-primary"
                           >
                             {esp}
                           </Badge>
@@ -167,7 +167,7 @@ export function Equipe({ tecnicos, compacta }: Props) {
                   <h3 className="font-semibold text-lg text-foreground">{tecnico.nome}</h3>
                   <div className="flex flex-wrap justify-center gap-1">
                     {tecnico.especialidades.map((esp) => (
-                      <Badge key={esp} variant="outline" className="text-[10px] uppercase font-bold tracking-wider py-0 px-1.5 border-primary/20 text-primary">
+                      <Badge key={esp} variant="outline" className="text-xs uppercase font-bold tracking-wider py-0 px-1.5 border-primary/20 text-primary">
                         {esp}
                       </Badge>
                     ))}

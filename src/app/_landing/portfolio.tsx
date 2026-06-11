@@ -67,7 +67,8 @@ const FOTOS_PADRAO: FotoPortfolioView[] = [
 ];
 
 export function Portfolio({ fotos, limite }: Props) {
-  const listaFotos = fotos.length > 0 ? fotos : FOTOS_PADRAO;
+  const usandoPadrao = fotos.length === 0;
+  const listaFotos = usandoPadrao ? FOTOS_PADRAO : fotos;
   const visiveis = limite != null ? listaFotos.slice(0, limite) : listaFotos;
 
   return (
@@ -78,8 +79,9 @@ export function Portfolio({ fotos, limite }: Props) {
             Trabalhos de verdade
           </h2>
           <p className="text-muted-foreground text-sm md:text-base mt-2">
-            Fotos reais de serviços concluídos, publicadas com permissão do
-            cliente.
+            {usandoPadrao
+              ? "Fotos reais de serviços executados pela equipe DBG."
+              : "Fotos reais de serviços concluídos, publicadas com permissão do cliente."}
           </p>
         </div>
 
@@ -100,7 +102,7 @@ export function Portfolio({ fotos, limite }: Props) {
                   loading="lazy"
                   className="w-full h-auto"
                 />
-                <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-xs font-bold uppercase tracking-wider">
                   {f.tipo === "ANTES" ? "Antes" : "Depois"}
                 </span>
               </div>
