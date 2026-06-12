@@ -22,6 +22,7 @@ export default async function setup() {
   const {
     cliente,
     membro,
+    notificacaoMarco,
     ordemServico,
     orcamento,
     pagamento,
@@ -65,6 +66,11 @@ export default async function setup() {
       await db.delete(tratativa).where(inArray(tratativa.osId, osIds));
       await db.delete(alertaAvaliacao).where(inArray(alertaAvaliacao.osId, osIds));
       await db.delete(avaliacao).where(inArray(avaliacao.osId, osIds));
+      // notificacaoMarco usa referência genérica sem FK (não cai por cascade) —
+      // varrer junto, senão marcos de OS de teste viram lixo permanente.
+      await db
+        .delete(notificacaoMarco)
+        .where(inArray(notificacaoMarco.refId, osIds));
     }
     await db
       .delete(ordemServico)

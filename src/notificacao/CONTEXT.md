@@ -36,6 +36,10 @@ _Avoid_: Mensagem padrão, modelo
 Cada transição de estado da OS emite evento. Contexto Notificação consome e decide: qual canal, qual template, qual horário. Outros contextos emitem eventos também (pagamento falho, remarketing, avaliação).
 _Avoid_: Trigger, webhook interno, signal
 
+**Marco de Notificação**:
+Registro único por (referência, evento) que o contexto reivindica antes de enviar. Garantia do contexto Notificação, não do emissor. A referência é genérica: id de OS para eventos de OS, id de assinatura para eventos de assinatura. Limitação consciente: claim ganho + falha de canal posterior não reenvia (sem retry parcial por canal).
+_Avoid_: Dedup, lock de envio, flag de enviado
+
 ## Relationships
 
 - **Notificação ← Operação**: transições de estado OS emitem eventos
