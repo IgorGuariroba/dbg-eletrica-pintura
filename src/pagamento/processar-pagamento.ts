@@ -45,10 +45,8 @@ async function ativarPadrao(assinaturaId: string): Promise<void> {
   await ativarAssinaturaCombinada(assinaturaId, {
     repo: criarAssinaturaCombinadaRepoDrizzle(db),
     enviarBoasVindas: async (id) => {
-      const { enviarBoasVindasCombo } = await import(
-        "@/assinatura/enviar-boas-vindas"
-      );
-      await enviarBoasVindasCombo(id);
+      const { notificar } = await import("@/notificacao/notificar");
+      await notificar({ tipo: "assinatura.criada_combo", assinaturaId: id });
     },
   });
 }

@@ -5,6 +5,10 @@ import {
 } from "@/documentos/gerar-documentos-os";
 import { despacharEventoOs, type DespachoResultado } from "./dispatcher";
 import { notificarMudancaEstadoOs } from "./notificador";
+import {
+  notificarBoasVindasAssinatura,
+  type ConsultaAssinaturaMp,
+} from "./boas-vindas-assinatura";
 import type { EmailService } from "./email-service";
 import type { GatewayWhatsApp } from "./whatsapp-gateway";
 
@@ -12,13 +16,15 @@ import type { GatewayWhatsApp } from "./whatsapp-gateway";
  * Evento de Notificação: união discriminada consumida pela interface única do
  * contexto. O emissor entrega só identificadores; Notificação carrega os dados
  * do render por conta própria (loaders Drizzle internos, não injetáveis).
- * Demais membros (assinatura.*, os.lembrete_*) entram em fatias futuras.
+ * Demais membros (os.lembrete_*, assinatura.pagamento_falhou) entram em
+ * fatias futuras.
  */
-export type EventoNotificacao = {
-  tipo: "os.transicao";
-  osId: string;
-  estadoNovo: EstadoOs;
-};
+export type EventoNotificacao =
+  | { tipo: "os.transicao"; osId: string; estadoNovo: EstadoOs }
+  | { tipo: "assinatura.criada"; preapprovalIdMp: string }
+  // Combo "pagar tudo junto + assinar" (#65): sem pre-approval no MP, lookup
+  // pelo id local e próxima cobrança "a confirmar".
+  | { tipo: "assinatura.criada_combo"; assinaturaId: string };
 
 /** Adapter de saída de documentos (fatura/certificado/relatório + e-mail). */
 export type GeradorDocumentos = (
@@ -37,6 +43,12 @@ export interface NotificarDeps {
   email?: EmailService;
   /** Adapter de saída de documentos (default: gerarDocumentosOs → R2+Resend). */
   documentos?: GeradorDocumentos;
+  /**
+   * Consulta de assinatura no MP (próxima cobrança das boas-vindas; default:
+   * adapter real). Emissor que já tem o recurso em mãos injeta para evitar
+   * segunda chamada ao MP.
+   */
+  mpAssinatura?: ConsultaAssinaturaMp;
   /** Relógio injetável (default: agora). Repassado ao Horário Restrito. */
   agora?: Date;
 }
@@ -71,5 +83,14 @@ export async function notificar(
           ((osId, estado) =>
             gerarDocumentosOs(osId, estado as EstadoOs, { email: deps.email })),
       });
+
+    case "assinatura.criada":
+    case "assinatura.criada_combo":
+      return {
+        email: await notificarBoasVindasAssinatura(evento, {
+          email: deps.email,
+          mpAssinatura: deps.mpAssinatura,
+        }),
+      };
   }
 }
