@@ -173,8 +173,8 @@ export async function montarOrcamento(
 
   // Despacha as notificações de ORÇADA (WhatsApp orcamento_pronto + e-mail PDF)
   // de forma assíncrona e não-bloqueante.
-  const { despacharEventoOs } = await import("@/notificacao/dispatcher");
-  despacharEventoOs(os.id, "ORCADA").catch((e) => {
+  const { notificar } = await import("@/notificacao/notificar");
+  notificar({ tipo: "os.transicao", osId: os.id, estadoNovo: "ORCADA" }).catch((e) => {
     console.error(`Erro ao despachar notificação de orçamento pronto da OS ${os.id}:`, e);
   });
 

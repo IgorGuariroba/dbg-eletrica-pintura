@@ -75,9 +75,9 @@ export async function POST(
     );
 
     // Despacha as notificações da transição (WhatsApp + e-mail) de forma
-    // assíncrona e não-bloqueante — o dispatcher decide canais por evento.
-    const { despacharEventoOs } = await import("@/notificacao/dispatcher");
-    despacharEventoOs(id, registro.estadoNovo).catch((e) => {
+    // assíncrona e não-bloqueante — Notificação decide canais por evento.
+    const { notificar } = await import("@/notificacao/notificar");
+    notificar({ tipo: "os.transicao", osId: id, estadoNovo: registro.estadoNovo }).catch((e) => {
       console.error(`Erro ao despachar notificação da OS ${id}:`, e);
     });
 

@@ -91,6 +91,10 @@ export interface DespacharDeps {
  * passa por `enviarTemplate` (horário restrito + fila); e-mail é delegado ao
  * notificador (PDF + Resend). Cliente sem número/e-mail válido → pula o canal e
  * loga, sem lançar erro.
+ *
+ * Seam INTERNO do contexto Notificação (#159): emissores usam a interface
+ * única `notificar(evento)` de `./notificar` — não importar daqui fora do
+ * contexto/testes.
  */
 export async function despacharEventoOs(
   osId: string,
