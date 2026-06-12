@@ -9,7 +9,7 @@ import { atualizarPlano } from "@/financeiro/planos/atualizar-plano";
 import { toggleAtivoPlano } from "@/financeiro/planos/toggle-ativo-plano";
 import { publicarPlano } from "@/financeiro/planos/publicar-plano";
 import { criarPlanoRepoDrizzle } from "@/financeiro/planos/plano-repo-drizzle";
-import { criarGatewayMercadoPagoPlano } from "@/financeiro/planos/mercadopago-plano";
+import { criarGatewayMercadoPagoPlano } from "@/lib/mercadopago";
 import { exigirFinanceiro } from "../guard";
 
 function repo() {

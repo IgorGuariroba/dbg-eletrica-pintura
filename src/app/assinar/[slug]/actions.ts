@@ -4,7 +4,7 @@ import { db } from "@/db/client";
 import { exigirPortal } from "@/portal/guard";
 import { criarAssinaturaRepoDrizzle } from "@/assinatura/assinatura-repo-drizzle";
 import { criarClienteAssinaturaRepoDrizzle } from "@/assinatura/cliente-assinatura-repo-drizzle";
-import { criarGatewayMercadoPagoAssinatura } from "@/assinatura/mercadopago-assinatura";
+import { criarGatewayMercadoPagoAssinatura } from "@/lib/mercadopago";
 import {
   iniciarAssinaturaPlano,
   type IniciarAssinaturaResultado,

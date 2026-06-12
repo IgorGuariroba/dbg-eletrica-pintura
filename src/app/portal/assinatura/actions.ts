@@ -10,10 +10,10 @@ import {
 import { cancelarPreventivasFuturas } from "@/assinatura/cancelar-preventivas-futuras";
 import { agendarDowngrade } from "@/assinatura/agendar-downgrade";
 import { carregarGestaoAssinatura } from "@/assinatura/gestao-assinatura-loader";
-import { criarGatewayMercadoPagoAssinatura } from "@/assinatura/mercadopago-assinatura";
+import { criarGatewayMercadoPagoAssinatura } from "@/lib/mercadopago";
 import { criarPreventivaRepoDrizzle } from "@/assinatura/preventiva-repo-drizzle";
 import { upgradeAssinatura } from "@/assinatura/upgrade-assinatura";
-import { criarGatewayMercadoPago } from "@/pagamento/mercadopago-client";
+import { criarGatewayMercadoPago } from "@/lib/mercadopago";
 import { exigirPortal } from "@/portal/guard";
 
 /** Resolve a assinatura gerenciável do cliente logado (garante posse). */

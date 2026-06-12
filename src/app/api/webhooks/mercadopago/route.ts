@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/client";
 import { criarTransicaoRepoDrizzle } from "@/operacao/transicao-repo-drizzle";
-import { criarGatewayMercadoPago } from "@/pagamento/mercadopago-client";
+import { criarGatewayMercadoPago } from "@/lib/mercadopago";
 import { criarPagamentoRepoDrizzle } from "@/pagamento/pagamento-repo-drizzle";
 import { processarPagamento } from "@/pagamento/processar-pagamento";
 import {

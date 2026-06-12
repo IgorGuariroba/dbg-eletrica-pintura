@@ -4,7 +4,7 @@ import { criarAssinaturaRepoDrizzle } from "@/assinatura/assinatura-repo-drizzle
 import { efetivarPendencias } from "@/assinatura/efetivar-pendencias";
 import { derivarTipoEvento } from "@/assinatura/evento-webhook";
 import { enviarBoasVindas } from "@/assinatura/enviar-boas-vindas";
-import { criarGatewayMercadoPagoAssinatura } from "@/assinatura/mercadopago-assinatura";
+import { criarGatewayMercadoPagoAssinatura } from "@/lib/mercadopago";
 import { notificarFalhaPagamento } from "@/assinatura/notificar-falha-pagamento";
 import { processarEventoAssinatura } from "@/assinatura/processar-evento";
 import { db } from "@/db/client";

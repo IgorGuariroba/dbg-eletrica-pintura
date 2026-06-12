@@ -17,7 +17,8 @@ const SECRET = process.env.MP_WEBHOOK_SECRET ?? "test_webhook_secret_dev";
 
 // Gateway do Mercado Pago mockado: o webhook consulta o pagamento por id.
 const buscarPagamento = vi.fn();
-vi.mock("@/pagamento/mercadopago-client", () => ({
+vi.mock("@/lib/mercadopago", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/mercadopago")>()),
   criarGatewayMercadoPago: () => ({
     criarPreferencia: vi.fn(),
     criarPagamentoPix: vi.fn(),
