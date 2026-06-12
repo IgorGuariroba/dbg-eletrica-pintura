@@ -5,12 +5,9 @@ import { db } from "@/db/client";
 import { ordemServico } from "@/db/schema";
 import { podeAcessarModulo } from "@/auth/require-modulo";
 import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
-import {
-  aplicarTransicao,
-  TransicaoInvalidaError,
-} from "@/operacao/maquina-estado";
+import { TransicaoInvalidaError } from "@/operacao/maquina-estado";
 import { OsInexistenteError } from "@/operacao/transicao-repo";
-import { criarTransicaoRepoDrizzle } from "@/operacao/transicao-repo-drizzle";
+import { transicionarOs } from "@/operacao/transicionar-os";
 
 const ALVOS_PERMITIDOS = new Set([
   "A_CAMINHO",
@@ -64,22 +61,15 @@ export async function POST(
   }
 
   try {
-    const registro = await aplicarTransicao(
+    // Valida, persiste e despacha as notificações num módulo só; o despacho é
+    // assíncrono e não-bloqueante (a promise exposta é ignorada pela rota).
+    const { registro } = await transicionarOs(
       id,
       alvo as AlvoPermitido,
       user.email,
       null,
-      criarTransicaoRepoDrizzle(db),
-      new Date(),
-      geo,
+      { geo },
     );
-
-    // Despacha as notificações da transição (WhatsApp + e-mail) de forma
-    // assíncrona e não-bloqueante — Notificação decide canais por evento.
-    const { notificar } = await import("@/notificacao/notificar");
-    notificar({ tipo: "os.transicao", osId: id, estadoNovo: registro.estadoNovo }).catch((e) => {
-      console.error(`Erro ao despachar notificação da OS ${id}:`, e);
-    });
 
     return NextResponse.json({ estado: registro.estadoNovo });
   } catch (erro) {

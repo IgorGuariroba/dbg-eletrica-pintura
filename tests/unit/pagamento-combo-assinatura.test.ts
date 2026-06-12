@@ -41,7 +41,7 @@ describe("processarPagamento — combo pagar tudo junto + assinar (#65)", () => 
     const resultado = await processarPagamento(dadosCombo(), {
       pagamentoRepo,
       transicaoRepo,
-      notificarTransicao: vi.fn(),
+      transicionar: async () => ({ registro: {} as never, despacho: Promise.resolve({}) }),
       ativarAssinatura,
     });
 
@@ -58,7 +58,7 @@ describe("processarPagamento — combo pagar tudo junto + assinar (#65)", () => 
       {
         pagamentoRepo,
         transicaoRepo,
-        notificarTransicao: vi.fn(),
+        transicionar: async () => ({ registro: {} as never, despacho: Promise.resolve({}) }),
         ativarAssinatura,
       },
     );
@@ -76,7 +76,7 @@ describe("processarPagamento — combo pagar tudo junto + assinar (#65)", () => 
       {
         pagamentoRepo,
         transicaoRepo,
-        notificarTransicao: vi.fn(),
+        transicionar: async () => ({ registro: {} as never, despacho: Promise.resolve({}) }),
         ativarAssinatura,
       },
     );

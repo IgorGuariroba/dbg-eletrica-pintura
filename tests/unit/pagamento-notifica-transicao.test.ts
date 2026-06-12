@@ -32,30 +32,42 @@ function dados(over: Partial<DadosPagamento> = {}): DadosPagamento {
   };
 }
 
-describe("processarPagamento — emissão de notificação no PAGA", () => {
-  it("notifica a transição para cada OS que vira PAGA", async () => {
-    const notificarTransicao = vi.fn();
+describe("processarPagamento — transição (com despacho) no PAGA", () => {
+  it("transiciona (e portanto despacha) cada OS que vira PAGA", async () => {
+    const transicionar = vi.fn(async () => ({
+      registro: {} as never,
+      despacho: Promise.resolve({}),
+    }));
     const { pagamentoRepo, transicaoRepo } = repos();
 
     await processarPagamento(dados(), {
       pagamentoRepo,
       transicaoRepo,
-      notificarTransicao,
+      transicionar,
     });
 
-    expect(notificarTransicao).toHaveBeenCalledWith("os-1", "PAGA");
+    expect(transicionar).toHaveBeenCalledWith(
+      "os-1",
+      "PAGA",
+      "mercadopago:webhook",
+      "Pagamento pay-1 (pix)",
+      expect.any(Date),
+    );
   });
 
-  it("não notifica quando o pagamento não é aprovado", async () => {
-    const notificarTransicao = vi.fn();
+  it("não transiciona quando o pagamento não é aprovado", async () => {
+    const transicionar = vi.fn(async () => ({
+      registro: {} as never,
+      despacho: Promise.resolve({}),
+    }));
     const { pagamentoRepo, transicaoRepo } = repos();
 
     await processarPagamento(dados({ status: "rejected" }), {
       pagamentoRepo,
       transicaoRepo,
-      notificarTransicao,
+      transicionar,
     });
 
-    expect(notificarTransicao).not.toHaveBeenCalled();
+    expect(transicionar).not.toHaveBeenCalled();
   });
 });

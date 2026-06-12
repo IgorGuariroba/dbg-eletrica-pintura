@@ -1,9 +1,10 @@
-import {
-  aplicarTransicao,
-  TransicaoInvalidaError,
-} from "@/operacao/maquina-estado";
+import { TransicaoInvalidaError } from "@/operacao/maquina-estado";
 import type { EstadoOs } from "@/operacao/orcamento-repo";
 import type { TransicaoRepo } from "@/operacao/transicao-repo";
+import {
+  transicionarOs,
+  type TransicionarResultado,
+} from "@/operacao/transicionar-os";
 import type { PagamentoRepo } from "./pagamento-repo";
 import type { DadosPagamento } from "./webhook";
 
@@ -22,10 +23,17 @@ export interface ProcessarDeps {
   pagamentoRepo: PagamentoRepo;
   transicaoRepo: TransicaoRepo;
   /**
-   * Emite a notificação da transição PAGA (gera fatura/certificado via
-   * Notificação). Default: notificar() fire-and-forget. Injetável para teste.
+   * Transição de OS (valida + persiste + despacha notificação — Marco/canais
+   * são do contexto Notificação). Default: `transicionarOs` com o
+   * `transicaoRepo` destas deps. Injetável para teste.
    */
-  notificarTransicao?: (osId: string, estado: EstadoOs) => void;
+  transicionar?: (
+    osId: string,
+    alvo: EstadoOs,
+    ator: string,
+    motivo: string | null,
+    agora: Date,
+  ) => Promise<TransicionarResultado>;
   /**
    * Ativa a assinatura PENDENTE do combo "pagar tudo junto + assinar" (#65)
    * quando o pagamento combinado é aprovado. Default: caso de uso
@@ -49,17 +57,6 @@ async function ativarPadrao(assinaturaId: string): Promise<void> {
       await notificar({ tipo: "assinatura.criada_combo", assinaturaId: id });
     },
   });
-}
-
-/** Emissão padrão: interface única notificar(evento), assíncrona e não-bloqueante. */
-function notificarPadrao(osId: string, estado: EstadoOs): void {
-  import("@/notificacao/notificar")
-    .then(({ notificar }) =>
-      notificar({ tipo: "os.transicao", osId, estadoNovo: estado }).catch((e) =>
-        console.error(`Erro ao despachar notificação da OS ${osId}:`, e),
-      ),
-    )
-    .catch((e) => console.error(`Erro ao carregar notificador:`, e));
 }
 
 export interface ProcessarResultado {
@@ -124,17 +121,22 @@ export async function processarPagamento(
     }
 
     try {
-      await aplicarTransicao(
+      const transicionar =
+        deps.transicionar ??
+        ((id, alvo, ator, motivo, em) =>
+          transicionarOs(id, alvo, ator, motivo, {
+            repo: deps.transicaoRepo,
+            agora: em,
+          }));
+      await transicionar(
         osId,
         "PAGA",
         dados.ator ?? ATOR_WEBHOOK,
         dados.motivo ?? `Pagamento ${dados.paymentId} (${dados.metodo})`,
-        deps.transicaoRepo,
         agora,
       );
       transitadas.push(osId);
       await deps.pagamentoRepo.processarReferralPosPagamento(osId);
-      (deps.notificarTransicao ?? notificarPadrao)(osId, "PAGA");
       log("pagamento_confirmado", { ...base(dados), osId });
     } catch (e) {
       if (e instanceof TransicaoInvalidaError) {

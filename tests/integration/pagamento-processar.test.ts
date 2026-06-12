@@ -81,8 +81,26 @@ describe.skipIf(!hasDb)("processarPagamento (Drizzle)", () => {
       transicaoRepo: (
         await import("@/operacao/transicao-repo-drizzle")
       ).criarTransicaoRepoDrizzle(dbMod.db),
-      // Suprime o dispatch de documentos (R2/e-mail) — isola o teste.
-      notificarTransicao: () => {},
+      // Transição real (persiste estado+histórico) com adapters de saída
+      // inertes — suprime dispatch de documentos/R2/e-mail, isola o teste.
+      transicionar: async (osId, alvo, ator, motivo, agora) =>
+        (await import("@/operacao/transicionar-os")).transicionarOs(
+          osId,
+          alvo,
+          ator,
+          motivo,
+          {
+            agora,
+            repo: (
+              await import("@/operacao/transicao-repo-drizzle")
+            ).criarTransicaoRepoDrizzle(dbMod.db),
+            notificarDeps: {
+              email: { enviar: async () => ({ id: "mock" }) },
+              whatsapp: { enviarTemplate: async () => ({ messageId: "wamid.X" }) },
+              documentos: async () => ({ email: "skipped" as const }),
+            },
+          },
+        ),
     };
   });
 
