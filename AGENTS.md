@@ -116,7 +116,8 @@ A tarefa de UI somente poderá ser dada como concluída quando atingir as seguin
 
 Nenhuma tarefa de UI é considerada concluída só com `lint`/`typecheck`/`test`/`build` verdes. O Reviewer **deve abrir a tela no navegador** via **Playwright MCP** e validar de verdade (não presumir pelo código).
 
-* **Ferramenta:** usar o **Playwright MCP** (`mcp__playwright__*`). Caso a sessão só tenha o `chrome-devtools` MCP carregado, ele é equivalente e pode substituir — registrar no relatório qual foi usado.
+* **Ferramenta:** usar o **Playwright MCP** (`mcp__playwright__*`) — padrão para navegação, fluxos e screenshots (validação visual). O `chrome-devtools` MCP **não é equivalente** (foco em diagnóstico, não em ação): serve como fallback aceitável se for o único carregado na sessão — registrar no relatório qual foi usado.
+* **Quando usar o `chrome-devtools` MCP por preferência:** tarefas de **diagnóstico** — análise de performance (trace, Web Vitals/LCP/INP/CLS, Lighthouse), investigação de erros de console e inspeção de rede (waterfall, request/response bodies). Para esses casos ele é a escolha certa; o Playwright MCP não expõe esses recursos nativamente.
 * **Subir o app:** `pnpm dev` em background; aguardar o servidor responder `200` antes de navegar.
 * **Resoluções:** validar nas 4 da §2.2 (`390`, `768`, `1366`, `1920`). Em cada uma, confirmar via script: `document.documentElement.scrollWidth === clientWidth` (sem scroll horizontal) e que as imagens carregam (HTTP 200).
 * **Fluxos, não só layout:** exercitar as ações reais (aprovar/rejeitar, toggles, diálogos, submits) e confirmar o efeito (estado no banco, `revalidatePath`, objeto no R2), não apenas o render estático.
