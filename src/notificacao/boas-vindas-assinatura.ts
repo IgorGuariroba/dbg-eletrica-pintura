@@ -57,11 +57,6 @@ export async function notificarBoasVindasAssinatura(
     return { status: "skipped", motivo: "cliente sem e-mail" };
   }
 
-  // Reivindica o marco ANTES de enviar: reexecução do webhook/fluxo não reenvia.
-  if (!(await claimMarco(row.assinaturaId, "boas_vindas"))) {
-    return { status: "skipped", motivo: "boas-vindas já enviadas (marco)" };
-  }
-
   let proximaCobranca = "a confirmar";
   if (evento.tipo === "assinatura.criada") {
     const mp = deps.mpAssinatura ?? criarGatewayMercadoPagoAssinatura();
@@ -71,6 +66,12 @@ export async function notificarBoasVindasAssinatura(
         "pt-BR",
       );
     }
+  }
+
+  // Reivindica o marco ANTES de enviar (e DEPOIS da consulta MP: falha do MP
+  // não queima o claim — retry do webhook ainda envia): reexecução não reenvia.
+  if (!(await claimMarco(row.assinaturaId, "boas_vindas"))) {
+    return { status: "skipped", motivo: "boas-vindas já enviadas (marco)" };
   }
 
   const html = await renderizarEmailBoasVindas({
