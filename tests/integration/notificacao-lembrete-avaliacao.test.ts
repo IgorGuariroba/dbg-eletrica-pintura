@@ -27,6 +27,20 @@ function fakeGateway(): GatewayWhatsApp & {
   };
 }
 
+function fakeEmail(): {
+  chamadas: { para: string }[];
+  enviar: (input: { para: string; assunto: string; html: string }) => Promise<{ id: string }>;
+} {
+  const chamadas: { para: string }[] = [];
+  return {
+    chamadas,
+    async enviar(input) {
+      chamadas.push({ para: input.para });
+      return { id: `email-aval-${chamadas.length}` };
+    },
+  };
+}
+
 const AGORA = new Date("2026-06-10T13:00:00Z");
 
 describe.skipIf(!hasDb)("Lembrete de Avaliação 48h (Bloco C)", () => {
@@ -55,6 +69,9 @@ describe.skipIf(!hasDb)("Lembrete de Avaliação 48h (Bloco C)", () => {
       osIds.length = 0;
     }
     if (solIds.length) {
+      await db
+        .delete(schema.notificacaoMarco)
+        .where(inArray(schema.notificacaoMarco.refId, solIds));
       await db.delete(schema.comentarioGeral).where(inArray(schema.comentarioGeral.solicitacaoId, solIds));
       await db.delete(schema.solicitacao).where(inArray(schema.solicitacao.id, solIds));
       solIds.length = 0;
@@ -128,9 +145,9 @@ describe.skipIf(!hasDb)("Lembrete de Avaliação 48h (Bloco C)", () => {
     return { os, sol, cli };
   }
 
-  it("C1 — tracer: OS avaliável há ≥48h sem avaliação dispara lembrete (WhatsApp + e-mail) e seta flag", async () => {
+  it("C1 — tracer: OS avaliável há ≥48h sem avaliação dispara lembrete (WhatsApp + e-mail) e grava marco", async () => {
     const destinatario = `${PREFIXO_WPP}01`;
-    const { os, sol } = await seedContexto({
+    const { cli, sol } = await seedContexto({
       whatsapp: destinatario,
       horasAtras: 49,
       tipo: "NORMAL",
@@ -138,38 +155,28 @@ describe.skipIf(!hasDb)("Lembrete de Avaliação 48h (Bloco C)", () => {
     });
 
     const gateway = fakeGateway();
-    const emailChamadas: { osId: string; estado: string }[] = [];
-    const mockEnviarEmail = async (osId: string, estado: string) => {
-      emailChamadas.push({ osId, estado });
-      return { status: "sent" as const, emailId: "mock-id" };
-    };
+    const email = fakeEmail();
 
-    await processarLembretesAvaliacao({
-      gateway,
-      agora: AGORA,
-      enviarEmail: mockEnviarEmail,
-    });
+    await processarLembretesAvaliacao({ gateway, agora: AGORA, email });
 
     const minhas = gateway.chamadas.filter((c) => c.destinatario === destinatario);
     expect(minhas).toHaveLength(1);
     expect(minhas[0].template).toBe("pedido_avaliacao");
     expect(minhas[0].variaveis.link).toContain(`/s/${sol.token}/avaliar`);
 
-    const minhasEmail = emailChamadas.filter((c) => c.osId === os.id);
-    expect(minhasEmail).toHaveLength(1);
-    expect(minhasEmail[0]).toEqual({ osId: os.id, estado: "PEDIDO_AVALIACAO" });
+    expect(email.chamadas.filter((c) => c.para === cli.email)).toHaveLength(1);
 
-    // Verificar se a flag foi setada
-    const [solAtualizada] = await db
-      .select({ lembreteAvaliacaoEnviado: schema.solicitacao.lembreteAvaliacaoEnviado })
-      .from(schema.solicitacao)
-      .where(eq(schema.solicitacao.id, sol.id));
-    expect(solAtualizada.lembreteAvaliacaoEnviado).toBe(true);
+    // Marco (solicitacaoId, lembrete_avaliacao) substitui a flag.
+    const marcos = await db
+      .select()
+      .from(schema.notificacaoMarco)
+      .where(eq(schema.notificacaoMarco.refId, sol.id));
+    expect(marcos.map((m) => m.marco)).toEqual(["lembrete_avaliacao"]);
   });
 
   it("C2 — lembrete envia apenas 1 vez mesmo se o job rodar 2 vezes (idempotência)", async () => {
     const destinatario = `${PREFIXO_WPP}02`;
-    const { os, sol } = await seedContexto({
+    const { cli } = await seedContexto({
       whatsapp: destinatario,
       horasAtras: 55,
       tipo: "NORMAL",
@@ -177,33 +184,17 @@ describe.skipIf(!hasDb)("Lembrete de Avaliação 48h (Bloco C)", () => {
     });
 
     const gateway = fakeGateway();
-    const emailChamadas: { osId: string; estado: string }[] = [];
-    const mockEnviarEmail = async (osId: string, estado: string) => {
-      emailChamadas.push({ osId, estado });
-      return { status: "sent" as const, emailId: "mock-id" };
-    };
+    const email = fakeEmail();
 
     // First execution (sends reminder)
-    await processarLembretesAvaliacao({
-      gateway,
-      agora: AGORA,
-      enviarEmail: mockEnviarEmail,
-    });
-    const minhas1 = gateway.chamadas.filter((c) => c.destinatario === destinatario);
-    expect(minhas1).toHaveLength(1);
-    const minhasEmail1 = emailChamadas.filter((c) => c.osId === os.id);
-    expect(minhasEmail1).toHaveLength(1);
+    await processarLembretesAvaliacao({ gateway, agora: AGORA, email });
+    expect(gateway.chamadas.filter((c) => c.destinatario === destinatario)).toHaveLength(1);
+    expect(email.chamadas.filter((c) => c.para === cli.email)).toHaveLength(1);
 
-    // Second execution (should skip since flag is now true)
-    await processarLembretesAvaliacao({
-      gateway,
-      agora: AGORA,
-      enviarEmail: mockEnviarEmail,
-    });
-    const minhas2 = gateway.chamadas.filter((c) => c.destinatario === destinatario);
-    expect(minhas2).toHaveLength(1); // still 1
-    const minhasEmail2 = emailChamadas.filter((c) => c.osId === os.id);
-    expect(minhasEmail2).toHaveLength(1); // still 1
+    // Second execution (should skip — marco já reivindicado)
+    await processarLembretesAvaliacao({ gateway, agora: AGORA, email });
+    expect(gateway.chamadas.filter((c) => c.destinatario === destinatario)).toHaveLength(1);
+    expect(email.chamadas.filter((c) => c.para === cli.email)).toHaveLength(1);
   });
 
   it("C3 — não envia lembrete se a OS já foi avaliada ou se foi concluída/paga há <48h", async () => {
@@ -211,7 +202,7 @@ describe.skipIf(!hasDb)("Lembrete de Avaliação 48h (Bloco C)", () => {
     const wppRecente = `${PREFIXO_WPP}04`;
 
     // 1. OS already rated (avaliada: true)
-    const { os: osAvaliada, sol: solAvaliada } = await seedContexto({
+    const { sol: solAvaliada, cli: clienteAvaliada } = await seedContexto({
       whatsapp: wppAvaliada,
       horasAtras: 55,
       tipo: "NORMAL",
@@ -220,7 +211,7 @@ describe.skipIf(!hasDb)("Lembrete de Avaliação 48h (Bloco C)", () => {
     });
 
     // 2. OS terminal but newer than 48 hours (horasAtras: 10)
-    const { os: osRecente, sol: solRecente } = await seedContexto({
+    const { sol: solRecente, cli: clienteRecente } = await seedContexto({
       whatsapp: wppRecente,
       horasAtras: 10,
       tipo: "NORMAL",
@@ -229,34 +220,21 @@ describe.skipIf(!hasDb)("Lembrete de Avaliação 48h (Bloco C)", () => {
     });
 
     const gateway = fakeGateway();
-    const emailChamadas: { osId: string; estado: string }[] = [];
-    const mockEnviarEmail = async (osId: string, estado: string) => {
-      emailChamadas.push({ osId, estado });
-      return { status: "sent" as const, emailId: "mock-id" };
-    };
+    const email = fakeEmail();
 
-    await processarLembretesAvaliacao({
-      gateway,
-      agora: AGORA,
-      enviarEmail: mockEnviarEmail,
-    });
+    await processarLembretesAvaliacao({ gateway, agora: AGORA, email });
 
     const minhas = gateway.chamadas.filter((c) => c.destinatario === wppAvaliada || c.destinatario === wppRecente);
     expect(minhas).toHaveLength(0);
 
-    const minhasEmail = emailChamadas.filter((c) => c.osId === osAvaliada.id || c.osId === osRecente.id);
-    expect(minhasEmail).toHaveLength(0);
+    const paras = [clienteAvaliada.email, clienteRecente.email];
+    expect(email.chamadas.filter((c) => paras.includes(c.para))).toHaveLength(0);
 
-    const [solAvalAtualizada] = await db
-      .select({ lembreteAvaliacaoEnviado: schema.solicitacao.lembreteAvaliacaoEnviado })
-      .from(schema.solicitacao)
-      .where(eq(schema.solicitacao.id, solAvaliada.id));
-    expect(solAvalAtualizada.lembreteAvaliacaoEnviado).toBe(false);
-
-    const [solRecAtualizada] = await db
-      .select({ lembreteAvaliacaoEnviado: schema.solicitacao.lembreteAvaliacaoEnviado })
-      .from(schema.solicitacao)
-      .where(eq(schema.solicitacao.id, solRecente.id));
-    expect(solRecAtualizada.lembreteAvaliacaoEnviado).toBe(false);
+    // Nenhum marco gravado para as Solicitações não-elegíveis.
+    const marcos = await db
+      .select()
+      .from(schema.notificacaoMarco)
+      .where(inArray(schema.notificacaoMarco.refId, [solAvaliada.id, solRecente.id]));
+    expect(marcos).toHaveLength(0);
   });
 });

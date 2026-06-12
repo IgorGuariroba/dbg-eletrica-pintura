@@ -10,6 +10,10 @@ import {
   type ConsultaAssinaturaMp,
 } from "./boas-vindas-assinatura";
 import { notificarFalhaPagamentoAssinatura } from "./falha-pagamento-assinatura";
+import {
+  enviarLembreteAvaliacao,
+  enviarLembretePagamento,
+} from "./lembrete-envio";
 import type { EmailService } from "./email-service";
 import type { GatewayWhatsApp } from "./whatsapp-gateway";
 
@@ -32,7 +36,12 @@ export type EventoNotificacao =
       tipo: "assinatura.pagamento_falhou";
       preapprovalIdMp: string;
       eventId: string;
-    };
+    }
+  // `banda` vem da varredura do job (elegibilidade por idade da conclusão);
+  // o marco (osId, lembrete_pagamento:{banda}) preserva as chaves dia1/dia3.
+  | { tipo: "os.lembrete_pagamento"; osId: string; banda: "dia1" | "dia3" }
+  // OS âncora da Solicitação elegível; marco por solicitação (1 por Solicitação).
+  | { tipo: "os.lembrete_avaliacao"; osId: string };
 
 /** Adapter de saída de documentos (fatura/certificado/relatório + e-mail). */
 export type GeradorDocumentos = (
@@ -103,6 +112,20 @@ export async function notificar(
 
     case "assinatura.pagamento_falhou":
       return notificarFalhaPagamentoAssinatura(evento, {
+        whatsapp: deps.whatsapp,
+        email: deps.email,
+        agora: deps.agora,
+      });
+
+    case "os.lembrete_pagamento":
+      return enviarLembretePagamento(evento, {
+        whatsapp: deps.whatsapp,
+        email: deps.email,
+        agora: deps.agora,
+      });
+
+    case "os.lembrete_avaliacao":
+      return enviarLembreteAvaliacao(evento, {
         whatsapp: deps.whatsapp,
         email: deps.email,
         agora: deps.agora,

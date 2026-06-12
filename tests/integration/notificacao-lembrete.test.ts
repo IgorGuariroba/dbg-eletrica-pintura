@@ -31,14 +31,14 @@ function fakeGateway(): GatewayWhatsApp & {
 }
 
 function fakeEmail(): {
-  chamadas: { para: string; valor: string }[];
-  enviar: (input: { para: string; clienteNome: string; numeroOS: string; valor: string; link: string }) => Promise<{ id: string }>;
+  chamadas: { para: string; html: string }[];
+  enviar: (input: { para: string; assunto: string; html: string }) => Promise<{ id: string }>;
 } {
-  const chamadas: { para: string; valor: string }[] = [];
+  const chamadas: { para: string; html: string }[] = [];
   return {
     chamadas,
     async enviar(input) {
-      chamadas.push({ para: input.para, valor: input.valor });
+      chamadas.push({ para: input.para, html: input.html });
       return { id: `email-${chamadas.length}` };
     },
   };
@@ -168,7 +168,7 @@ describe.skipIf(!hasDb)("Lembrete de Pagamento (Slice 2 — #46)", () => {
     const gateway = fakeGateway();
     const email = fakeEmail();
 
-    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
+    await processarLembretesPagamento({ gateway, agora: AGORA, email });
 
     const minhas = gateway.chamadas.filter((c) => c.destinatario === destinatario);
     expect(minhas).toHaveLength(1);
@@ -192,8 +192,8 @@ describe.skipIf(!hasDb)("Lembrete de Pagamento (Slice 2 — #46)", () => {
     const gateway = fakeGateway();
     const email = fakeEmail();
 
-    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
-    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
+    await processarLembretesPagamento({ gateway, agora: AGORA, email });
+    await processarLembretesPagamento({ gateway, agora: AGORA, email });
 
     // Apesar de duas execuções, o marco garante um único envio por canal.
     expect(gateway.chamadas.filter((c) => c.destinatario === destinatario)).toHaveLength(1);
@@ -209,7 +209,7 @@ describe.skipIf(!hasDb)("Lembrete de Pagamento (Slice 2 — #46)", () => {
     const gateway = fakeGateway();
     const email = fakeEmail();
 
-    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
+    await processarLembretesPagamento({ gateway, agora: AGORA, email });
 
     expect(gateway.chamadas.filter((c) => c.destinatario === wppPaga || c.destinatario === wppPrev)).toHaveLength(0);
     expect(await marcosDaOs(paga.os.id)).toEqual([]);
@@ -222,7 +222,7 @@ describe.skipIf(!hasDb)("Lembrete de Pagamento (Slice 2 — #46)", () => {
     const gateway = fakeGateway();
     const email = fakeEmail();
 
-    await processarLembretesPagamento({ gateway, agora: AGORA, enviarEmail: email.enviar });
+    await processarLembretesPagamento({ gateway, agora: AGORA, email });
 
     expect(gateway.chamadas.filter((c) => c.destinatario === destinatario)).toHaveLength(0);
     expect(await marcosDaOs(os.id)).toEqual([]);
