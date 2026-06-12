@@ -16,7 +16,8 @@ build/
 .idea
 .vscode
 .claude/
-.agents/
+.agents/*
+!.agents/rules/
 .antigravitycli/
 skills-lock.json
 tsconfig.tsbuildinfo

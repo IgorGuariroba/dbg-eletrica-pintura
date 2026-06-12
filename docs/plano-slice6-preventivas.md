@@ -151,7 +151,7 @@ proximaPreventivaDevida(inicio, ultima, cadencia, hoje): Date | null
 - `npx fallow dupes` antes/depois (geração de OS pode duplicar com complementar/solicitacao-repo).
 - Deepen: esconder snapshot de solicitacao atrás de helper único reusado por complementar+preventiva.
 
-## 8. Validação final (workflow §13 AGENTS.md)
+## 8. Validação final (workflow §6 AGENTS.md)
 
 ```
 pnpm lint && pnpm typecheck && pnpm test
