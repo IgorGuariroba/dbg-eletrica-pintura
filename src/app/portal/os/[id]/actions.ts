@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 import { ordemServico, solicitacao } from "@/db/schema";
 import { acionarGarantia, ForaDoPrazoError } from "@/operacao/garantia/acionar-garantia";
 import { criarGarantiaRepoDrizzle } from "@/operacao/garantia/garantia-repo-drizzle";
-import { uploadFotoGarantia } from "@/operacao/r2-privado";
+import { uploadFotoGarantia } from "@/lib/storage";
 
 const service = criarAgendamentoService(criarAgendamentoRepoDrizzle(db));
 

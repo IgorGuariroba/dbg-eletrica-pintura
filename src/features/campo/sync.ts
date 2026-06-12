@@ -14,7 +14,7 @@ import {
   type UploadFotoChecklist,
   uploadAssinaturaOsR2,
   uploadFotoChecklistR2,
-} from "@/operacao/r2-privado";
+} from "@/lib/storage";
 import type { UploadAssinatura } from "@/operacao/aprovacao-presencial";
 import type { PortfolioRepo } from "@/marketing/portfolio-repo";
 import type { ChecklistResultadoRepo } from "@/operacao/checklist-resultado-repo";

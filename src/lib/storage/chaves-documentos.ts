@@ -1,7 +1,7 @@
 /**
- * Chaves determinísticas dos documentos de uma OS no R2 privado. Módulo leve
- * (sem dependências de banco/e-mail) para ser importado tanto pelo gerador
- * quanto pelo portal sem arrastar o use-case inteiro para o bundle.
+ * Chaves determinísticas dos documentos de uma OS no R2 privado — convenção
+ * de chave é decisão do módulo Storage. Determinísticas (sem uuid) para que a
+ * re-geração sobrescreva e a re-assinatura sob demanda ache o mesmo objeto.
  */
 
 /** Chave da fatura de uma OS. */

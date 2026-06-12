@@ -1,6 +1,6 @@
 import type { EstadoOs, FotosOsPort, HistoricoRepo } from "./historico-repo";
-import { listarFotosOs, obterUrlLeituraAssinada } from "@/operacao/r2-privado";
-import { chaveCertificado, chaveFatura, chaveRelatorio } from "@/documentos/chaves";
+import { listarFotosOs, obterUrlLeituraAssinada } from "@/lib/storage";
+import { chaveCertificado, chaveFatura, chaveRelatorio } from "@/lib/storage";
 import { planejarDocumentos } from "@/documentos/planejar-documentos";
 import type { TipoOs } from "@/operacao/maquina-estado";
 

@@ -1,7 +1,7 @@
 import {
   enviarPdfDocumento,
   obterUrlLeituraAssinada,
-} from "@/operacao/r2-privado";
+} from "@/lib/storage";
 
 /** Porta de armazenamento de PDFs — permite injetar um fake nos testes. */
 export interface ArmazenamentoPdf {
@@ -14,7 +14,7 @@ export function r2PrivadoPdf(): ArmazenamentoPdf {
   return {
     enviar: (chave, corpo) => enviarPdfDocumento(chave, corpo),
     urlAssinada: (chave, expiraEmSegundos) =>
-      obterUrlLeituraAssinada(chave, expiraEmSegundos),
+      obterUrlLeituraAssinada(chave),
   };
 }
 

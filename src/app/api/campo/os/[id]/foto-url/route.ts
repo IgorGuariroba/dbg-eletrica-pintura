@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { uploadServiceSolicitacaoR2, type TipoFotoOs } from "@/operacao/r2-privado";
+import { uploadServiceSolicitacaoR2, type TipoFotoOs } from "@/lib/storage";
 
 /**
  * Assina o upload de uma foto de execução para o R2 privado. O cliente envia o

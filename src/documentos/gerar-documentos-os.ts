@@ -30,7 +30,7 @@ import {
   type ArmazenamentoPdf,
 } from "./pdf/salvar-pdf-r2";
 import { planejarDocumentos } from "./planejar-documentos";
-import { chaveCertificado, chaveFatura, chaveRelatorio } from "./chaves";
+import { chaveCertificado, chaveFatura, chaveRelatorio } from "@/lib/storage";
 
 export interface GerarDocumentosDeps {
   /** Armazenamento de PDFs (default: R2 privado). */

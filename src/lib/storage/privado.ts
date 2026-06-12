@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { PutObjectCommand, S3Client, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import {
+  GetObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import type { UploadAssinatura } from "./aprovacao-presencial";
+import type { UploadAssinatura } from "@/operacao/aprovacao-presencial";
+import { clientePrivado } from "./clientes";
 
 export interface AssinarInput {
   filename: string;
@@ -30,9 +35,27 @@ export interface UploadServicePrivado {
   assinarUploadFotoOs(input: AssinarFotoOsInput): Promise<AssinarOutput>;
 }
 
+/**
+ * Teto do AWS SigV4: presigned URLs não podem expirar a mais de 7 dias.
+ * A persistência é do objeto no R2 (não expira) — acesso prolongado
+ * re-assina a mesma chave sob demanda. Expiração é decisão deste módulo;
+ * caller não passa expiry.
+ */
+const DURACAO_URL_LEITURA_SEGUNDOS = 7 * 24 * 60 * 60;
+
 /** Chave do objeto no R2: `os/{id}/{antes|depois}/{uuid}.jpg`. */
 export function montarChaveFotoOs(osId: string, tipo: TipoFotoOs): string {
   return `os/${osId}/${tipo.toLowerCase()}/${randomUUID()}.jpg`;
+}
+
+/** Chave da assinatura no R2: `assinaturas/os/{id}/{uuid}.png`. */
+function montarChaveAssinaturaOs(osId: string): string {
+  return `assinaturas/os/${osId}/${randomUUID()}.png`;
+}
+
+/** Chave da foto de checklist no R2: `os/{id}/checklist/{itemId}/{uuid}.jpg`. */
+function montarChaveFotoChecklist(osId: string, itemId: string): string {
+  return `os/${osId}/checklist/${itemId}/${randomUUID()}.jpg`;
 }
 
 const EXT_POR_TIPO: Record<string, string> = {
@@ -45,32 +68,11 @@ const EXT_POR_TIPO: Record<string, string> = {
 const TIPOS_PERMITIDOS = new Set(Object.keys(EXT_POR_TIPO));
 
 let cached: UploadServicePrivado | null = null;
-let clientCached: S3Client | null = null;
-let bucketCached: string | null = null;
 
-function init(): { client: S3Client; bucket: string } {
-  if (clientCached && bucketCached) {
-    return { client: clientCached, bucket: bucketCached };
-  }
-  const accountId = process.env.R2_PRIVATE_ACCOUNT_ID;
-  const accessKeyId = process.env.R2_PRIVATE_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_PRIVATE_SECRET_ACCESS_KEY;
-  const bucket = process.env.R2_PRIVATE_BUCKET;
-  if (!accountId || !accessKeyId || !secretAccessKey || !bucket) {
-    throw new Error("R2 privado não configurado (verifique R2_PRIVATE_*)");
-  }
-  clientCached = new S3Client({
-    region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    credentials: { accessKeyId, secretAccessKey },
-  });
-  bucketCached = bucket;
-  return { client: clientCached, bucket: bucketCached };
-}
-
-/** Chave da assinatura no R2: `assinaturas/os/{id}/{uuid}.png`. */
-export function montarChaveAssinaturaOs(osId: string): string {
-  return `assinaturas/os/${osId}/${randomUUID()}.png`;
+function corpoDeDataUrl(dataUrl: string, rotulo: string): Buffer {
+  const virgula = dataUrl.indexOf(",");
+  if (virgula < 0) throw new Error(`data URL de ${rotulo} inválido`);
+  return Buffer.from(dataUrl.slice(virgula + 1), "base64");
 }
 
 export interface UploadFotoOs {
@@ -81,14 +83,13 @@ export interface UploadFotoOs {
   }): Promise<{ url: string }>;
 }
 
+/** Foto de execução da OS (antes/depois), enviada server-side pelo sync. */
 export function uploadFotoOsR2(): UploadFotoOs {
   return {
     async enviarFoto({ osId, tipo, dataUrl }) {
-      const virgula = dataUrl.indexOf(",");
-      if (virgula < 0) throw new Error("data URL de foto inválido");
-      const corpo = Buffer.from(dataUrl.slice(virgula + 1), "base64");
+      const corpo = corpoDeDataUrl(dataUrl, "foto");
       const key = montarChaveFotoOs(osId, tipo);
-      const { client, bucket } = init();
+      const { client, bucket } = clientePrivado();
       await client.send(
         new PutObjectCommand({
           Bucket: bucket,
@@ -110,19 +111,13 @@ export interface UploadFotoChecklist {
   }): Promise<{ url: string }>;
 }
 
-/** Chave da foto de checklist no R2: `os/{id}/checklist/{itemId}/{uuid}.jpg`. */
-export function montarChaveFotoChecklist(osId: string, itemId: string): string {
-  return `os/${osId}/checklist/${itemId}/${randomUUID()}.jpg`;
-}
-
+/** Foto de item de checklist preventivo. */
 export function uploadFotoChecklistR2(): UploadFotoChecklist {
   return {
     async enviar({ osId, itemId, dataUrl }) {
-      const virgula = dataUrl.indexOf(",");
-      if (virgula < 0) throw new Error("data URL de foto inválido");
-      const corpo = Buffer.from(dataUrl.slice(virgula + 1), "base64");
+      const corpo = corpoDeDataUrl(dataUrl, "foto");
       const key = montarChaveFotoChecklist(osId, itemId);
-      const { client, bucket } = init();
+      const { client, bucket } = clientePrivado();
       await client.send(
         new PutObjectCommand({
           Bucket: bucket,
@@ -141,15 +136,12 @@ export function uploadFotoChecklistR2(): UploadFotoChecklist {
  * Server-side em vez de presigned: o PWA pode replayar no sync offline sem
  * precisar de uma URL assinada válida no momento.
  */
-
 export function uploadAssinaturaOsR2(): UploadAssinatura {
   return {
     async enviarAssinatura({ osId, dataUrl }) {
-      const virgula = dataUrl.indexOf(",");
-      if (virgula < 0) throw new Error("data URL de assinatura inválido");
-      const corpo = Buffer.from(dataUrl.slice(virgula + 1), "base64");
+      const corpo = corpoDeDataUrl(dataUrl, "assinatura");
       const key = montarChaveAssinaturaOs(osId);
-      const { client, bucket } = init();
+      const { client, bucket } = clientePrivado();
       await client.send(
         new PutObjectCommand({
           Bucket: bucket,
@@ -163,6 +155,7 @@ export function uploadAssinaturaOsR2(): UploadAssinatura {
   };
 }
 
+/** Presigned PUTs das fotos do formulário público e da execução da OS. */
 export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
   if (cached) return cached;
   cached = {
@@ -183,7 +176,7 @@ export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
       void filename;
       const ext = EXT_POR_TIPO[tipo];
       const key = `solicitacoes/${randomUUID()}.${ext}`;
-      const { client, bucket } = init();
+      const { client, bucket } = clientePrivado();
       const uploadUrl = await getSignedUrl(
         client,
         new PutObjectCommand({
@@ -203,7 +196,7 @@ export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
     },
     async assinarUploadFotoOs({ osId, tipo }) {
       const key = montarChaveFotoOs(osId, tipo);
-      const { client, bucket } = init();
+      const { client, bucket } = clientePrivado();
       const uploadUrl = await getSignedUrl(
         client,
         new PutObjectCommand({
@@ -219,8 +212,9 @@ export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
   return cached;
 }
 
+/** Persiste um PDF no bucket privado (chave do catálogo de documentos). */
 export async function enviarPdfDocumento(key: string, corpo: Buffer): Promise<void> {
-  const { client, bucket } = init();
+  const { client, bucket } = clientePrivado();
   await client.send(
     new PutObjectCommand({
       Bucket: bucket,
@@ -231,26 +225,38 @@ export async function enviarPdfDocumento(key: string, corpo: Buffer): Promise<vo
   );
 }
 
-export async function obterUrlLeituraAssinada(
-  key: string,
-  expiresInSeconds: number = 7 * 24 * 60 * 60,
-): Promise<string> {
-  const { client, bucket } = init();
-  const command = new GetObjectCommand({
-    Bucket: bucket,
-    Key: key,
-  });
-  return getSignedUrl(client, command, { expiresIn: expiresInSeconds });
+export type TipoPdfOs = "orcamento" | "conclusao";
+
+/**
+ * PDF transacional de uma OS (orçamento/relatório de conclusão anexado ao
+ * e-mail): persiste com chave própria do módulo e devolve a URL de leitura.
+ */
+export async function salvarPdfOs(
+  tipo: TipoPdfOs,
+  osId: string,
+  corpo: Buffer,
+): Promise<{ chave: string; url: string }> {
+  const prefixo = tipo === "orcamento" ? "orcamentos" : "conclusoes";
+  const chave = `${prefixo}/os-${osId}-${Date.now()}.pdf`;
+  await enviarPdfDocumento(chave, corpo);
+  return { chave, url: await obterUrlLeituraAssinada(chave) };
 }
 
+/** URL de leitura de um objeto privado; expiração é decisão do módulo (7d). */
+export async function obterUrlLeituraAssinada(key: string): Promise<string> {
+  const { client, bucket } = clientePrivado();
+  const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+  return getSignedUrl(client, command, {
+    expiresIn: DURACAO_URL_LEITURA_SEGUNDOS,
+  });
+}
+
+/** Chaves das fotos de execução de uma OS (antes/depois). */
 export async function listarFotosOs(osId: string, tipo: TipoFotoOs): Promise<string[]> {
   try {
-    const { client, bucket } = init();
+    const { client, bucket } = clientePrivado();
     const prefix = `os/${osId}/${tipo.toLowerCase()}/`;
-    const command = new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: prefix,
-    });
+    const command = new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix });
     const res = await client.send(command);
     return res.Contents?.map((c) => c.Key).filter((k): k is string => !!k) ?? [];
   } catch (e) {
@@ -259,12 +265,11 @@ export async function listarFotosOs(osId: string, tipo: TipoFotoOs): Promise<str
   }
 }
 
+/** Foto anexada a um chamado de garantia da OS. */
 export async function uploadFotoGarantia(dataUrl: string, osId: string): Promise<string> {
-  const virgula = dataUrl.indexOf(",");
-  if (virgula < 0) throw new Error("data URL de foto inválido");
-  const corpo = Buffer.from(dataUrl.slice(virgula + 1), "base64");
+  const corpo = corpoDeDataUrl(dataUrl, "foto");
   const key = `chamados/os-${osId}/${randomUUID()}.jpg`;
-  const { client, bucket } = init();
+  const { client, bucket } = clientePrivado();
   await client.send(
     new PutObjectCommand({
       Bucket: bucket,
@@ -275,4 +280,3 @@ export async function uploadFotoGarantia(dataUrl: string, osId: string): Promise
   );
   return key;
 }
-

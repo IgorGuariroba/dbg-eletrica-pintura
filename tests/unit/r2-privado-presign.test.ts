@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { uploadServiceSolicitacaoR2 } from "@/operacao/r2-privado";
+import { uploadServiceSolicitacaoR2 } from "@/lib/storage";
 
 const MB = 1024 * 1024;
 

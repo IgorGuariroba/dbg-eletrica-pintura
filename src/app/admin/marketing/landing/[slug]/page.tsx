@@ -4,7 +4,7 @@ import { criarServicoRepoDrizzle } from "@/catalogo/servico-repo-drizzle";
 import { listarServicos } from "@/catalogo/listar-servicos";
 import { criarLandingOverrideRepoDrizzle } from "@/marketing/landing/landing-override-repo-drizzle";
 import { criarDepoimentosQueryDrizzle } from "@/marketing/landing/depoimentos-query-drizzle";
-import { urlPublicaFoto } from "@/marketing/copiador-r2";
+import { urlPublicaFoto } from "@/lib/storage";
 import { exigirMarketing } from "../../guard";
 import { LandingOverrideForm } from "./landing-override-form";
 

@@ -6,7 +6,7 @@ import { atualizarMembro } from "@/equipe/atualizar-membro";
 import { criarMembro } from "@/equipe/criar-membro";
 import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
 import { toggleAtivoMembro } from "@/equipe/toggle-ativo-membro";
-import { uploadServicePublicoR2 } from "@/catalogo/r2-client";
+import { uploadServicePublicoR2 } from "@/lib/storage";
 import { db } from "@/db/client";
 import { moduloEnum, categoriaServicoEnum } from "@/db/schema";
 import type {

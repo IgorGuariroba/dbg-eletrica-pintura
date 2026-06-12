@@ -1,25 +1,23 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { criarUploadService, type UploadService } from "./r2-upload";
+import { criarUploadService, type UploadService } from "@/catalogo/r2-upload";
+import { clientePublico } from "./clientes";
 
 const cache = new Map<string, UploadService>();
 
+/**
+ * Upload público por intenção: fotos de serviço do catálogo (`servicos`),
+ * fotos de perfil de técnico etc. — prefixo define a intenção, base URL
+ * pública serve direto (sem URL assinada).
+ */
 export function uploadServicePublicoR2(keyPrefix = "servicos"): UploadService {
   const existente = cache.get(keyPrefix);
   if (existente) return existente;
-  const accountId = process.env.R2_PUBLIC_ACCOUNT_ID;
-  const accessKeyId = process.env.R2_PUBLIC_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_PUBLIC_SECRET_ACCESS_KEY;
-  const bucket = process.env.R2_PUBLIC_BUCKET;
   const baseUrl = process.env.R2_PUBLIC_BASE_URL;
-  if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !baseUrl) {
+  if (!baseUrl) {
     throw new Error("R2 público não configurado (verifique R2_PUBLIC_*)");
   }
-  const client = new S3Client({
-    region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    credentials: { accessKeyId, secretAccessKey },
-  });
+  const { client, bucket } = clientePublico();
   const svc = criarUploadService({
     bucket,
     baseUrl,
@@ -35,4 +33,11 @@ export function uploadServicePublicoR2(keyPrefix = "servicos"): UploadService {
   });
   cache.set(keyPrefix, svc);
   return svc;
+}
+
+/** URL pública de uma foto aprovada (R2 público + base URL). */
+export function urlPublicaFoto(chavePublica: string): string {
+  const base = process.env.R2_PUBLIC_BASE_URL;
+  if (!base) throw new Error("R2_PUBLIC_BASE_URL não configurada");
+  return `${base.replace(/\/$/, "")}/${chavePublica}`;
 }

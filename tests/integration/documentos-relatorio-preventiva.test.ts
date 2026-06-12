@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { config } from "dotenv";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { gerarDocumentosOs } from "@/documentos/gerar-documentos-os";
-import { chaveRelatorio } from "@/documentos/chaves";
+import { chaveRelatorio } from "@/lib/storage";
 import type { ArmazenamentoPdf } from "@/documentos/pdf/salvar-pdf-r2";
 import type { EmailService, EnviarEmailInput } from "@/notificacao/email-service";
 

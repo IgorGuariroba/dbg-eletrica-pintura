@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
 import { aprovarFoto, rejeitarFoto } from "@/marketing/portfolio";
 import { criarPortfolioRepoDrizzle } from "@/marketing/portfolio-repo-drizzle";
-import { copiadorR2 } from "@/marketing/copiador-r2";
+import { copiadorR2 } from "@/lib/storage";
 import { exigirMarketing } from "../guard";
 
 export interface PortfolioActionState {

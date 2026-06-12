@@ -9,7 +9,7 @@ import {
   type Origem,
 } from "@/operacao/aprovacao-presencial";
 import { criarAprovacaoPresencialRepoDrizzle } from "@/operacao/aprovacao-presencial-repo-drizzle";
-import { uploadAssinaturaOsR2 } from "@/operacao/r2-privado";
+import { uploadAssinaturaOsR2 } from "@/lib/storage";
 
 export interface AprovacaoPresencialState {
   erro?: string;

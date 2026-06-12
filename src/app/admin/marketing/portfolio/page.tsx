@@ -1,7 +1,7 @@
 import { ImageIcon } from "lucide-react";
 import { db } from "@/db/client";
 import { criarPortfolioRepoDrizzle } from "@/marketing/portfolio-repo-drizzle";
-import { obterUrlLeituraAssinada } from "@/operacao/r2-privado";
+import { obterUrlLeituraAssinada } from "@/lib/storage";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { EmptyState } from "../../_components/empty-state";
@@ -29,7 +29,7 @@ export default async function PortfolioQueuePage() {
   const itens = await Promise.all(
     pendentes.map(async (p) => ({
       ...p,
-      url: await obterUrlLeituraAssinada(p.chavePrivada, 60 * 30),
+      url: await obterUrlLeituraAssinada(p.chavePrivada),
     })),
   );
 
