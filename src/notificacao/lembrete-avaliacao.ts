@@ -1,16 +1,16 @@
-import { and, eq, inArray, notInArray, isNull, or, desc } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import * as schema from "@/db/schema";
-import { normalizarWhatsapp, ordenarVariaveis } from "./templates";
-import { whatsappConfigurado, type GatewayWhatsApp } from "./whatsapp-gateway";
-import { notificarMudancaEstadoOs, type NotificacaoResultado } from "./notificador";
-import { TIPOS_PAGAVEIS } from "./lembrete-pagamento";
+import type { EmailService } from "./email-service";
+import { TIPOS_PAGAVEIS } from "./tipos-pagaveis";
+import { notificar } from "./notificar";
+import type { GatewayWhatsApp } from "./whatsapp-gateway";
 
 interface LembreteAvaliacaoDeps {
   /** Gateway da Cloud API (default: real/mock por env). */
   gateway?: GatewayWhatsApp;
-  /** Envio do e-mail (default: notificarMudancaEstadoOs). */
-  enviarEmail?: (osId: string, estado: string) => Promise<NotificacaoResultado>;
+  /** Adapter de e-mail (default: Resend/mock por env). */
+  email?: EmailService;
   /** Relógio injetável (default: agora). */
   agora?: Date;
 }
@@ -41,49 +41,12 @@ async function checarElegibilidadeLembrete(
   return { elegivel: false, anchorOsId: "" };
 }
 
-async function dispararCanaisLembrete(
-  cli: typeof schema.cliente.$inferSelect,
-  token: string,
-  anchorOsId: string,
-  deps: LembreteAvaliacaoDeps
-): Promise<boolean> {
-  const agora = deps.agora ?? new Date();
-  let algumCanal = false;
-
-  // WhatsApp
-  const destinatario = normalizarWhatsapp(cli.whatsapp);
-  if (destinatario && (deps.gateway || whatsappConfigurado())) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const link = `${siteUrl}/s/${token}/avaliar`;
-    const repo = await import("./templates").then(m => m.criarTemplateRepo());
-    const padrao = await repo.obterVariaveis("pedido_avaliacao");
-    const variaveis = ordenarVariaveis("pedido_avaliacao", {
-      ...padrao,
-      nome_cliente: cli.nome,
-      link,
-    });
-
-    const wppRes = await import("./enviar-template").then(m =>
-      m.enviarTemplate(
-        { destinatario, template: "pedido_avaliacao", variaveis },
-        { gateway: deps.gateway, agora }
-      )
-    );
-    if (wppRes.status === "enviado") {
-      algumCanal = true;
-    }
-  }
-
-  // E-mail
-  if (cli.email) {
-    const enviarEmail = deps.enviarEmail ?? ((id, est) => notificarMudancaEstadoOs(id, est));
-    await enviarEmail(anchorOsId, "PEDIDO_AVALIACAO");
-    algumCanal = true;
-  }
-
-  return algumCanal;
-}
-
+/**
+ * Job de Lembrete de Avaliação 48h: varre as OS no estado terminal do cliente
+ * sem avaliação, agrupa por Solicitação e emite o Evento de Notificação
+ * `os.lembrete_avaliacao` com a OS âncora elegível — envio, canais e
+ * idempotência (Marco por Solicitação) são do contexto Notificação.
+ */
 export async function processarLembretesAvaliacao(
   deps: LembreteAvaliacaoDeps = {}
 ) {
@@ -126,20 +89,6 @@ export async function processarLembretesAvaliacao(
   const solIds = [...new Set(osCandidatas.map(o => o.solicitacaoId))];
 
   for (const solId of solIds) {
-    // Pula se a Solicitação já recebeu o lembrete.
-    const [solInfo] = await db
-      .select({
-        id: schema.solicitacao.id,
-        token: schema.solicitacao.token,
-        lembreteAvaliacaoEnviado: schema.solicitacao.lembreteAvaliacaoEnviado,
-        clienteId: schema.solicitacao.clienteId,
-      })
-      .from(schema.solicitacao)
-      .where(eq(schema.solicitacao.id, solId))
-      .limit(1);
-
-    if (!solInfo || solInfo.lembreteAvaliacaoEnviado) continue;
-
     // OS desta Solicitação; elegível se ao menos uma está terminal há ≥48h.
     const solOsList = osCandidatas.filter(o => o.solicitacaoId === solId);
 
@@ -147,36 +96,16 @@ export async function processarLembretesAvaliacao(
 
     if (!elegivel) continue;
 
-    // 2. Reivindica atomicamente: UPDATE ... WHERE flag=false RETURNING.
-    const claim = await db
-      .update(schema.solicitacao)
-      .set({ lembreteAvaliacaoEnviado: true })
-      .where(
-        and(
-          eq(schema.solicitacao.id, solId),
-          eq(schema.solicitacao.lembreteAvaliacaoEnviado, false)
-        )
-      )
-      .returning({ id: schema.solicitacao.id });
+    const resultado = await notificar(
+      { tipo: "os.lembrete_avaliacao", osId: anchorOsId },
+      { whatsapp: deps.gateway, email: deps.email, agora },
+    );
 
-    if (claim.length === 0) continue;
-
-    // Carrega o cliente para montar os canais.
-    const [cli] = await db
-      .select()
-      .from(schema.cliente)
-      .where(eq(schema.cliente.id, solInfo.clienteId))
-      .limit(1);
-    
-    if (!cli) continue;
-
-    const enviado = await dispararCanaisLembrete(cli, solInfo.token, anchorOsId, deps);
-
-    if (enviado) {
-      enviados++;
-    }
+    const whatsappSaiu =
+      resultado.whatsapp?.status === "enviado" ||
+      resultado.whatsapp?.status === "enfileirado";
+    if (whatsappSaiu || resultado.email?.status === "sent") enviados++;
   }
 
   return { enviados };
 }
-
