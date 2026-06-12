@@ -7,7 +7,6 @@ import {
   osHistoricoConflito,
   solicitacao,
 } from "@/db/schema";
-import { aplicarTransicao } from "@/operacao/maquina-estado";
 import { criarTransicaoRepoDrizzle } from "@/operacao/transicao-repo-drizzle";
 import {
   uploadFotoOsR2,
@@ -98,20 +97,15 @@ export async function processarItemSync(
 
     // Processamento da ação sem conflito
     if (item.tipo === "TRANSICAO") {
-      const repo = criarTransicaoRepoDrizzle(db);
-      await aplicarTransicao(
-        osId,
-        payload.alvo,
-        sessionEmail,
-        payload.motivo || null,
-        repo,
-        new Date(item.criadoEm),
-        payload.lat && payload.lon ? { lat: payload.lat, lon: payload.lon } : undefined
-      );
-
-      const { notificar } = await import("@/notificacao/notificar");
-      notificar({ tipo: "os.transicao", osId, estadoNovo: payload.alvo }).catch((e) => {
-        console.error(`Erro ao despachar notificação da OS ${osId}:`, e);
+      // Valida, persiste e despacha num módulo só; despacho não-bloqueante.
+      const { transicionarOs } = await import("@/operacao/transicionar-os");
+      await transicionarOs(osId, payload.alvo, sessionEmail, payload.motivo || null, {
+        repo: criarTransicaoRepoDrizzle(db),
+        agora: new Date(item.criadoEm),
+        geo:
+          payload.lat && payload.lon
+            ? { lat: payload.lat, lon: payload.lon }
+            : undefined,
       });
     } else if (item.tipo === "FOTO") {
       const uploadService = options?.uploadFoto ?? uploadFotoOsR2();
