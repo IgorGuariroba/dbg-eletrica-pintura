@@ -1,15 +1,11 @@
 "use server";
 
-import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/db/client";
-import { ordemServico, orcamento } from "@/db/schema";
 import { exigirTecnico } from "@/app/campo/guard";
-import { criarGatewayMercadoPago } from "@/lib/mercadopago";
-import { criarCobrancaPix, criarPreferenciaCheckoutPro } from "@/pagamento/checkout";
+import { montarCobrancaCampo } from "@/pagamento/montar-cobranca";
 import { registrarPagamentoManual } from "@/pagamento/registrar-manual";
 import { criarPagamentoRepoDrizzle } from "@/pagamento/pagamento-repo-drizzle";
 import { criarTransicaoRepoDrizzle } from "@/operacao/transicao-repo-drizzle";
-import { podeCobrar } from "@/operacao/estado-predicados";
 import { urlWhatsApp } from "@/lib/contato";
 
 export interface AcaoState {
@@ -28,42 +24,9 @@ export async function gerarPixAction(osId: string): Promise<AcaoState> {
   }
 
   try {
-    const [os] = await db
-      .select({ estado: ordemServico.estado, categoria: ordemServico.categoria })
-      .from(ordemServico)
-      .where(eq(ordemServico.id, osId))
-      .limit(1);
-
-    if (!os) {
-      return { erro: "Ordem de serviço não encontrada" };
-    }
-    if (!podeCobrar(os.estado)) {
-      return { erro: "Apenas ordens de serviço no estado CONCLUIDA podem ser pagas" };
-    }
-
-    const [orc] = await db
-      .select({ total: orcamento.total })
-      .from(orcamento)
-      .where(and(eq(orcamento.osId, osId), isNotNull(orcamento.aprovadoEm)))
-      .orderBy(desc(orcamento.criadoEm))
-      .limit(1);
-
-    if (!orc) {
-      return { erro: "Nenhum orçamento aprovado encontrado para esta Ordem de Serviço" };
-    }
-
-    const gateway = criarGatewayMercadoPago();
-    const out = await criarCobrancaPix(gateway, {
-      valor: orc.total,
-      descricao: `DBG Eletrica e Pintura — OS ${osId.slice(0, 8)}`,
-      metadata: { os_id: osId },
-    });
-
-    return {
-      ok: true,
-      qrBase64: out.qrBase64,
-      copiaCola: out.copiaCola,
-    };
+    const res = await montarCobrancaCampo(osId, "pix");
+    if (!res.ok) return { erro: res.erro };
+    return { ok: true, qrBase64: res.pix?.qrBase64, copiaCola: res.pix?.copiaCola };
   } catch (e) {
     return {
       erro:
@@ -80,49 +43,11 @@ export async function gerarLinkAction(osId: string): Promise<AcaoState> {
   }
 
   try {
-    const [os] = await db
-      .select({ estado: ordemServico.estado, categoria: ordemServico.categoria })
-      .from(ordemServico)
-      .where(eq(ordemServico.id, osId))
-      .limit(1);
+    const res = await montarCobrancaCampo(osId, "link");
+    if (!res.ok) return { erro: res.erro };
 
-    if (!os) {
-      return { erro: "Ordem de serviço não encontrada" };
-    }
-    if (!podeCobrar(os.estado)) {
-      return { erro: "Apenas ordens de serviço no estado CONCLUIDA podem ser pagas" };
-    }
-
-    const [orc] = await db
-      .select({ total: orcamento.total })
-      .from(orcamento)
-      .where(and(eq(orcamento.osId, osId), isNotNull(orcamento.aprovadoEm)))
-      .orderBy(desc(orcamento.criadoEm))
-      .limit(1);
-
-    if (!orc) {
-      return { erro: "Nenhum orçamento aprovado encontrado para esta Ordem de Serviço" };
-    }
-
-    const gateway = criarGatewayMercadoPago();
-    const out = await criarPreferenciaCheckoutPro(gateway, {
-      items: [
-        {
-          titulo: `DBG Serviços — OS ${osId.slice(0, 8)}`,
-          quantidade: 1,
-          precoUnitario: orc.total,
-        },
-      ],
-      metadata: { os_id: osId },
-    });
-
-    const msg = `Olá! Segue o link para pagamento da Ordem de Serviço de ${os.categoria.toLowerCase()}: ${out.url}`;
-    const urlWaMe = urlWhatsApp(msg);
-
-    return {
-      ok: true,
-      urlWaMe,
-    };
+    const msg = `Olá! Segue o link para pagamento da Ordem de Serviço de ${res.link!.categoria.toLowerCase()}: ${res.link!.url}`;
+    return { ok: true, urlWaMe: urlWhatsApp(msg) };
   } catch (e) {
     return {
       erro:
