@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { salvarPDFR2 } from "@/documentos/pdf/salvar-pdf-r2";
-import { obterUrlLeituraAssinada } from "@/operacao/r2-privado";
+import { obterUrlLeituraAssinada } from "@/lib/storage";
 
 // Round-trip real contra o R2 privado. Inerte sem credenciais (CI padrão).
 const hasR2 = Boolean(
@@ -27,14 +27,14 @@ describe.skipIf(!hasR2)("salvarPDFR2 contra R2 real", () => {
     );
   }, 30_000);
 
-  it("a URL fica inacessível após expirar (HTTP 403)", async () => {
+  it("a URL assinada carrega a expiração fixa do módulo (teto SigV4 de 7 dias)", async () => {
     const chave = `documentos/_teste/${randomUUID()}.pdf`;
     await salvarPDFR2(Buffer.from("%PDF-1.7\n"), chave);
 
-    const urlCurta = await obterUrlLeituraAssinada(chave, 1);
-    await sleep(3000);
-    const res = await fetch(urlCurta);
-
-    expect(res.status).toBe(403);
+    // Expiração é decisão do módulo Storage — caller não passa expiry (#166).
+    const url = await obterUrlLeituraAssinada(chave);
+    expect(new URL(url).searchParams.get("X-Amz-Expires")).toBe(
+      String(7 * 24 * 60 * 60),
+    );
   }, 30_000);
 });

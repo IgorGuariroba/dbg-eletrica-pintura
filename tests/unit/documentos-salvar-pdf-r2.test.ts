@@ -22,14 +22,11 @@ describe("salvarPDFR2", () => {
     expect(url).toBe("https://r2.exemplo/assinada");
   });
 
-  it("assina a URL no máximo do SigV4 (7 dias)", async () => {
+  it("pede a URL assinada ao armazenamento (expiração é decisão dele)", async () => {
     const arm = armazenamento();
 
     await salvarPDFR2(Buffer.from("x"), "documentos/c.pdf", arm);
 
-    expect(arm.urlAssinada).toHaveBeenCalledWith(
-      "documentos/c.pdf",
-      7 * 24 * 60 * 60,
-    );
+    expect(arm.urlAssinada).toHaveBeenCalledWith("documentos/c.pdf");
   });
 });

@@ -6,7 +6,7 @@ import { criarServico } from "@/catalogo/criar-servico";
 import { atualizarServico } from "@/catalogo/atualizar-servico";
 import { toggleAtivoServico } from "@/catalogo/toggle-ativo-servico";
 import { criarServicoRepoDrizzle } from "@/catalogo/servico-repo-drizzle";
-import { uploadServicePublicoR2 } from "@/catalogo/r2-client";
+import { uploadServicePublicoR2 } from "@/lib/storage";
 import { db } from "@/db/client";
 import { exigirCatalogo } from "./guard";
 

@@ -6,7 +6,7 @@ import { exigirMarketing } from "../../guard";
 import { criarLandingOverrideRepoDrizzle } from "@/marketing/landing/landing-override-repo-drizzle";
 import { criarDepoimentosQueryDrizzle } from "@/marketing/landing/depoimentos-query-drizzle";
 import { validarPrecoPromo } from "@/marketing/landing/validar-override";
-import { uploadServicePublicoR2 } from "@/catalogo/r2-client";
+import { uploadServicePublicoR2 } from "@/lib/storage";
 
 interface Resultado {
   erro?: string;

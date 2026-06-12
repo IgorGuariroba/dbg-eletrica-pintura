@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { montarChaveFotoOs } from "@/operacao/r2-privado";
+import { montarChaveFotoOs } from "@/lib/storage";
 
 describe("montarChaveFotoOs", () => {
   it("monta a chave no formato os/{id}/{antes|depois}/{uuid}.jpg", () => {

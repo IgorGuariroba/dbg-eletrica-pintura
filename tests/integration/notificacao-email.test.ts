@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { gerarPdfOrcamento, gerarPdfConclusao } from "@/notificacao/pdf-gerador";
-import { enviarPdfDocumento, obterUrlLeituraAssinada } from "@/operacao/r2-privado";
+import { enviarPdfDocumento, obterUrlLeituraAssinada } from "@/lib/storage";
 import { renderizarEmailOrcamento, renderizarEmailConclusao, criarEmailService } from "@/notificacao/email-service";
 import { notificarMudancaEstadoOs } from "@/notificacao/notificador";
 
@@ -318,7 +318,7 @@ describe.skipIf(!hasDb || !hasR2)("Notificação E-mail & PDF Integration (Slice
   });
 
   it("deve incluir as fotos antes/depois (semeadas no R2) no PDF de conclusão", async () => {
-    const { uploadFotoOsR2 } = await import("@/operacao/r2-privado");
+    const { uploadFotoOsR2 } = await import("@/lib/storage");
     const tecnico = await seedTecnico();
     const cliente = await seedCliente(true);
     const { os } = await seedSolicitacaoEOs(cliente.id, tecnico.id, "EM_EXECUCAO");

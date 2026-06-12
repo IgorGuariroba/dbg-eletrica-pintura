@@ -4,7 +4,7 @@ import { db } from "@/db/client";
 import { revalidatePath } from "next/cache";
 import { acionarGarantia } from "@/operacao/garantia/acionar-garantia";
 import { criarGarantiaRepoDrizzle } from "@/operacao/garantia/garantia-repo-drizzle";
-import { uploadFotoGarantia } from "@/operacao/r2-privado";
+import { uploadFotoGarantia } from "@/lib/storage";
 import { exigirGarantias } from "./guard";
 import { eq } from "drizzle-orm";
 import { cliente, ordemServico, solicitacao } from "@/db/schema";

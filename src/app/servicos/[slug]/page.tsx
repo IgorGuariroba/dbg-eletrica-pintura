@@ -10,7 +10,7 @@ import {
   type DepoimentoLanding,
   type UpsellLanding,
 } from "@/marketing/landing/montar-landing";
-import { urlPublicaFoto } from "@/marketing/copiador-r2";
+import { urlPublicaFoto } from "@/lib/storage";
 import { listarBairrosAtendidos } from "@/operacao/cobertura-query";
 import { SiteHeader } from "@/app/_landing/site-header";
 import { SiteFooter } from "@/app/_landing/site-footer";

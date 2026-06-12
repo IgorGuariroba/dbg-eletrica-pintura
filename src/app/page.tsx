@@ -19,7 +19,7 @@ import { criarMetricasPublicasQueryDrizzle } from "@/marketing/landing/metricas-
 import type { MetricasPublicas } from "@/marketing/landing/metricas-publicas-query";
 import type { DepoimentoCandidato } from "@/marketing/landing/depoimentos-query";
 import { listarBairrosAtendidos } from "@/operacao/cobertura-query";
-import { urlPublicaFoto } from "@/marketing/copiador-r2";
+import { urlPublicaFoto } from "@/lib/storage";
 import { Equipe } from "./_landing/equipe";
 import type { FotoPortfolioView } from "./_landing/portfolio";
 

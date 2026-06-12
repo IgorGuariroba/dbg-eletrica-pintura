@@ -12,7 +12,7 @@ vi.mock("@/app/admin/garantias/guard", () => ({
   exigirGarantias: vi.fn().mockResolvedValue({ email: "admin@dbg.test" }),
 }));
 
-vi.mock("@/operacao/r2-privado", () => ({
+vi.mock("@/lib/storage", () => ({
   uploadFotoGarantia: vi.fn().mockResolvedValue("fotos/chamados/foto.jpg"),
 }));
 

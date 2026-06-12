@@ -10,7 +10,7 @@ import {
   servico,
 } from "@/db/schema";
 import { gerarPdfOrcamento, gerarPdfConclusao } from "./pdf-gerador";
-import { enviarPdfDocumento, obterUrlLeituraAssinada, listarFotosOs } from "@/operacao/r2-privado";
+import { salvarPdfOs, obterUrlLeituraAssinada, listarFotosOs } from "@/lib/storage";
 import {
   criarEmailService,
   renderizarEmailOrcamento,
@@ -118,10 +118,7 @@ export async function notificarMudancaEstadoOs(
     };
 
     const pdfBuffer = await gerarPdfOrcamento(dadosPdf);
-    const key = `orcamentos/os-${osId}-${Date.now()}.pdf`;
-    
-    await enviarPdfDocumento(key, pdfBuffer);
-    const pdfUrl = await obterUrlLeituraAssinada(key);
+    const { url: pdfUrl } = await salvarPdfOs("orcamento", osId, pdfBuffer);
 
     const html = await renderizarEmailOrcamento({
       clienteNome: cli.nome,
@@ -206,10 +203,10 @@ export async function notificarMudancaEstadoOs(
     const fotosDepoisChaves = await listarFotosOs(osId, "DEPOIS");
 
     const fotosAntes = await Promise.all(
-      fotosAntesChaves.slice(0, 4).map((k) => obterUrlLeituraAssinada(k, 3600))
+      fotosAntesChaves.slice(0, 4).map((k) => obterUrlLeituraAssinada(k))
     );
     const fotosDepois = await Promise.all(
-      fotosDepoisChaves.slice(0, 4).map((k) => obterUrlLeituraAssinada(k, 3600))
+      fotosDepoisChaves.slice(0, 4).map((k) => obterUrlLeituraAssinada(k))
     );
 
     const dadosPdf = {
@@ -227,10 +224,7 @@ export async function notificarMudancaEstadoOs(
     };
 
     const pdfBuffer = await gerarPdfConclusao(dadosPdf);
-    const key = `conclusoes/os-${osId}-${Date.now()}.pdf`;
-    
-    await enviarPdfDocumento(key, pdfBuffer);
-    const pdfUrl = await obterUrlLeituraAssinada(key);
+    const { url: pdfUrl } = await salvarPdfOs("conclusao", osId, pdfBuffer);
 
     const html = await renderizarEmailConclusao({
       clienteNome: cli.nome,

@@ -5,7 +5,7 @@ import { buscarCep } from "@/operacao/cep";
 import { reverseGeocode } from "@/operacao/geo";
 import { criarSolicitacao } from "@/operacao/criar-solicitacao";
 import { criarSolicitacaoRepoDrizzle } from "@/operacao/solicitacao-repo-drizzle";
-import { uploadServiceSolicitacaoR2 } from "@/operacao/r2-privado";
+import { uploadServiceSolicitacaoR2 } from "@/lib/storage";
 import { db } from "@/db/client";
 import {
   lerCategoriasForm,
