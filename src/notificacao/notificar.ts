@@ -64,14 +64,12 @@ export async function notificar(
                 emailService: deps.email,
               })
           : undefined,
+        // Sem deps.email, gerarDocumentosOs usa o serviço default (Resend/mock
+        // por env) — mesmo comportamento do default interno do dispatcher.
         gerarDocumentos:
           deps.documentos ??
-          (deps.email
-            ? (osId, estado) =>
-                gerarDocumentosOs(osId, estado as EstadoOs, {
-                  email: deps.email,
-                })
-            : undefined),
+          ((osId, estado) =>
+            gerarDocumentosOs(osId, estado as EstadoOs, { email: deps.email })),
       });
   }
 }
