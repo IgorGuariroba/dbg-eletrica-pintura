@@ -9,6 +9,7 @@ import {
   notificarBoasVindasAssinatura,
   type ConsultaAssinaturaMp,
 } from "./boas-vindas-assinatura";
+import { notificarFalhaPagamentoAssinatura } from "./falha-pagamento-assinatura";
 import type { EmailService } from "./email-service";
 import type { GatewayWhatsApp } from "./whatsapp-gateway";
 
@@ -24,7 +25,14 @@ export type EventoNotificacao =
   | { tipo: "assinatura.criada"; preapprovalIdMp: string }
   // Combo "pagar tudo junto + assinar" (#65): sem pre-approval no MP, lookup
   // pelo id local e próxima cobrança "a confirmar".
-  | { tipo: "assinatura.criada_combo"; assinaturaId: string };
+  | { tipo: "assinatura.criada_combo"; assinaturaId: string }
+  // `eventId` = notificação do webhook MP: o marco é por falha (reexecução do
+  // mesmo webhook não reenvia; falha de ciclo futuro notifica de novo).
+  | {
+      tipo: "assinatura.pagamento_falhou";
+      preapprovalIdMp: string;
+      eventId: string;
+    };
 
 /** Adapter de saída de documentos (fatura/certificado/relatório + e-mail). */
 export type GeradorDocumentos = (
@@ -92,5 +100,12 @@ export async function notificar(
           mpAssinatura: deps.mpAssinatura,
         }),
       };
+
+    case "assinatura.pagamento_falhou":
+      return notificarFalhaPagamentoAssinatura(evento, {
+        whatsapp: deps.whatsapp,
+        email: deps.email,
+        agora: deps.agora,
+      });
   }
 }

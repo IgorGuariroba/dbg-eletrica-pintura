@@ -5,7 +5,6 @@ import { efetivarPendencias } from "@/assinatura/efetivar-pendencias";
 import { derivarTipoEvento } from "@/assinatura/evento-webhook";
 import { notificar } from "@/notificacao/notificar";
 import { criarGatewayMercadoPagoAssinatura } from "@/lib/mercadopago";
-import { notificarFalhaPagamento } from "@/assinatura/notificar-falha-pagamento";
 import { processarEventoAssinatura } from "@/assinatura/processar-evento";
 import { db } from "@/db/client";
 import { plano } from "@/db/schema";
@@ -86,11 +85,17 @@ export async function POST(request: Request): Promise<NextResponse> {
           { mpAssinatura: { buscarAssinatura: async () => recurso } },
         );
       },
-      // Falha de pagamento (slice #58): WhatsApp + e-mail com link MP. A
-      // idempotência (1 falha = 1 notificação) vem de `assinatura_evento`:
-      // só notifica quando o evento foi aplicado pela 1ª vez.
+      // Falha de pagamento (slice #58): WhatsApp + e-mail com link MP.
+      // Idempotência em duas camadas: `assinatura_evento` (só notifica quando
+      // o evento foi aplicado pela 1ª vez) + Marco de Notificação por eventId.
       notificarFalha: (preapprovalIdMp) => {
-        void notificarFalhaPagamento(preapprovalIdMp);
+        void notificar({
+          tipo: "assinatura.pagamento_falhou",
+          preapprovalIdMp,
+          eventId,
+        }).catch((e) =>
+          console.error(`Erro ao notificar falha de pagamento (${preapprovalIdMp}):`, e),
+        );
       },
     },
   );

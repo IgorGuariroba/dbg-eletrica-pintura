@@ -184,7 +184,7 @@ describe.skipIf(!hasDb)("Gestão de assinatura — fluxo (Drizzle)", () => {
     expect(transicoes.map((t) => t.estadoNovo)).toContain("CANCELADA");
   });
 
-  it("notificarFalhaPagamento (defaults) carrega dados e dispara sem lançar", async () => {
+  it("notificar(assinatura.pagamento_falhou) carrega dados pelos loaders internos e dispara", async () => {
     const wpp = String(Math.floor(1e12 + Math.random() * 9e12));
     const cli = await seedCliente(wpp, "falha@x.com");
     const plano = await seedPlano(
@@ -197,14 +197,33 @@ describe.skipIf(!hasDb)("Gestão de assinatura — fluxo (Drizzle)", () => {
       new Date("2026-06-28T00:00:00Z"),
     );
 
-    const { notificarFalhaPagamento } = await import(
-      "@/assinatura/notificar-falha-pagamento"
+    const { notificar } = await import("@/notificacao/notificar");
+    // Loaders internos (Drizzle) + adapter de e-mail fake (sem Resend real).
+    const enviados: { para: string }[] = [];
+    const res = await notificar(
+      {
+        tipo: "assinatura.pagamento_falhou",
+        preapprovalIdMp: ass.preapproval,
+        eventId: `ev-gestao-${Math.random().toString(36).slice(2, 8)}`,
+      },
+      {
+        email: {
+          enviar: async (input) => {
+            enviados.push({ para: input.para });
+            return { id: "mock-gestao" };
+          },
+        },
+      },
     );
-    // Sem senders injetados: exercita os loaders/closures default (e-mail mock).
-    const res = await notificarFalhaPagamento(ass.preapproval, {
-      forceMock: true,
-    });
 
-    expect(res.email).toBe("sent");
+    expect(res.email?.status).toBe("sent");
+    expect(enviados).toHaveLength(1);
+
+    const { db } = await import("@/db/client");
+    const schemaDb = await import("@/db/schema");
+    const { eq } = await import("drizzle-orm");
+    await db
+      .delete(schemaDb.notificacaoMarco)
+      .where(eq(schemaDb.notificacaoMarco.refId, ass.id));
   });
 });
