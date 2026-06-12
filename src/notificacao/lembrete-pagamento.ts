@@ -3,9 +3,10 @@ import { db } from "@/db/client";
 import { ordemServico, transicaoOs } from "@/db/schema";
 import type { EmailService } from "./email-service";
 import { notificar } from "./notificar";
+import { TIPOS_PAGAVEIS } from "./tipos-pagaveis";
 import type { GatewayWhatsApp } from "./whatsapp-gateway";
 
-export const TIPOS_PAGAVEIS = ["NORMAL", "EXPRESS", "COMPLEMENTAR"] as const;
+export { TIPOS_PAGAVEIS } from "./tipos-pagaveis";
 
 const HORAS_DIA1 = 24;
 const HORAS_DIA3 = 72;

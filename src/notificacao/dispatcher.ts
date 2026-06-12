@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { cliente, membro, ordemServico, solicitacao } from "@/db/schema";
-import { TIPOS_PAGAVEIS } from "./lembrete-pagamento";
+import { TIPOS_PAGAVEIS } from "./tipos-pagaveis";
 import { claimMarco } from "./marco";
 import { enviarTemplate } from "./enviar-template";
 import { notificarMudancaEstadoOs, type NotificacaoResultado } from "./notificador";

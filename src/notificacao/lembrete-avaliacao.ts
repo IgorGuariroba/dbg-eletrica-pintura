@@ -2,7 +2,7 @@ import { and, desc, eq, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import * as schema from "@/db/schema";
 import type { EmailService } from "./email-service";
-import { TIPOS_PAGAVEIS } from "./lembrete-pagamento";
+import { TIPOS_PAGAVEIS } from "./tipos-pagaveis";
 import { notificar } from "./notificar";
 import type { GatewayWhatsApp } from "./whatsapp-gateway";
 
