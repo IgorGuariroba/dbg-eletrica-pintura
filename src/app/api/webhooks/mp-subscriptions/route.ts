@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { criarAssinaturaRepoDrizzle } from "@/assinatura/assinatura-repo-drizzle";
 import { efetivarPendencias } from "@/assinatura/efetivar-pendencias";
 import { derivarTipoEvento } from "@/assinatura/evento-webhook";
-import { enviarBoasVindas } from "@/assinatura/enviar-boas-vindas";
+import { notificar } from "@/notificacao/notificar";
 import { criarGatewayMercadoPagoAssinatura } from "@/lib/mercadopago";
 import { notificarFalhaPagamento } from "@/assinatura/notificar-falha-pagamento";
 import { processarEventoAssinatura } from "@/assinatura/processar-evento";
@@ -79,11 +79,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     {
       repo: criarAssinaturaRepoDrizzle(db),
       // Boas-vindas só na 1ª ativação (gate em processarEventoAssinatura).
-      // Reaproveita o `next_payment_date` já consultado acima.
+      // Reaproveita o `next_payment_date` já consultado acima via deps.
       enviarBoasVindas: async (preapprovalIdMp) => {
-        await enviarBoasVindas(preapprovalIdMp, {
-          obterProximaCobranca: async () => recurso.nextPaymentDate,
-        });
+        await notificar(
+          { tipo: "assinatura.criada", preapprovalIdMp },
+          { mpAssinatura: { buscarAssinatura: async () => recurso } },
+        );
       },
       // Falha de pagamento (slice #58): WhatsApp + e-mail com link MP. A
       // idempotência (1 falha = 1 notificação) vem de `assinatura_evento`:
