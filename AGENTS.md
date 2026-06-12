@@ -1,6 +1,6 @@
 # AGENTS.md — Instruções para Agentes de IA
 
-Este arquivo contém instruções operacionais para agentes de IA que interagem com o repositório da **DBG Elétrica e Pintura**. As regras detalhadas de design, UX e arquitetura vivem em [`.agents/rules/`](./.agents/rules/) (ver §4).
+Este arquivo contém instruções operacionais para agentes de IA que interagem com o repositório da **DBG Elétrica e Pintura**. As regras detalhadas de design, UX e arquitetura vivem em [`.agents/rules/`](./.agents/rules/) (ver §4). As diretrizes comportamentais que regem *como* trabalhar estão na §7.
 
 ---
 
@@ -179,3 +179,70 @@ Toda alteração de código deve seguir estritamente estes passos:
    - Caso o Gemini retorne `MUDANÇAS NECESSÁRIAS ❌`, devemos analisar os achados:
      - Se for realmente um problema crítico, devemos corrigir o problema e reiniciar o processo de validação local e push.
      - Se for um problema mais simples (não crítico), o agente deve perguntar ao usuário se deseja corrigir o problema ou apenas responder/comentar no review do Gemini explicando a decisão.
+
+---
+
+## 7. Diretrizes Comportamentais (Reduzir Erros Comuns de LLM)
+
+**Tradeoff:** estas diretrizes priorizam cautela sobre velocidade. Para tarefas triviais, use julgamento.
+
+### 7.1. Pensar Antes de Codificar
+
+**Não presuma. Não esconda confusão. Exponha tradeoffs.**
+
+Antes de implementar:
+- Declare suas premissas explicitamente. Se incerto, pergunte.
+- Se existem múltiplas interpretações, apresente-as — não escolha silenciosamente.
+- Se existe abordagem mais simples, diga. Conteste quando justificado.
+- Se algo está obscuro, pare. Nomeie o que confunde. Pergunte.
+
+### 7.2. Simplicidade Primeiro
+
+**Mínimo de código que resolve o problema. Nada especulativo.**
+
+- Sem funcionalidades além do pedido.
+- Sem abstrações para código de uso único.
+- Sem "flexibilidade" ou "configurabilidade" não solicitadas.
+- Sem tratamento de erro para cenários impossíveis.
+- Se escreveu 200 linhas e poderiam ser 50, reescreva.
+
+Pergunte-se: "Um engenheiro sênior diria que isto está supercomplicado?" Se sim, simplifique.
+
+### 7.3. Mudanças Cirúrgicas
+
+**Toque apenas no necessário. Limpe apenas a própria bagunça.**
+
+Ao editar código existente:
+- Não "melhore" código, comentários ou formatação adjacentes.
+- Não refatore o que não está quebrado.
+- Siga o estilo existente, mesmo que fizesse diferente.
+- Se notar código morto não relacionado, mencione — não delete.
+
+Quando suas mudanças criarem órfãos:
+- Remova imports/variáveis/funções que **suas** mudanças tornaram não usados.
+- Não remova código morto pré-existente sem que seja pedido.
+
+O teste: cada linha alterada deve rastrear diretamente ao pedido do usuário.
+
+### 7.4. Execução Orientada a Objetivo
+
+**Defina critérios de sucesso. Itere até verificar.**
+
+Transforme tarefas em objetivos verificáveis:
+- "Adicionar validação" → "Escrever testes para entradas inválidas e fazê-los passar"
+- "Corrigir o bug" → "Escrever um teste que o reproduza e fazê-lo passar"
+- "Refatorar X" → "Garantir testes passando antes e depois"
+
+Para tarefas multi-etapa, declare um plano breve:
+
+```
+1. [Etapa] → verificar: [checagem]
+2. [Etapa] → verificar: [checagem]
+3. [Etapa] → verificar: [checagem]
+```
+
+Critérios de sucesso fortes permitem iterar com autonomia. Critérios fracos ("faça funcionar") exigem esclarecimento constante.
+
+---
+
+**Estas diretrizes estão funcionando se:** menos mudanças desnecessárias nos diffs, menos retrabalho por supercomplicação, e perguntas de esclarecimento vêm antes da implementação — não depois dos erros.
