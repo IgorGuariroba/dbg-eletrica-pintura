@@ -84,9 +84,9 @@ export async function processarLembretesPagamento(
     // Reivindica o marco ANTES de enviar: se já existe, outro disparo cobriu.
     const claim = await db
       .insert(notificacaoMarco)
-      .values({ osId: os.id, marco })
+      .values({ refId: os.id, marco })
       .onConflictDoNothing({
-        target: [notificacaoMarco.osId, notificacaoMarco.marco],
+        target: [notificacaoMarco.refId, notificacaoMarco.marco],
       })
       .returning({ id: notificacaoMarco.id });
     if (claim.length === 0) continue;

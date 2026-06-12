@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { cliente, membro, ordemServico, solicitacao, notificacaoMarco } from "@/db/schema";
+import { cliente, membro, ordemServico, solicitacao } from "@/db/schema";
 import { TIPOS_PAGAVEIS } from "./lembrete-pagamento";
+import { claimMarco } from "./marco";
 import { enviarTemplate } from "./enviar-template";
 import { notificarMudancaEstadoOs, type NotificacaoResultado } from "./notificador";
 import {
@@ -77,9 +78,9 @@ export interface DespacharDeps {
     osId: string,
   ) => Promise<Pick<typeof ordemServico.$inferSelect, "tipo"> | undefined>;
   /**
-   * Reivindica o marco de convite à avaliação (idempotência). Default: insere
-   * em `notificacaoMarco` com `onConflictDoNothing` e devolve `true` se ganhou a
-   * corrida. Injetável para isolar testes do banco.
+   * Reivindica o marco de convite à avaliação (idempotência). Default:
+   * `claimMarco` genérico do contexto (Marco de Notificação). Injetável para
+   * isolar testes do banco.
    */
   claimAvaliacao?: (osId: string) => Promise<boolean>;
 }
@@ -121,16 +122,9 @@ export async function despacharEventoOs(
 
       if (deveAvaliar) {
         // Reivindica o marco ANTES de enviar: reexecução da transição não reenvia.
-        const claimAvaliacao = deps.claimAvaliacao ?? (async (id) => {
-          const claim = await db
-            .insert(notificacaoMarco)
-            .values({ osId: id, marco: "pedido_avaliacao:disparo" })
-            .onConflictDoNothing({
-              target: [notificacaoMarco.osId, notificacaoMarco.marco],
-            })
-            .returning({ id: notificacaoMarco.id });
-          return claim.length > 0;
-        });
+        const claimAvaliacao =
+          deps.claimAvaliacao ??
+          ((id: string) => claimMarco(id, "pedido_avaliacao:disparo"));
 
         if (await claimAvaliacao(osId)) {
           const avaliacao: { whatsapp?: DespachoWhatsapp; email?: NotificacaoResultado } = {};

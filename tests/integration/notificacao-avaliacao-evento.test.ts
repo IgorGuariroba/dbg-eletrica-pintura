@@ -65,7 +65,7 @@ describe.skipIf(!hasDb)("Disparo de Pedido de Avaliação (Bloco B)", () => {
         const osIds = oss.map(o => o.id);
         if (osIds.length > 0) {
           await db.delete(schema.pagamento).where(inArray(schema.pagamento.osId, osIds));
-          await db.delete(schema.notificacaoMarco).where(inArray(schema.notificacaoMarco.osId, osIds));
+          await db.delete(schema.notificacaoMarco).where(inArray(schema.notificacaoMarco.refId, osIds));
           await db.delete(schema.transicaoOs).where(inArray(schema.transicaoOs.osId, osIds));
           
           const orcs = await db
@@ -93,7 +93,7 @@ describe.skipIf(!hasDb)("Disparo de Pedido de Avaliação (Bloco B)", () => {
       .delete(schema.filaWhatsapp)
       .where(like(schema.filaWhatsapp.destinatario, `${PREFIXO_WPP}%`));
     if (osIds.length) {
-      await db.delete(schema.notificacaoMarco).where(inArray(schema.notificacaoMarco.osId, osIds));
+      await db.delete(schema.notificacaoMarco).where(inArray(schema.notificacaoMarco.refId, osIds));
       await db.delete(schema.ordemServico).where(inArray(schema.ordemServico.id, osIds));
       osIds.length = 0;
     }
