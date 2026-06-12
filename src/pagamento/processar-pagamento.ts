@@ -2,6 +2,7 @@ import {
   aplicarTransicao,
   TransicaoInvalidaError,
 } from "@/operacao/maquina-estado";
+import type { EstadoOs } from "@/operacao/orcamento-repo";
 import type { TransicaoRepo } from "@/operacao/transicao-repo";
 import type { PagamentoRepo } from "./pagamento-repo";
 import type { DadosPagamento } from "./webhook";
@@ -22,9 +23,9 @@ export interface ProcessarDeps {
   transicaoRepo: TransicaoRepo;
   /**
    * Emite a notificação da transição PAGA (gera fatura/certificado via
-   * dispatcher). Default: dispatcher fire-and-forget. Injetável para teste.
+   * Notificação). Default: notificar() fire-and-forget. Injetável para teste.
    */
-  notificarTransicao?: (osId: string, estado: string) => void;
+  notificarTransicao?: (osId: string, estado: EstadoOs) => void;
   /**
    * Ativa a assinatura PENDENTE do combo "pagar tudo junto + assinar" (#65)
    * quando o pagamento combinado é aprovado. Default: caso de uso
@@ -52,15 +53,15 @@ async function ativarPadrao(assinaturaId: string): Promise<void> {
   });
 }
 
-/** Emissão padrão: dispatcher de eventos, assíncrono e não-bloqueante. */
-function notificarPadrao(osId: string, estado: string): void {
-  import("@/notificacao/dispatcher")
-    .then(({ despacharEventoOs }) =>
-      despacharEventoOs(osId, estado).catch((e) =>
+/** Emissão padrão: interface única notificar(evento), assíncrona e não-bloqueante. */
+function notificarPadrao(osId: string, estado: EstadoOs): void {
+  import("@/notificacao/notificar")
+    .then(({ notificar }) =>
+      notificar({ tipo: "os.transicao", osId, estadoNovo: estado }).catch((e) =>
         console.error(`Erro ao despachar notificação da OS ${osId}:`, e),
       ),
     )
-    .catch((e) => console.error(`Erro ao carregar dispatcher:`, e));
+    .catch((e) => console.error(`Erro ao carregar notificador:`, e));
 }
 
 export interface ProcessarResultado {

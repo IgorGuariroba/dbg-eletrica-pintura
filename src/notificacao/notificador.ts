@@ -16,6 +16,7 @@ import {
   renderizarEmailOrcamento,
   renderizarEmailConclusao,
   renderizarEmailPedidoAvaliacao,
+  type EmailService,
 } from "./email-service";
 
 export interface NotificacaoResultado {
@@ -28,7 +29,7 @@ export interface NotificacaoResultado {
 export async function notificarMudancaEstadoOs(
   osId: string,
   estadoNovo: string,
-  config: { forceMock?: boolean } = {},
+  config: { forceMock?: boolean; emailService?: EmailService } = {},
 ): Promise<NotificacaoResultado> {
   // Apenas e-mails para ORCADA, CONCLUIDA e PEDIDO_AVALIACAO
   if (estadoNovo !== "ORCADA" && estadoNovo !== "CONCLUIDA" && estadoNovo !== "PEDIDO_AVALIACAO") {
@@ -70,7 +71,7 @@ export async function notificarMudancaEstadoOs(
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const urlPortal = `${siteUrl}/s/${sol.token}`;
-  const emailService = criarEmailService(config);
+  const emailService = config.emailService ?? criarEmailService(config);
 
   // ============================================================
   // Caso ORCADA

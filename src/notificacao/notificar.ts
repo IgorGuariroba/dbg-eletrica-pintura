@@ -1,0 +1,75 @@
+import type { EstadoOs } from "@/operacao/orcamento-repo";
+import {
+  gerarDocumentosOs,
+  type GerarDocumentosResultado,
+} from "@/documentos/gerar-documentos-os";
+import { despacharEventoOs, type DespachoResultado } from "./dispatcher";
+import { notificarMudancaEstadoOs } from "./notificador";
+import type { EmailService } from "./email-service";
+import type { GatewayWhatsApp } from "./whatsapp-gateway";
+
+/**
+ * Evento de Notificação: união discriminada consumida pela interface única do
+ * contexto. O emissor entrega só identificadores; Notificação carrega os dados
+ * do render por conta própria (loaders Drizzle internos, não injetáveis).
+ * Demais membros (assinatura.*, os.lembrete_*) entram em fatias futuras.
+ */
+export type EventoNotificacao = {
+  tipo: "os.transicao";
+  osId: string;
+  estadoNovo: EstadoOs;
+};
+
+/** Adapter de saída de documentos (fatura/certificado/relatório + e-mail). */
+export type GeradorDocumentos = (
+  osId: string,
+  estadoNovo: string,
+) => Promise<GerarDocumentosResultado>;
+
+/**
+ * Dependências de `notificar`: apenas adapters de saída + relógio. Defaults de
+ * produção: Cloud API (por env), Resend e gerador de documentos reais.
+ */
+export interface NotificarDeps {
+  /** Adapter de saída da Cloud API (default: real/mock por env). */
+  whatsapp?: GatewayWhatsApp;
+  /** Adapter de saída de e-mail (default: Resend/mock por env). */
+  email?: EmailService;
+  /** Adapter de saída de documentos (default: gerarDocumentosOs → R2+Resend). */
+  documentos?: GeradorDocumentos;
+  /** Relógio injetável (default: agora). Repassado ao Horário Restrito. */
+  agora?: Date;
+}
+
+export type NotificarResultado = DespachoResultado;
+
+/**
+ * Interface única do contexto Notificação: consome um Evento de Notificação e
+ * decide internamente canal (Prioridade de Canal), template, variáveis,
+ * Horário Restrito/fila, e-mail+PDF e idempotência via Marco de Notificação.
+ * Cliente sem WhatsApp/e-mail válido → pula o canal e loga, sem lançar.
+ */
+export async function notificar(
+  evento: EventoNotificacao,
+  deps: NotificarDeps = {},
+): Promise<NotificarResultado> {
+  switch (evento.tipo) {
+    case "os.transicao":
+      return despacharEventoOs(evento.osId, evento.estadoNovo, {
+        gateway: deps.whatsapp,
+        agora: deps.agora,
+        enviarEmail: deps.email
+          ? (osId, estado) =>
+              notificarMudancaEstadoOs(osId, estado, {
+                emailService: deps.email,
+              })
+          : undefined,
+        // Sem deps.email, gerarDocumentosOs usa o serviço default (Resend/mock
+        // por env) — mesmo comportamento do default interno do dispatcher.
+        gerarDocumentos:
+          deps.documentos ??
+          ((osId, estado) =>
+            gerarDocumentosOs(osId, estado as EstadoOs, { email: deps.email })),
+      });
+  }
+}

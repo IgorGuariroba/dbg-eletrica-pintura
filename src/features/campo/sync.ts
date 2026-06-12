@@ -109,8 +109,8 @@ export async function processarItemSync(
         payload.lat && payload.lon ? { lat: payload.lat, lon: payload.lon } : undefined
       );
 
-      const { despacharEventoOs } = await import("@/notificacao/dispatcher");
-      despacharEventoOs(osId, payload.alvo).catch((e) => {
+      const { notificar } = await import("@/notificacao/notificar");
+      notificar({ tipo: "os.transicao", osId, estadoNovo: payload.alvo }).catch((e) => {
         console.error(`Erro ao despachar notificação da OS ${osId}:`, e);
       });
     } else if (item.tipo === "FOTO") {
