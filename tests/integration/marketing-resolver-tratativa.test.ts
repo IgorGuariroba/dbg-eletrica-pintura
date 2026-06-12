@@ -24,7 +24,7 @@ describe.skipIf(!hasDb)("Resolver Tratativa → Reavaliação Idempotente (Bloco
   afterEach(async () => {
     if (alertaIds.length) {
       await db.delete(schema.notificacaoMarco).where(
-        inArray(schema.notificacaoMarco.osId, osIds),
+        inArray(schema.notificacaoMarco.refId, osIds),
       );
       await db.delete(schema.tratativa).where(inArray(schema.tratativa.alertaAvaliacaoId, alertaIds));
       await db.delete(schema.alertaAvaliacao).where(inArray(schema.alertaAvaliacao.id, alertaIds));

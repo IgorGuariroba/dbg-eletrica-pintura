@@ -2,7 +2,6 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
   cliente,
-  notificacaoMarco,
   orcamento,
   ordemServico,
   solicitacao,
@@ -10,6 +9,7 @@ import {
 } from "@/db/schema";
 import { criarEmailService, renderizarEmailLembretePagamento } from "./email-service";
 import { enviarTemplate } from "./enviar-template";
+import { claimMarco } from "./marco";
 import {
   criarTemplateRepo,
   normalizarWhatsapp,
@@ -82,14 +82,7 @@ export async function processarLembretesPagamento(
     if (!marco) continue;
 
     // Reivindica o marco ANTES de enviar: se já existe, outro disparo cobriu.
-    const claim = await db
-      .insert(notificacaoMarco)
-      .values({ osId: os.id, marco })
-      .onConflictDoNothing({
-        target: [notificacaoMarco.osId, notificacaoMarco.marco],
-      })
-      .returning({ id: notificacaoMarco.id });
-    if (claim.length === 0) continue;
+    if (!(await claimMarco(os.id, marco))) continue;
 
     const ctx = await carregarContexto(os.id, os.solicitacaoId);
     if (!ctx) continue;

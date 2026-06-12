@@ -22,6 +22,7 @@ export default async function setup() {
   const {
     cliente,
     membro,
+    notificacaoMarco,
     ordemServico,
     orcamento,
     pagamento,
@@ -65,6 +66,11 @@ export default async function setup() {
       await db.delete(tratativa).where(inArray(tratativa.osId, osIds));
       await db.delete(alertaAvaliacao).where(inArray(alertaAvaliacao.osId, osIds));
       await db.delete(avaliacao).where(inArray(avaliacao.osId, osIds));
+      // notificacaoMarco usa referência genérica sem FK (não cai por cascade) —
+      // varrer junto, senão marcos de OS de teste viram lixo permanente.
+      await db
+        .delete(notificacaoMarco)
+        .where(inArray(notificacaoMarco.refId, osIds));
     }
     await db
       .delete(ordemServico)
@@ -88,6 +94,25 @@ export default async function setup() {
     .from(plano)
     .where(like(plano.nome, "Plano %"));
   const planoIdsTeste = planosTeste.map((p) => p.id);
+  // Marcos de notificação referenciam assinaturas de teste por refId genérico
+  // (sem FK) — varrer antes de apagar as assinaturas, como feito para as OS.
+  const assinaturasTeste = await db
+    .select({ id: assinatura.id })
+    .from(assinatura)
+    .where(
+      planoIdsTeste.length
+        ? or(
+            like(assinatura.preapprovalIdMp, "pre-%"),
+            inArray(assinatura.planoId, planoIdsTeste),
+          )
+        : like(assinatura.preapprovalIdMp, "pre-%"),
+    );
+  const assinaturaIdsTeste = assinaturasTeste.map((a) => a.id);
+  if (assinaturaIdsTeste.length) {
+    await db
+      .delete(notificacaoMarco)
+      .where(inArray(notificacaoMarco.refId, assinaturaIdsTeste));
+  }
   await db.delete(assinatura).where(like(assinatura.preapprovalIdMp, "pre-%"));
   if (planoIdsTeste.length) {
     await db.delete(assinatura).where(inArray(assinatura.planoId, planoIdsTeste));

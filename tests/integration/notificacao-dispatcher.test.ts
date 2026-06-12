@@ -78,7 +78,7 @@ describe.skipIf(!hasDb)("Notificação Dispatcher (Slice 2 — #46)", () => {
       );
       await db.delete(schema.orcamento).where(inArray(schema.orcamento.osId, osIds));
       await db.delete(schema.transicaoOs).where(inArray(schema.transicaoOs.osId, osIds));
-      await db.delete(schema.notificacaoMarco).where(inArray(schema.notificacaoMarco.osId, osIds));
+      await db.delete(schema.notificacaoMarco).where(inArray(schema.notificacaoMarco.refId, osIds));
       await db.delete(schema.ordemServico).where(inArray(schema.ordemServico.id, osIds));
       osIds.length = 0;
     }

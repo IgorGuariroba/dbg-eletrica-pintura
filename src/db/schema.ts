@@ -606,28 +606,31 @@ export const notificacaoWhatsapp = pgTable(
 );
 
 // ============================================================
-// Marco de Notificação (idempotência do dispatcher — módulo Notificação)
+// Marco de Notificação (idempotência do contexto Notificação)
 // ============================================================
-// Âncora de idempotência: cada evento de notificação que não pode duplicar
-// grava um marco (osId, marco). UNIQUE garante que reexecuções do job (ex:
-// lembrete de pagamento dia1/dia3) só disparem uma vez por marco. Insert com
-// onConflictDoNothing → 0 linhas devolvidas = já enviado, pula.
+// Âncora de idempotência: cada Evento de Notificação que não pode duplicar
+// grava um marco (refId, marco). UNIQUE garante que reexecuções (job, webhook,
+// transição) só disparem uma vez por marco. Insert com onConflictDoNothing →
+// 0 linhas devolvidas = já enviado, pula. A referência é genérica (sem FK):
+// id de OS para eventos de OS, id de assinatura para eventos de assinatura.
 
 export const notificacaoMarco = pgTable(
   "notificacao_marco",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    osId: uuid("os_id")
-      .notNull()
-      .references(() => ordemServico.id, { onDelete: "cascade" }),
-    // Chave do marco, ex: "lembrete_pagamento:dia1", "lembrete_pagamento:dia3".
+    // Referência genérica do evento (id de OS, de assinatura, ...).
+    refId: uuid("ref_id").notNull(),
+    // Chave do marco, ex: "pedido_avaliacao:disparo", "lembrete_pagamento:dia1".
     marco: varchar("marco", { length: 64 }).notNull(),
     criadoEm: timestamp("criado_em", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (t) => ({
-    osMarcoUq: uniqueIndex("notificacao_marco_os_marco_uq").on(t.osId, t.marco),
+    refMarcoUq: uniqueIndex("notificacao_marco_ref_marco_uq").on(
+      t.refId,
+      t.marco,
+    ),
   }),
 );
 

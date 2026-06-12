@@ -70,7 +70,7 @@ describe.skipIf(!hasDb)("Lembrete de Pagamento (Slice 2 — #46)", () => {
     if (osIds.length) {
       await db.delete(schema.orcamento).where(inArray(schema.orcamento.osId, osIds));
       await db.delete(schema.transicaoOs).where(inArray(schema.transicaoOs.osId, osIds));
-      await db.delete(schema.notificacaoMarco).where(inArray(schema.notificacaoMarco.osId, osIds));
+      await db.delete(schema.notificacaoMarco).where(inArray(schema.notificacaoMarco.refId, osIds));
       await db.delete(schema.ordemServico).where(inArray(schema.ordemServico.id, osIds));
       osIds.length = 0;
     }
@@ -155,7 +155,7 @@ describe.skipIf(!hasDb)("Lembrete de Pagamento (Slice 2 — #46)", () => {
       .select()
       .from(schema.notificacaoMarco)
       .where(like(schema.notificacaoMarco.marco, "lembrete_pagamento:%"));
-    return linhas.filter((m) => m.osId === osId).map((m) => m.marco);
+    return linhas.filter((m) => m.refId === osId).map((m) => m.marco);
   }
 
   // O job varre TODAS as OS CONCLUÍDA do banco — em suíte paralela ele pode
