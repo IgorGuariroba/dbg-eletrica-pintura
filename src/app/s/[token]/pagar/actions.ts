@@ -2,7 +2,7 @@
 
 import { db } from "@/db/client";
 import { criarPagamentoCheckoutRepoDrizzle } from "@/pagamento/checkout-query-repo-drizzle";
-import { criarGatewayMercadoPago } from "@/pagamento/mercadopago-client";
+import { criarGatewayMercadoPago } from "@/lib/mercadopago";
 import { criarPreferenciaCheckoutPro, montarCheckoutConsolidado } from "@/pagamento/checkout";
 import { rotularCategoria } from "@/operacao/rotulo-estado";
 import { podeCobrar } from "@/operacao/estado-predicados";

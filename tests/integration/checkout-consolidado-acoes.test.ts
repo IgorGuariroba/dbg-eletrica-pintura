@@ -13,7 +13,8 @@ const hasDb = Boolean(process.env.DATABASE_URL);
 
 // Mock the gateway
 const mockCriarPreferencia = vi.fn();
-vi.mock("@/pagamento/mercadopago-client", () => ({
+vi.mock("@/lib/mercadopago", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/mercadopago")>()),
   criarGatewayMercadoPago: () => ({
     criarPreferencia: mockCriarPreferencia,
     criarPagamentoPix: vi.fn(),

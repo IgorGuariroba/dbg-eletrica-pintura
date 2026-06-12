@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { criarAssinaturaRepoDrizzle } from "@/assinatura/assinatura-repo-drizzle";
-import { criarGatewayMercadoPagoAssinatura } from "@/assinatura/mercadopago-assinatura";
+import { criarGatewayMercadoPagoAssinatura } from "@/lib/mercadopago";
 import { pausarAssinatura } from "@/assinatura/pausar-assinatura";
 import { db } from "@/db/client";
 import { exigirFinanceiro } from "../guard";

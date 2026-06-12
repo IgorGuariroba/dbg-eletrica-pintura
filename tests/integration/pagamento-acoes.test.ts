@@ -15,7 +15,8 @@ vi.mock("@/app/campo/guard", () => ({
 // Mock do gateway para evitar requisições reais de rede
 const mockCriarPagamentoPix = vi.fn();
 const mockCriarPreferencia = vi.fn();
-vi.mock("@/pagamento/mercadopago-client", () => ({
+vi.mock("@/lib/mercadopago", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/mercadopago")>()),
   criarGatewayMercadoPago: () => ({
     criarPagamentoPix: mockCriarPagamentoPix,
     criarPreferencia: mockCriarPreferencia,

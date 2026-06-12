@@ -5,7 +5,7 @@ import {
   criarEmailService,
   renderizarEmailBoasVindas,
 } from "@/notificacao/email-service";
-import { criarGatewayMercadoPagoAssinatura } from "./mercadopago-assinatura";
+import { criarGatewayMercadoPagoAssinatura } from "@/lib/mercadopago";
 
 /** Dados do assinante necessários para o e-mail de boas-vindas. */
 export interface DadosBoasVindas {

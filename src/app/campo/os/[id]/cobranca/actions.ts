@@ -4,7 +4,7 @@ import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { ordemServico, orcamento } from "@/db/schema";
 import { exigirTecnico } from "@/app/campo/guard";
-import { criarGatewayMercadoPago } from "@/pagamento/mercadopago-client";
+import { criarGatewayMercadoPago } from "@/lib/mercadopago";
 import { criarCobrancaPix, criarPreferenciaCheckoutPro } from "@/pagamento/checkout";
 import { registrarPagamentoManual } from "@/pagamento/registrar-manual";
 import { criarPagamentoRepoDrizzle } from "@/pagamento/pagamento-repo-drizzle";

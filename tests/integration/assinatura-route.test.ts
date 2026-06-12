@@ -17,7 +17,8 @@ const SECRET = process.env.MP_WEBHOOK_SECRET ?? "test_webhook_secret_dev";
 
 // Gateway de assinatura mockado: o webhook consulta o pre-approval por id.
 const buscarAssinatura = vi.fn();
-vi.mock("@/assinatura/mercadopago-assinatura", () => ({
+vi.mock("@/lib/mercadopago", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/mercadopago")>()),
   criarGatewayMercadoPagoAssinatura: () => ({
     criarAssinatura: vi.fn(),
     pausarAssinatura: vi.fn(),
