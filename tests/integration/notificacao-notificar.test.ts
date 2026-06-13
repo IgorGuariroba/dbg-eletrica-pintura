@@ -8,12 +8,6 @@ import type { EmailService, EnviarEmailInput } from "@/notificacao/email-service
 config({ path: ".env.local" });
 
 const hasDb = Boolean(process.env.DATABASE_URL);
-const hasR2 = Boolean(
-  process.env.R2_PRIVATE_ACCOUNT_ID &&
-    process.env.R2_PRIVATE_ACCESS_KEY_ID &&
-    process.env.R2_PRIVATE_SECRET_ACCESS_KEY &&
-    process.env.R2_PRIVATE_BUCKET,
-);
 const PREFIXO_WPP = "5511955503";
 // Relógio fixo dentro da janela 8h–20h (São Paulo); sem isso o WhatsApp é
 // enfileirado fora do horário comercial e o gateway nunca é chamado.
@@ -48,7 +42,11 @@ function fakeEmail(): EmailService & { enviados: EnviarEmailInput[] } {
   };
 }
 
-describe.skipIf(!hasDb || !hasR2)("notificar(evento) — interface única (#159)", () => {
+// Sem gate de R2: o Storage degrada pra mock fora de produção quando o R2 não
+// está configurado (CI custo-zero), então o wiring de notificação roda mesmo
+// sem credenciais. Asserções de URL R2 real ficam em notificacao-email/
+// documentos-pdf-r2, que seguem gated.
+describe.skipIf(!hasDb)("notificar(evento) — interface única (#159)", () => {
   let db: typeof import("@/db/client").db;
   let schema: typeof import("@/db/schema");
   const osIds: string[] = [];

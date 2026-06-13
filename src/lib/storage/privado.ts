@@ -6,7 +6,12 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { UploadAssinatura } from "@/operacao/aprovacao-presencial";
-import { clientePrivado } from "./clientes";
+import { clientePrivado, usarMockPrivado } from "./clientes";
+
+/** URL sintética do mock de storage (R2 ausente fora de produção). */
+function urlMock(key: string): string {
+  return `mock://r2/${key}`;
+}
 
 export interface AssinarInput {
   filename: string;
@@ -89,6 +94,7 @@ export function uploadFotoOsR2(): UploadFotoOs {
     async enviarFoto({ osId, tipo, dataUrl }) {
       const corpo = corpoDeDataUrl(dataUrl, "foto");
       const key = montarChaveFotoOs(osId, tipo);
+      if (usarMockPrivado()) return { url: key };
       const { client, bucket } = clientePrivado();
       await client.send(
         new PutObjectCommand({
@@ -117,6 +123,7 @@ export function uploadFotoChecklistR2(): UploadFotoChecklist {
     async enviar({ osId, itemId, dataUrl }) {
       const corpo = corpoDeDataUrl(dataUrl, "foto");
       const key = montarChaveFotoChecklist(osId, itemId);
+      if (usarMockPrivado()) return { url: key };
       const { client, bucket } = clientePrivado();
       await client.send(
         new PutObjectCommand({
@@ -141,6 +148,7 @@ export function uploadAssinaturaOsR2(): UploadAssinatura {
     async enviarAssinatura({ osId, dataUrl }) {
       const corpo = corpoDeDataUrl(dataUrl, "assinatura");
       const key = montarChaveAssinaturaOs(osId);
+      if (usarMockPrivado()) return { url: key };
       const { client, bucket } = clientePrivado();
       await client.send(
         new PutObjectCommand({
@@ -176,6 +184,7 @@ export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
       void filename;
       const ext = EXT_POR_TIPO[tipo];
       const key = `solicitacoes/${randomUUID()}.${ext}`;
+      if (usarMockPrivado()) return { uploadUrl: urlMock(key), key };
       const { client, bucket } = clientePrivado();
       const uploadUrl = await getSignedUrl(
         client,
@@ -196,6 +205,7 @@ export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
     },
     async assinarUploadFotoOs({ osId, tipo }) {
       const key = montarChaveFotoOs(osId, tipo);
+      if (usarMockPrivado()) return { uploadUrl: urlMock(key), key };
       const { client, bucket } = clientePrivado();
       const uploadUrl = await getSignedUrl(
         client,
@@ -214,6 +224,7 @@ export function uploadServiceSolicitacaoR2(): UploadServicePrivado {
 
 /** Persiste um PDF no bucket privado (chave do catálogo de documentos). */
 export async function enviarPdfDocumento(key: string, corpo: Buffer): Promise<void> {
+  if (usarMockPrivado()) return;
   const { client, bucket } = clientePrivado();
   await client.send(
     new PutObjectCommand({
@@ -244,6 +255,7 @@ export async function salvarPdfOs(
 
 /** URL de leitura de um objeto privado; expiração é decisão do módulo (7d). */
 export async function obterUrlLeituraAssinada(key: string): Promise<string> {
+  if (usarMockPrivado()) return urlMock(key);
   const { client, bucket } = clientePrivado();
   const command = new GetObjectCommand({ Bucket: bucket, Key: key });
   return getSignedUrl(client, command, {
@@ -253,6 +265,7 @@ export async function obterUrlLeituraAssinada(key: string): Promise<string> {
 
 /** Chaves das fotos de execução de uma OS (antes/depois). */
 export async function listarFotosOs(osId: string, tipo: TipoFotoOs): Promise<string[]> {
+  if (usarMockPrivado()) return [];
   try {
     const { client, bucket } = clientePrivado();
     const prefix = `os/${osId}/${tipo.toLowerCase()}/`;
@@ -269,6 +282,7 @@ export async function listarFotosOs(osId: string, tipo: TipoFotoOs): Promise<str
 export async function uploadFotoGarantia(dataUrl: string, osId: string): Promise<string> {
   const corpo = corpoDeDataUrl(dataUrl, "foto");
   const key = `chamados/os-${osId}/${randomUUID()}.jpg`;
+  if (usarMockPrivado()) return key;
   const { client, bucket } = clientePrivado();
   await client.send(
     new PutObjectCommand({

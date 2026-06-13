@@ -14,6 +14,26 @@ let publicoCache: { client: S3Client; bucket: string } | null = null;
 // client-side que recua diante de throttling; mais tentativas cobrem o pico.
 const RETRY_R2 = { maxAttempts: 5, retryMode: "adaptive" as const };
 
+function r2PrivadoConfigurado(): boolean {
+  return Boolean(
+    process.env.R2_PRIVATE_ACCOUNT_ID &&
+      process.env.R2_PRIVATE_ACCESS_KEY_ID &&
+      process.env.R2_PRIVATE_SECRET_ACCESS_KEY &&
+      process.env.R2_PRIVATE_BUCKET,
+  );
+}
+
+/**
+ * Storage degrada pra mock quando o R2 privado não está configurado — mesma
+ * postura do e-mail (`criarEmailService`: sem RESEND_API_KEY → mock), para o
+ * CI custo-zero (ADR 0003) exercitar o wiring de notificação/documentos sem
+ * credenciais externas. Guardrail no estilo do dev-bypass: em produção a falta
+ * de R2 ainda LANÇA (fail-loud em `clientePrivado`), nunca mocka silenciosamente.
+ */
+export function usarMockPrivado(): boolean {
+  return !r2PrivadoConfigurado() && process.env.NODE_ENV !== "production";
+}
+
 export function clientePrivado(): { client: S3Client; bucket: string } {
   if (privadoCache) return privadoCache;
   const accountId = process.env.R2_PRIVATE_ACCOUNT_ID;
