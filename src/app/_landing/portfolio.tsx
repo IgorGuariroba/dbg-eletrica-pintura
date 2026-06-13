@@ -76,7 +76,7 @@ export function Portfolio({ fotos, limite }: Props) {
       <div className="container mx-auto px-4 py-16 max-w-5xl">
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-            Trabalhos de verdade
+            Veja o serviço pronto, não a promessa
           </h2>
           <p className="text-muted-foreground text-sm md:text-base mt-2">
             {usandoPadrao

@@ -9,23 +9,23 @@ const MIN_AVALIACOES = 3;
 const ITENS = [
   {
     icone: BadgeDollarSign,
-    titulo: "Preço fixo",
-    texto: "Você sabe o valor antes do técnico chegar.",
+    titulo: "Você aprova o preço antes",
+    texto: "Sem cobrança a mais no final. O que você combinou é o que paga.",
   },
   {
     icone: ShieldCheck,
-    titulo: "Garantia formal",
-    texto: "Mão de obra garantida, com certificado.",
+    titulo: "Garantia no papel",
+    texto: "Deu problema no prazo, a gente volta e refaz sem cobrar.",
   },
   {
     icone: Camera,
-    titulo: "Fotos antes e depois",
-    texto: "Registro do serviço direto no seu WhatsApp.",
+    titulo: "Foto antes e depois",
+    texto: "Chega no seu WhatsApp. Você vê o serviço pronto sem ter que fiscalizar.",
   },
   {
     icone: UserCheck,
-    titulo: "Técnico identificado",
-    texto: "Você vê quem vai atender antes da visita.",
+    titulo: "Você vê quem vai te atender",
+    texto: "Nome, foto e avaliação do técnico antes dele chegar na sua casa.",
   },
 ] as const;
 

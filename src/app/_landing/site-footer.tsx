@@ -36,9 +36,9 @@ export function SiteFooter({ bairros = [] }: { bairros?: string[] }) {
             DBG Elétrica e Pintura
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed max-w-xs">
-            Serviços residenciais de elétrica, pintura e drywall de alto padrão.
-            Preço fixo, garantia formal de mão de obra e documentação
-            fotográfica de antes e depois.
+            Serviços residenciais de elétrica, pintura e drywall. Você aprova o
+            preço antes do serviço, com garantia formal de mão de obra e fotos
+            de antes e depois.
           </p>
         </div>
 

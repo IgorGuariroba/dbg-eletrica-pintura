@@ -39,11 +39,11 @@ function EquipeCompacta({ tecnicos }: { tecnicos: Membro[] }) {
     <section id="equipe" className="py-16 bg-background scroll-mt-24">
       <div className="mx-auto max-w-5xl px-4 md:px-6 text-center space-y-6">
         <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-          Conheça Nossa Equipe
+          Conheça quem vai entrar na sua casa
         </h2>
         <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
-          Profissionais qualificados e homologados pela DBG. Você vê quem vai
-          atender antes da visita.
+          Cada técnico tem nome, foto e avaliação. Você vê quem vai entrar na
+          sua casa antes da visita.
         </p>
         <AvatarGroup className="justify-center">
           {visiveis.map((t) => {
@@ -141,10 +141,10 @@ export function Equipe({ tecnicos, compacta }: Props) {
       <div className="mx-auto max-w-5xl px-4 md:px-6 space-y-12">
         <div className="text-center space-y-3">
           <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-            Conheça Nossa Equipe
+            Conheça quem vai entrar na sua casa
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
-            Profissionais qualificados, de confiança e homologados pela DBG para garantir o melhor atendimento na sua residência.
+            Cada técnico tem nome, foto e avaliação dos clientes. Nada de estranho sem rosto na sua casa.
           </p>
         </div>
 

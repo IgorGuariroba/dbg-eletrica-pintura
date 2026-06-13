@@ -66,7 +66,7 @@ export function Avaliacoes({
   return (
     <section className="container mx-auto px-4 py-16 max-w-5xl overflow-hidden">
       <div className="text-center mb-12">
-        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">O que dizem</h2>
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Quem já confiou e deu certo</h2>
         <p className="text-muted-foreground text-sm md:text-base mt-2">
           Avaliações reais de clientes, coletadas após cada serviço concluído.
         </p>

@@ -3,23 +3,23 @@ import { Smartphone, BadgeDollarSign, Wrench, ShieldCheck } from "lucide-react";
 const PASSOS = [
   {
     icone: Smartphone,
-    titulo: "Peça online",
-    texto: "2 minutos, sem ligação.",
+    titulo: "Você conta o problema",
+    texto: "Pelo celular, em 2 minutos. Sem ligação, sem compromisso.",
   },
   {
     icone: BadgeDollarSign,
-    titulo: "Receba o preço fixo",
-    texto: "Confirmado antes da visita.",
+    titulo: "Você aprova o orçamento",
+    texto: "Recebe o preço antes e decide. Não gostou, não paga nada.",
   },
   {
     icone: Wrench,
-    titulo: "Técnico executa",
-    texto: "Você acompanha cada etapa.",
+    titulo: "O técnico resolve",
+    texto: "Você vê quando ele sai e quando chega na sua casa.",
   },
   {
     icone: ShieldCheck,
-    titulo: "Fotos + garantia",
-    texto: "Antes/depois e certificado.",
+    titulo: "Você recebe a prova",
+    texto: "Foto antes e depois no WhatsApp e garantia no papel.",
   },
 ] as const;
 

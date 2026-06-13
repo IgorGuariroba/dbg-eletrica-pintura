@@ -4,11 +4,13 @@ import { criarServicoRepoDrizzle } from "@/catalogo/servico-repo-drizzle";
 import { db } from "@/db/client";
 import type { Servico } from "@/catalogo/servico-repo";
 import { Hero } from "./_landing/hero";
+import { Empatia } from "./_landing/empatia";
 import { Diferenciais } from "./_landing/diferenciais";
 import { ComoFunciona } from "./_landing/como-funciona";
 import { ServicosGrid } from "./_landing/servicos-grid";
 import { Portfolio } from "./_landing/portfolio";
 import { Avaliacoes } from "./_landing/avaliacoes";
+import { Faq } from "./_landing/faq";
 import { CtaFinal } from "./_landing/cta-final";
 import { SiteHeader } from "./_landing/site-header";
 import { SiteFooter } from "./_landing/site-footer";
@@ -27,13 +29,13 @@ export const dynamic = "force-static";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "DBG Elétrica e Pintura — Preço fixo, garantia e agendamento digital",
+  title: "DBG Elétrica e Pintura — Eletricista e pintor de confiança, com garantia",
   description:
-    "Serviços residenciais de elétrica, pintura e drywall com preço fixo, garantia formal e fotos antes/depois. Solicite seu orçamento online.",
+    "Serviços residenciais de elétrica, pintura e drywall. Você aprova o preço antes do serviço começar, com garantia formal e fotos antes e depois. Peça seu orçamento online.",
   openGraph: {
     title: "DBG Elétrica e Pintura",
     description:
-      "Preço fixo. Garantia. Agendamento digital. Sem surpresa no final.",
+      "Você aprova o preço antes. Garantia no papel. Sem surpresa no final.",
     type: "website",
     locale: "pt_BR",
   },
@@ -120,13 +122,15 @@ export default async function Home() {
   return (
     <>
       <SiteHeader />
-      <Hero bairros={bairros} metricas={metricas} />
+      <Hero bairros={bairros} />
+      <Empatia />
       <Diferenciais metricas={metricas} />
-      <Portfolio fotos={portfolio} limite={6} />
-      <ServicosGrid servicos={servicos} limitePorCategoria={3} />
       <ComoFunciona />
+      <ServicosGrid servicos={servicos} limitePorCategoria={3} />
+      <Portfolio fotos={portfolio} limite={6} />
       <Equipe tecnicos={tecnicos} compacta />
       <Avaliacoes depoimentos={depoimentos} />
+      <Faq />
       <CtaFinal />
       <SiteFooter bairros={bairros} />
     </>
