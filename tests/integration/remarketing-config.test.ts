@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { criarConfigRemarketingRepoDrizzle } from "@/marketing/remarketing/config-repo-drizzle";
+import { criarConfigRemarketingRepoDrizzle } from "@/marketing/remarketing/config-repo";
 
 config({ path: ".env.local" });
 

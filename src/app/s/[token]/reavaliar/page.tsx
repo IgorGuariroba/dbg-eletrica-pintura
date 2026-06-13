@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { db } from "@/db/client";
 import { carregarParaAvaliar } from "@/operacao/avaliacao/avaliacao";
-import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
+import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo";
 import { TokenInvalidoError } from "@/operacao/aprovacao-repo";
 import { SiteHeader } from "@/app/_landing/site-header";
 import { SiteFooter } from "@/app/_landing/site-footer";
-import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo-drizzle";
+import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo";
 import { FormAvaliacao } from "../avaliar/form-avaliacao";
 
 export const metadata = {

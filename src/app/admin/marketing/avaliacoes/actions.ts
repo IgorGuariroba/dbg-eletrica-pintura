@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
 import { exigirMarketing } from "../guard";
-import { criarTratativaRepoDrizzle } from "@/marketing/tratativa-repo-drizzle";
-import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
+import { criarTratativaRepoDrizzle } from "@/marketing/tratativa-repo";
+import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo";
 import { resolverTratativa } from "@/marketing/resolver-tratativa";
 import { enviarReavaliacaoPorOsId } from "@/marketing/enviar-reavaliacao";
 import type { TipoComunicado } from "@/marketing/tratativa-repo";

@@ -6,11 +6,11 @@ import { db } from "@/db/client";
 import { aprovarOrcamento, rejeitarOrcamento } from "@/operacao/aprovacao";
 import { criarAprovacaoRepoDrizzle } from "@/operacao/aprovacao-repo-drizzle";
 import { registrarAvaliacoes } from "@/operacao/avaliacao/avaliacao";
-import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
+import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo";
 import type { RegistrarAvaliacoesPayload } from "@/operacao/avaliacao/avaliacao-repo";
 
 import { finalizarAvaliacao } from "@/marketing/filtro-avaliacao";
-import { criarAlertaAvaliacaoRepoDrizzle } from "@/marketing/alerta-avaliacao-repo-drizzle";
+import { criarAlertaAvaliacaoRepoDrizzle } from "@/marketing/alerta-avaliacao-repo";
 import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
 
 function repo() {

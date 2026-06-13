@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/db/client";
-import { criarPagamentoCheckoutRepoDrizzle } from "@/pagamento/checkout-query-repo-drizzle";
+import { criarPagamentoCheckoutRepoDrizzle } from "@/pagamento/checkout-query-repo";
 import { montarCheckoutConsolidado } from "@/pagamento/checkout";
 import { criarUpsellRepoDrizzle } from "@/financeiro/upsell/upsell-repo-drizzle";
 import { carregarUpsellCheckout } from "@/financeiro/upsell/carregar-upsell-checkout";

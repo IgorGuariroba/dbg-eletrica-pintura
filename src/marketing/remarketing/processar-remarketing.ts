@@ -1,6 +1,6 @@
 import { db as dbPadrao } from "@/db/client";
-import { criarConfigRemarketingRepoDrizzle } from "./config-repo-drizzle";
-import { criarRemarketingEnviadoRepoDrizzle } from "./enviado-repo-drizzle";
+import { criarConfigRemarketingRepoDrizzle } from "./config-repo";
+import { criarRemarketingEnviadoRepoDrizzle } from "./enviado-repo";
 import { processarLembreteOrcamento } from "./processar-lembrete-orcamento";
 import { processarRejeicaoOrcamento } from "./processar-rejeicao-orcamento";
 import { processarReativacaoInativos } from "./processar-reativacao-inativos";

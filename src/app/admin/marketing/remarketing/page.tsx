@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/db/client";
-import { criarConfigRemarketingRepoDrizzle } from "@/marketing/remarketing/config-repo-drizzle";
+import { criarConfigRemarketingRepoDrizzle } from "@/marketing/remarketing/config-repo";
 import { GATILHOS_REMARKETING } from "@/marketing/remarketing/gatilhos";
 import { exigirMarketing } from "../guard";
 import { RemarketingForm } from "./remarketing-form";

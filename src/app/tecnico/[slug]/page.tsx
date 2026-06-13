@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/db/client";
 import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
 import { criarPortfolioRepoDrizzle } from "@/marketing/portfolio-repo-drizzle";
-import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo-drizzle";
+import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo";
 import { urlPublicaFoto } from "@/lib/storage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";

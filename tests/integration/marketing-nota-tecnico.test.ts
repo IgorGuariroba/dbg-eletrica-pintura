@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { inArray } from "drizzle-orm";
 import { db as dbClient } from "@/db/client";
 import * as schema from "@/db/schema";
-import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo-drizzle";
+import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo";
 
 config({ path: ".env.local" });
 

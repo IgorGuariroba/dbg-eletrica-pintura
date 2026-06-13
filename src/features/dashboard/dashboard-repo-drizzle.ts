@@ -21,7 +21,7 @@ import {
 } from "@/db/schema";
 import type { Categoria } from "@/operacao/fila-repo";
 import type { DashboardRepo } from "./dashboard";
-import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo-drizzle";
+import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo";
 import { criarFinanceiroRepoDrizzle } from "@/features/financeiro/financeiro-repo-drizzle";
 
 export function criarDashboardRepoDrizzle(db: DB): DashboardRepo {

@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/db/client";
-import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo-drizzle";
+import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo";
 import { exigirMarketing } from "../guard";
 import { ReferralForm } from "./referral-form";
 

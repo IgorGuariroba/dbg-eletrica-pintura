@@ -4,7 +4,7 @@ import { eq, inArray } from "drizzle-orm";
 import { db as dbClient } from "@/db/client";
 import * as schema from "@/db/schema";
 import { registrarAvaliacoes, carregarParaAvaliar } from "@/operacao/avaliacao/avaliacao";
-import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
+import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo";
 import { NotaInvalidaError, OsNaoAvaliavelError } from "@/operacao/avaliacao/avaliacao-repo";
 
 config({ path: ".env.local" });

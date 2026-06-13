@@ -17,9 +17,9 @@ import { AgendarOs } from "./agendar-os";
 import { EstouAqui } from "./estou-aqui";
 import { ArrowRight, CalendarCheck } from "lucide-react";
 import { RecompensasAvaliacao } from "@/components/shared/recompensas-avaliacao";
-import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
+import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo";
 import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
-import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo-drizzle";
+import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo";
 
 export const metadata = {
   title: "Seu orçamento — DBG Elétrica e Pintura",
