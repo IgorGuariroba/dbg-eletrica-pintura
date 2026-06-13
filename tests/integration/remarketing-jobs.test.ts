@@ -46,8 +46,8 @@ describe.skipIf(!hasDb)("Processador de Remarketing (Slices D, E, F, G)", () => 
   beforeAll(async () => {
     db = (await import("@/db/client")).db;
     schema = await import("@/db/schema");
-    const { criarConfigRemarketingRepoDrizzle } = await import("@/marketing/remarketing/config-repo-drizzle");
-    const { criarRemarketingEnviadoRepoDrizzle } = await import("@/marketing/remarketing/enviado-repo-drizzle");
+    const { criarConfigRemarketingRepoDrizzle } = await import("@/marketing/remarketing/config-repo");
+    const { criarRemarketingEnviadoRepoDrizzle } = await import("@/marketing/remarketing/enviado-repo");
     configRepo = criarConfigRemarketingRepoDrizzle(db);
     enviadoRepo = criarRemarketingEnviadoRepoDrizzle(db);
     

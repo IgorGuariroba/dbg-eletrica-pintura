@@ -1,5 +1,5 @@
 import { db } from "@/db/client";
-import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo-drizzle";
+import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo";
 import { criarGatewayGBP, gbpConfigurado } from "@/marketing/gbp/gbp-gateway";
 import { obterReputacao } from "@/marketing/gbp/reputacao-service";
 import { exigirMarketing } from "../guard";

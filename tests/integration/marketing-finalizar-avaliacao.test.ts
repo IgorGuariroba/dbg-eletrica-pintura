@@ -3,8 +3,8 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { eq, inArray } from "drizzle-orm";
 import { db as dbClient } from "@/db/client";
 import * as schema from "@/db/schema";
-import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo-drizzle";
-import { criarAlertaAvaliacaoRepoDrizzle } from "@/marketing/alerta-avaliacao-repo-drizzle";
+import { criarAvaliacaoRepoDrizzle } from "@/operacao/avaliacao/avaliacao-repo";
+import { criarAlertaAvaliacaoRepoDrizzle } from "@/marketing/alerta-avaliacao-repo";
 import { criarOperacaoConfigRepoDrizzle } from "@/operacao/config-repo-drizzle";
 import { finalizarAvaliacao } from "@/marketing/filtro-avaliacao";
 

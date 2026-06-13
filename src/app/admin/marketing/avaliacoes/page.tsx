@@ -1,7 +1,7 @@
 import { Star } from "lucide-react";
 import { db } from "@/db/client";
-import { criarAlertaAvaliacaoRepoDrizzle } from "@/marketing/alerta-avaliacao-repo-drizzle";
-import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo-drizzle";
+import { criarAlertaAvaliacaoRepoDrizzle } from "@/marketing/alerta-avaliacao-repo";
+import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo";
 import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
 import { exigirMarketing } from "../guard";
 import { AvaliacoesClient } from "./avaliacoes-client";

@@ -8,7 +8,7 @@ import {
   criarPreferenciaCheckoutPro,
   montarCheckoutConsolidado,
 } from "./checkout";
-import { criarPagamentoCheckoutRepoDrizzle } from "./checkout-query-repo-drizzle";
+import { criarPagamentoCheckoutRepoDrizzle } from "./checkout-query-repo";
 import type { GatewayPagamento } from "./gateway";
 
 export interface MontarCobrancaDeps {

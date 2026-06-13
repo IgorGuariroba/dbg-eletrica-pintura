@@ -105,7 +105,7 @@ export function criarOrcamentoRepoDrizzle(db: DB): OrcamentoRepo {
     },
 
     async obterValidadeDias(): Promise<number> {
-      const { criarConfigRemarketingRepoDrizzle } = await import("@/marketing/remarketing/config-repo-drizzle");
+      const { criarConfigRemarketingRepoDrizzle } = await import("@/marketing/remarketing/config-repo");
       const configRepo = criarConfigRemarketingRepoDrizzle(db);
       return configRepo.obterValidadeDias();
     },

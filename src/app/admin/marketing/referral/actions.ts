@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
-import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo-drizzle";
+import { criarConfigReferralRepoDrizzle } from "@/marketing/referral/config-referral-repo";
 import { exigirMarketing } from "../guard";
 
 export interface ActionState {

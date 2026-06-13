@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { criarRemarketingEnviadoRepoDrizzle } from "@/marketing/remarketing/enviado-repo-drizzle";
+import { criarRemarketingEnviadoRepoDrizzle } from "@/marketing/remarketing/enviado-repo";
 
 config({ path: ".env.local" });
 

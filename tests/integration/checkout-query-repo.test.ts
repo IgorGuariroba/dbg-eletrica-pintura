@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db/client";
 import * as schema from "@/db/schema";
 import { desc, eq, inArray } from "drizzle-orm";
-import { criarPagamentoCheckoutRepoDrizzle } from "@/pagamento/checkout-query-repo-drizzle";
+import { criarPagamentoCheckoutRepoDrizzle } from "@/pagamento/checkout-query-repo";
 
 loadEnv({ path: ".env.local" });
 

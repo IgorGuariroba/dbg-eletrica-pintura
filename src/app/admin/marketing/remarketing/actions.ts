@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
-import { criarConfigRemarketingRepoDrizzle } from "@/marketing/remarketing/config-repo-drizzle";
+import { criarConfigRemarketingRepoDrizzle } from "@/marketing/remarketing/config-repo";
 import { exigirMarketing } from "../guard";
 import type { GatilhoRemarketingId } from "@/marketing/remarketing/gatilhos";
 
