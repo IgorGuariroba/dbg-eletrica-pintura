@@ -5,7 +5,7 @@ test.describe("Smoke", () => {
     await page.goto("/");
     await expect(
       page.getByRole("heading", {
-        name: /Serviço transparente, com preço fixo e garantia/i,
+        name: /Eletricista e pintor de confiança pra sua casa/i,
       }),
     ).toBeVisible();
     await expect(

@@ -40,8 +40,8 @@ interface Props {
 export function ServicosGrid({
   servicos,
   limitePorCategoria,
-  titulo = "Nossos serviços",
-  descricao = "Preços fixos, sem orçamento na hora. O que você vê é o que paga.",
+  titulo = "O que a gente resolve na sua casa",
+  descricao = "Os preços abaixo são de referência. O valor exato você aprova no orçamento, antes do serviço começar.",
 }: Props) {
   const porCategoria = new Map<Servico["categoria"], Servico[]>();
   for (const s of servicos) {
