@@ -1,5 +1,5 @@
 import { config as loadEnv } from "dotenv";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { aprovarFoto, rejeitarFoto } from "@/marketing/portfolio";
 import type {
   CopiadorFotoPublica,
@@ -23,6 +23,7 @@ describe.skipIf(!hasDb)("PortfolioRepo Drizzle", () => {
   let dbRaw: typeof import("@/db/client").db;
   let schema: typeof import("@/db/schema");
   let repo: PortfolioRepo;
+  let osIds: string[] = [];
   let solicitacaoIds: string[] = [];
   let clienteIds: string[] = [];
   let membroIds: string[] = [];
@@ -75,6 +76,7 @@ describe.skipIf(!hasDb)("PortfolioRepo Drizzle", () => {
       .returning();
     clienteIds.push(cli.id);
     solicitacaoIds.push(sol.id);
+    osIds.push(os.id);
     return os.id;
   }
 
@@ -88,18 +90,17 @@ describe.skipIf(!hasDb)("PortfolioRepo Drizzle", () => {
     repo = criarPortfolioRepoDrizzle(dbMod.db);
   });
 
-  beforeEach(() => {
-    solicitacaoIds = [];
-    clienteIds = [];
-    membroIds = [];
-  });
-
   afterAll(async () => {
     const { inArray } = await import("drizzle-orm");
-    if (solicitacaoIds.length) {
+    if (osIds.length) {
+      await dbRaw
+        .delete(schema.fotoPortfolio)
+        .where(inArray(schema.fotoPortfolio.osId, osIds));
       await dbRaw
         .delete(schema.ordemServico)
-        .where(inArray(schema.ordemServico.solicitacaoId, solicitacaoIds));
+        .where(inArray(schema.ordemServico.id, osIds));
+    }
+    if (solicitacaoIds.length) {
       await dbRaw
         .delete(schema.solicitacao)
         .where(inArray(schema.solicitacao.id, solicitacaoIds));
