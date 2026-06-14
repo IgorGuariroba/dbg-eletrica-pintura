@@ -4,7 +4,6 @@ import { criarServicoRepoDrizzle } from "@/catalogo/servico-repo-drizzle";
 import { db } from "@/db/client";
 import type { Servico } from "@/catalogo/servico-repo";
 import { Hero } from "./_landing/hero";
-import { Empatia } from "./_landing/empatia";
 import { Diferenciais } from "./_landing/diferenciais";
 import { ComoFunciona } from "./_landing/como-funciona";
 import { ServicosGrid } from "./_landing/servicos-grid";
@@ -124,7 +123,6 @@ export default async function Home() {
     <>
       <SiteHeader />
       <Hero bairros={bairros} />
-      <Empatia />
       <Diferenciais metricas={metricas} />
       <ComoFunciona />
       <ServicosGrid servicos={servicos} limitePorCategoria={3} />
