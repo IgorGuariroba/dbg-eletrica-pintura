@@ -61,7 +61,7 @@ export function ServicosGrid({
     >
       <div className="mb-8">
         <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">{titulo}</h2>
-        <p className="text-muted-foreground text-sm md:text-base mt-2">
+        <p className="text-muted-foreground text-sm md:text-base mt-2 max-w-2xl text-pretty">
           {descricao}
         </p>
       </div>

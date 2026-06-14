@@ -38,7 +38,7 @@ export function Hero({ bairros }: { bairros: string[] }) {
 
           {/* Coluna Esquerda: Textos e CTA */}
           <div className="lg:col-span-7 flex flex-col items-start text-left">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-card px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground shadow-2xs">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-card px-3.5 py-1 text-xs font-semibold text-muted-foreground shadow-2xs">
               <Zap className="size-3.5 text-primary" />
               Elétrica, Pintura e Drywall residencial
             </div>

@@ -16,7 +16,7 @@ const LINKS: LinkNavegacao[] = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 px-4 pt-4">
-      <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 rounded-full border bg-background/80 pr-2 pl-5 shadow-lg backdrop-blur">
+      <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 rounded-full border bg-background/80 pr-2 pl-5 shadow-md backdrop-blur">
         <Link href="/" className="font-bold tracking-tight">
           DBG
         </Link>
