@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 export interface FotoPortfolioView {
   id: string;
@@ -21,6 +22,16 @@ const CATEGORIA_LABEL: Record<string, string> = {
   PINTURA: "Pintura",
   DRYWALL: "Drywall",
 };
+
+// Ritmo bento: herói grande (2×2) abrindo o grid, um tile largo no meio do
+// ciclo e o resto 1×1 — empacotado denso pra fechar os buracos. A variação de
+// escala é o que dá impacto; sem ela vira masonry chapado.
+function spanBento(i: number): string {
+  const m = i % 6;
+  if (m === 0) return "col-span-2 row-span-2";
+  if (m === 3) return "col-span-2";
+  return "";
+}
 
 interface Props {
   fotos: FotoPortfolioView[];
@@ -197,34 +208,37 @@ export function Portfolio({ fotos, limite }: Props) {
           </div>
         )}
 
-        {/* Fotos avulsas (sem contraparte): masonry CSS, altura natural. */}
+        {/* Fotos avulsas (sem contraparte): grid bento assimétrico. Células de
+            tamanho fixo (object-cover) + spans variados deixam a foto ser o
+            protagonista — legenda sobreposta em vez de card abaixo. */}
         {singles.length > 0 && (
-          <ul className="columns-1 md:columns-2 gap-4">
-            {singles.map((f) => (
+          <ul className="grid grid-cols-2 md:grid-cols-4 auto-rows-[8.5rem] md:auto-rows-[10.5rem] grid-flow-dense gap-3">
+            {singles.map((f, i) => (
               <li
                 key={f.id}
-                className="mb-4 break-inside-avoid rounded-lg border bg-card overflow-hidden"
+                className={cn(
+                  "group relative overflow-hidden rounded-xl ring-1 ring-foreground/10 transition-shadow hover:shadow-md",
+                  spanBento(i),
+                )}
               >
-                <div className="relative bg-muted">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={f.url}
-                    alt={`${CATEGORIA_LABEL[f.categoria] ?? f.categoria} — foto ${
-                      f.tipo === "ANTES" ? "antes" : "depois"
-                    }`}
-                    loading="lazy"
-                    className="w-full h-auto"
-                  />
-                  <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-xs font-bold uppercase tracking-wider">
-                    {f.tipo === "ANTES" ? "Antes" : "Depois"}
-                  </span>
-                </div>
-                <div className="p-3">
-                  <span className="text-xs font-medium">
+                <Image
+                  src={f.url}
+                  alt={`${CATEGORIA_LABEL[f.categoria] ?? f.categoria} — foto ${
+                    f.tipo === "ANTES" ? "antes" : "depois"
+                  }`}
+                  fill
+                  sizes="(max-width: 767px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 ease-out motion-safe:group-hover:scale-105"
+                />
+                <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-xs font-bold uppercase tracking-wider">
+                  {f.tipo === "ANTES" ? "Antes" : "Depois"}
+                </span>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/85 via-foreground/30 to-transparent p-3 pt-8">
+                  <span className="text-sm font-semibold text-background">
                     {CATEGORIA_LABEL[f.categoria] ?? f.categoria}
                   </span>
                   {f.tecnicoNome && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-background/80">
                       por {f.tecnicoNome}
                     </p>
                   )}
