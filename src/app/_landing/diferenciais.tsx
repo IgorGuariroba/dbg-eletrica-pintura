@@ -60,11 +60,10 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
     >
       <div className="container mx-auto px-4 py-20 md:py-28 max-w-5xl">
         <div className="max-w-3xl">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.05] text-balance">
-            Cansada de chamar e se arrepender?{" "}
-            <span className="text-primary">A DBG funciona ao contrário.</span>
+          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-balance">
+            Cansada de chamar e se arrepender? A DBG funciona ao contrário.
           </h2>
-          <p className="mt-5 text-base md:text-lg text-muted-foreground leading-relaxed">
+          <p className="mt-3 text-muted-foreground leading-relaxed">
             Todo medo de chamar um desconhecido tem um motivo. Pra cada um deles,
             a gente faz o oposto.
           </p>

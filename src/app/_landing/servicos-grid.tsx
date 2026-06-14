@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Paintbrush, Ruler, Zap } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { Servico } from "@/catalogo/servico-repo";
 import { buttonVariants } from "@/components/ui/button";
 import { formatBRL } from "@/lib/utils";
@@ -12,6 +13,12 @@ const LABEL_CATEGORIA: Record<Servico["categoria"], string> = {
   ELETRICA: "Elétrica",
   PINTURA: "Pintura",
   DRYWALL: "Drywall",
+};
+
+const ICONE_CATEGORIA: Record<Servico["categoria"], LucideIcon> = {
+  ELETRICA: Zap,
+  PINTURA: Paintbrush,
+  DRYWALL: Ruler,
 };
 
 const ANCORA_CATEGORIA: Record<Servico["categoria"], string> = {
@@ -74,77 +81,86 @@ export function ServicosGrid({
               ? todos.slice(0, limitePorCategoria)
               : todos;
           const ocultos = todos.length - items.length;
+          const IconeCat = ICONE_CATEGORIA[cat];
           return (
-          <div key={cat} id={ANCORA_CATEGORIA[cat]} className="scroll-mt-20">
-            <h3 className="text-lg font-semibold mb-4">
-              {LABEL_CATEGORIA[cat]}
-            </h3>
-            {/* Masonry: colunas CSS (sem JS); break-inside-avoid impede card
-                partido entre colunas. */}
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
-              {items.map((s) => {
-                const conteudo = (
-                  <>
-                    {s.fotoUrl ? (
+            <div key={cat} id={ANCORA_CATEGORIA[cat]} className="scroll-mt-20">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                <IconeCat className="size-5 text-primary" aria-hidden />
+                {LABEL_CATEGORIA[cat]}
+              </h3>
+              {/* Grade de altura uniforme: cada card preenche a célula (h-full +
+                  flex-col), preço fixado na base. Sem masonry — alinhamento
+                  consistente mesmo com/sem foto. */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {items.map((s) => {
+                  const conteudo = (
+                    <>
                       <div className="relative aspect-video bg-muted">
-                        <Image
-                          src={s.fotoUrl}
-                          alt={s.nome}
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          className="object-cover"
-                        />
+                        {s.fotoUrl ? (
+                          <Image
+                            src={s.fotoUrl}
+                            alt={s.nome}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-muted-foreground/30">
+                            <IconeCat className="size-9" aria-hidden />
+                          </div>
+                        )}
                       </div>
-                    ) : null}
-                    <div className="p-4 flex-1 flex flex-col">
-                      <h4 className="font-medium">{s.nome}</h4>
-                      <div className="mt-auto pt-3 flex items-baseline justify-between">
-                        <span className="text-xl font-bold font-mono">
-                          {formatBRL(s.precoBase)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {LABEL_UNIDADE[s.unidade]}
-                        </span>
+                      <div className="flex flex-1 flex-col p-4">
+                        <h4 className="font-semibold leading-snug text-balance">
+                          {s.nome}
+                        </h4>
+                        <div className="mt-auto flex items-baseline justify-between pt-4">
+                          <span className="text-xl font-bold font-mono">
+                            {formatBRL(s.precoBase)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {LABEL_UNIDADE[s.unidade]}
+                          </span>
+                        </div>
+                        {s.prazoGarantiaMeses > 0 && (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Garantia de {s.prazoGarantiaMeses}{" "}
+                            {s.prazoGarantiaMeses === 1 ? "mês" : "meses"}
+                          </p>
+                        )}
                       </div>
-                      {s.prazoGarantiaMeses > 0 && (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          Garantia de {s.prazoGarantiaMeses}{" "}
-                          {s.prazoGarantiaMeses === 1 ? "mês" : "meses"}
-                        </p>
-                      )}
-                    </div>
-                  </>
-                );
-                const classeCard =
-                  "mb-4 break-inside-avoid rounded-lg border bg-card overflow-hidden flex flex-col";
-                // Serviço com slug tem landing própria — card vira link.
-                return s.slug ? (
-                  <Link
-                    key={s.id}
-                    href={`/servicos/${s.slug}` as Route}
-                    className={`${classeCard} transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
-                  >
-                    {conteudo}
-                  </Link>
-                ) : (
-                  <article key={s.id} className={classeCard}>
-                    {conteudo}
-                  </article>
-                );
-              })}
-            </div>
-            {ocultos > 0 && (
-              <div className="mt-4">
-                <Link
-                  href={`/servicos#${ANCORA_CATEGORIA[cat]}` as Route}
-                  className={buttonVariants({ variant: "ghost", size: "sm" })}
-                >
-                  {`Ver todos os ${todos.length} serviços de ${LABEL_CATEGORIA[cat]}`}
-                  <ArrowRight className="size-4" />
-                </Link>
+                    </>
+                  );
+                  const classeCard =
+                    "flex h-full flex-col overflow-hidden rounded-xl border bg-card";
+                  // Serviço com slug tem landing própria — card vira link.
+                  return s.slug ? (
+                    <Link
+                      key={s.id}
+                      href={`/servicos/${s.slug}` as Route}
+                      className={`${classeCard} transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+                    >
+                      {conteudo}
+                    </Link>
+                  ) : (
+                    <article key={s.id} className={classeCard}>
+                      {conteudo}
+                    </article>
+                  );
+                })}
               </div>
-            )}
-          </div>
+              {ocultos > 0 && (
+                <div className="mt-4">
+                  <Link
+                    href={`/servicos#${ANCORA_CATEGORIA[cat]}` as Route}
+                    className={buttonVariants({ variant: "ghost", size: "sm" })}
+                  >
+                    {`Ver todos os ${todos.length} serviços de ${LABEL_CATEGORIA[cat]}`}
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
