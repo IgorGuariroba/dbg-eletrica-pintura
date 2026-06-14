@@ -38,7 +38,7 @@ export default async function ServicosPage() {
       <ServicosGrid
         servicos={servicos}
         titulo="Serviços e preços"
-        descricao="Catálogo completo, com preço fixo e garantia. Clique num serviço para ver detalhes e pedir orçamento."
+        descricao="Catálogo completo, com preço de referência e garantia. O valor exato você aprova no orçamento. Clique num serviço para ver detalhes e pedir orçamento."
       />
       <CtaFinal />
       <SiteFooter />

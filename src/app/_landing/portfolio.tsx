@@ -131,8 +131,9 @@ function LadoComparacao({
   return (
     <div className="relative">
       <div className="relative aspect-[4/3] bg-muted">
-        {/* Aspect fixo → <Image fill> rende otimização (R2 em remotePatterns).
-            As fotos avulsas seguem <img> por serem masonry de altura natural. */}
+        {/* Aspect fixo → next/image com fill rende otimização (R2 em
+            remotePatterns). As fotos avulsas usam img comum por serem masonry
+            de altura natural. */}
         <Image
           src={foto.url}
           alt={`${CATEGORIA_LABEL[foto.categoria] ?? foto.categoria} — ${rotulo.toLowerCase()}`}
