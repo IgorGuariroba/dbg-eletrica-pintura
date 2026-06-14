@@ -32,21 +32,28 @@ export function ComoFunciona() {
       <div className="mb-8 text-center">
         <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Como funciona</h2>
       </div>
-      <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Sequência ordenada real → timeline conectada (não card-grid). A linha
+          horizontal liga os números no desktop; os círculos sólidos a mascaram. */}
+      <ol className="grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-4">
         {PASSOS.map((passo, i) => (
           <li
             key={passo.titulo}
-            className="relative rounded-lg border bg-card p-5 flex flex-col items-center text-center gap-3"
+            className="relative flex flex-col items-center gap-3 text-center"
           >
-            <span
-              className="absolute top-3 left-3 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold"
-              aria-hidden
-            >
+            {i < PASSOS.length - 1 && (
+              <span
+                className="absolute left-1/2 top-5 hidden h-px w-full bg-border lg:block"
+                aria-hidden
+              />
+            )}
+            <span className="relative flex size-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
               {i + 1}
             </span>
-            <passo.icone className="size-7 text-primary mt-2" aria-hidden />
-            <h3 className="font-semibold text-sm">{passo.titulo}</h3>
-            <p className="text-xs text-muted-foreground">{passo.texto}</p>
+            <passo.icone className="size-6 text-primary" aria-hidden />
+            <h3 className="text-sm font-semibold">{passo.titulo}</h3>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {passo.texto}
+            </p>
           </li>
         ))}
       </ol>

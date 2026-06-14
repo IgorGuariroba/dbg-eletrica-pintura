@@ -58,6 +58,7 @@ async function carregarPortfolio(): Promise<FotoPortfolioView[]> {
     const fotos = await criarPortfolioRepoDrizzle(db).listarPublicas(12);
     return fotos.map((f) => ({
       id: f.id,
+      osId: f.osId,
       url: urlPublicaFoto(f.chavePublica),
       categoria: f.categoria,
       tipo: f.tipo,

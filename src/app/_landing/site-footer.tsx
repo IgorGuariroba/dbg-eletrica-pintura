@@ -1,9 +1,7 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { MessageCircle, Mail, MapPin } from "lucide-react";
-import { urlWhatsApp, REGIAO_ATENDIMENTO } from "@/lib/contato";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Mail, MapPin } from "lucide-react";
+import { REGIAO_ATENDIMENTO } from "@/lib/contato";
 
 const LINKS_NAVEGACAO = [
   { href: "/servicos", label: "Serviços e preços" },
@@ -24,7 +22,6 @@ const NOSSOS_SERVICOS = [
 
 export function SiteFooter({ bairros = [] }: { bairros?: string[] }) {
   const ano = new Date().getFullYear();
-  const msgOrcamento = "Olá! Gostaria de solicitar um orçamento com a DBG.";
 
   return (
     <footer className="border-t border-border bg-background text-sm">
@@ -93,23 +90,11 @@ export function SiteFooter({ bairros = [] }: { bairros?: string[] }) {
             </span>
           </div>
 
-          {/* Horário e WhatsApp destacado */}
+          {/* Horário */}
           <div className="w-full mt-2">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
               Segunda a Sábado · 8h às 18h
             </p>
-            <a
-              href={urlWhatsApp(msgOrcamento)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                "w-full gap-2 text-xs border-success/30 hover:border-success/60 text-success hover:bg-success/5 dark:text-success dark:hover:bg-success/10"
-              )}
-            >
-              <MessageCircle className="size-4" />
-              <span>Solicitar Orçamento</span>
-            </a>
           </div>
         </div>
       </div>

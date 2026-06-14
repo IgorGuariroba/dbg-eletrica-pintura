@@ -31,12 +31,11 @@ export function Empatia() {
           </p>
         </div>
 
-        <ul className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+        {/* Cenários como copy de apoio (sem card) — não competem com os
+            diferenciais; só dão peso emocional à dor. */}
+        <ul className="grid grid-cols-1 gap-6 text-left sm:grid-cols-3">
           {CENARIOS.map((c) => (
-            <li
-              key={c.texto}
-              className="flex flex-col gap-2 rounded-lg border bg-background p-4"
-            >
+            <li key={c.texto} className="flex flex-col gap-2">
               <c.icone className="size-5 text-muted-foreground" aria-hidden />
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {c.texto}

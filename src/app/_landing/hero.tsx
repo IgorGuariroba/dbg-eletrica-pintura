@@ -24,6 +24,12 @@ const SINAIS = [
   { icone: Camera, texto: "Foto antes e depois" },
 ] as const;
 
+const SERVICOS = [
+  { icone: Zap, nome: "Elétrica", desc: "Disjuntor, chuveiro, tomada, ventilador." },
+  { icone: Ruler, nome: "Drywall", desc: "Divisória, forro, home office, sanca." },
+  { icone: Paintbrush, nome: "Pintura", desc: "Quarto, casa inteira, retoque." },
+] as const;
+
 export function Hero({ bairros }: { bairros: string[] }) {
   return (
     <section className="relative isolate overflow-hidden bg-gradient-to-b from-background to-muted/30 dark:from-background dark:to-background border-b border-border/40">
@@ -66,67 +72,37 @@ export function Hero({ bairros }: { bairros: string[] }) {
             </p>
           </div>
 
-          {/* Coluna Direita: Grid de Destaques dos Serviços */}
+          {/* Coluna Direita: uma imagem decisiva + lista compacta de serviços.
+              Um único elemento dominante (não trio de cards competindo). */}
           <div className="lg:col-span-5 w-full">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-
-              {/* Subcoluna 1 (Elétrica & Drywall) */}
-              <div className="flex flex-col gap-4 lg:gap-6 justify-between">
-
-                {/* Card Elétrica */}
-                <div className="flex-1 rounded-xl border border-border/40 bg-card/60 p-6 shadow-xs backdrop-blur-xs transition-all duration-300 hover:border-primary/30 hover:shadow-md flex flex-col items-start gap-4">
-                  <div className="rounded-lg bg-primary/10 p-2.5 text-primary shadow-2xs">
-                    <Zap className="size-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Elétrica</h3>
-                    <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                      Disjuntor caindo, chuveiro, tomada, ventilador de teto.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Card Drywall */}
-                <div className="flex-1 rounded-xl border border-border/40 bg-card/60 p-6 shadow-xs backdrop-blur-xs transition-all duration-300 hover:border-primary/30 hover:shadow-md flex flex-col items-start gap-4">
-                  <div className="rounded-lg bg-primary/10 p-2.5 text-primary shadow-2xs">
-                    <Ruler className="size-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Drywall</h3>
-                    <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                      Divisória, forro, home office, sanca.
-                    </p>
-                  </div>
-                </div>
-
+            <div className="overflow-hidden rounded-xl border border-border/40 bg-card">
+              <div className="relative aspect-[4/3] bg-muted">
+                <Image
+                  src="/images/landing/pincel-hero.png"
+                  alt="Serviço de pintura residencial"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 40vw"
+                  className="object-cover"
+                  priority
+                />
               </div>
-
-              {/* Card Pintura (Altura Total) */}
-              <div className="rounded-xl border border-border/40 bg-card/60 shadow-xs backdrop-blur-xs transition-all duration-300 hover:border-primary/30 hover:shadow-md overflow-hidden flex flex-col min-h-[340px]">
-                <div className="relative h-48 sm:h-auto sm:flex-grow bg-muted overflow-hidden">
-                  <Image
-                    src="/images/landing/pincel-hero.png"
-                    alt="Serviço de pintura residencial"
-                    fill
-                    sizes="(max-width: 640px) 100vw, 30vw"
-                    className="object-cover transition-transform duration-500 hover:scale-105"
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-card/85 via-transparent to-transparent sm:hidden" />
-                </div>
-                <div className="p-6 flex flex-col items-start gap-4 shrink-0">
-                  <div className="rounded-lg bg-primary/10 p-2.5 text-primary shadow-2xs">
-                    <Paintbrush className="size-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Pintura</h3>
-                    <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                      Quarto, casa inteira, retoque antes da mudança.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
+              <ul className="divide-y divide-border/40">
+                {SERVICOS.map((s) => (
+                  <li key={s.nome} className="flex items-center gap-3 p-4">
+                    <div className="shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
+                      <s.icone className="size-5" aria-hidden />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">
+                        {s.nome}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {s.desc}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
