@@ -1,10 +1,9 @@
-import { BadgeDollarSign, Camera, ShieldCheck, UserCheck, Star } from "lucide-react";
+import { BadgeDollarSign, Camera, ShieldCheck, UserCheck } from "lucide-react";
 import type { MetricasPublicas } from "@/marketing/landing/metricas-publicas-query";
 
 // Abaixo destes mínimos o número joga contra (parece empresa recém-aberta):
 // esconde a métrica individualmente em vez de exibir valor baixo.
 const MIN_OS_CONCLUIDAS = 10;
-const MIN_AVALIACOES = 3;
 
 const ITENS = [
   {
@@ -30,8 +29,6 @@ const ITENS = [
 ] as const;
 
 export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
-  const mostrarNota =
-    metricas.notaMedia != null && metricas.totalAvaliacoes >= MIN_AVALIACOES;
   const mostrarConcluidas = metricas.osConcluidas >= MIN_OS_CONCLUIDAS;
 
   return (
@@ -41,43 +38,33 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
       className="border-y bg-card scroll-mt-24"
     >
       <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
-        {(mostrarNota || mostrarConcluidas) && (
+        {mostrarConcluidas && (
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
-            {mostrarNota && (
-              <p className="flex items-center gap-2 text-sm">
-                <Star className="size-4 fill-primary text-primary" />
-                <strong className="text-lg font-mono font-bold">
-                  {metricas.notaMedia!.toFixed(1).replace(".", ",")}
-                </strong>
-                <span className="text-muted-foreground">
-                  em {metricas.totalAvaliacoes} avaliações
-                </span>
-              </p>
-            )}
-            {mostrarConcluidas && (
-              <p className="flex items-center gap-2 text-sm">
-                <strong className="text-lg font-mono font-bold">
-                  {metricas.osConcluidas}
-                </strong>
-                <span className="text-muted-foreground">
-                  serviços concluídos
-                </span>
-              </p>
-            )}
+            <p className="flex items-center gap-2 text-sm">
+              <strong className="text-lg font-mono font-bold">
+                {metricas.osConcluidas}
+              </strong>
+              <span className="text-muted-foreground">
+                serviços concluídos
+              </span>
+            </p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Lista de benefícios com ícone à esquerda (sem card) — diferencia da
+            timeline de "Como funciona" e da grade de serviços. */}
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
           {ITENS.map((item) => (
-            <div
-              key={item.titulo}
-              className="flex flex-col items-start gap-2 rounded-lg border bg-background p-4"
-            >
-              <item.icone className="size-5 text-primary" aria-hidden />
-              <h3 className="font-semibold text-sm">{item.titulo}</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {item.texto}
-              </p>
+            <div key={item.titulo} className="flex gap-4">
+              <div className="shrink-0 rounded-lg bg-primary/10 p-2.5 text-primary">
+                <item.icone className="size-5" aria-hidden />
+              </div>
+              <div>
+                <h3 className="font-semibold">{item.titulo}</h3>
+                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                  {item.texto}
+                </p>
+              </div>
             </div>
           ))}
         </div>

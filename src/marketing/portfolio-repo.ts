@@ -33,6 +33,8 @@ export interface FotoPortfolioPendente {
 /** Foto aprovada para exibição pública (landing, perfil do técnico). */
 export interface FotoPublica {
   id: string;
+  /** OS de origem — permite parear ANTES↔DEPOIS do mesmo serviço na landing. */
+  osId: string;
   chavePublica: string;
   categoria: CategoriaServico;
   tipo: TipoFoto;

@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Star, ChevronLeft, ChevronRight, BadgeCheck } from "lucide-react";
+import {
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  BadgeCheck,
+  Pause,
+  Play,
+} from "lucide-react";
 import type { DepoimentoCandidato } from "@/marketing/landing/depoimentos-query";
 import {
   Carousel,
@@ -30,7 +37,22 @@ export function Avaliacoes({
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const multiplos = depoimentos.length > 1;
+
+  // Respeita prefers-reduced-motion: sem rotação automática pra quem pediu
+  // menos movimento (WCAG 2.3.3 / 2.2.2).
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const aplicar = () => setReducedMotion(mq.matches);
+    aplicar();
+    mq.addEventListener("change", aplicar);
+    return () => mq.removeEventListener("change", aplicar);
+  }, []);
 
   const onSelect = useCallback((api: CarouselApi) => {
     if (!api) return;
@@ -41,14 +63,24 @@ export function Avaliacoes({
 
   useEffect(() => {
     if (!api) return;
-    Promise.resolve().then(() => onSelect(api));
-    api.on("reInit", onSelect);
-    api.on("select", onSelect);
+    const sync = () => {
+      onSelect(api);
+      setScrollSnaps(api.scrollSnapList());
+    };
+    sync();
+    api.on("reInit", sync);
+    api.on("select", sync);
+    return () => {
+      api.off("reInit", sync);
+      api.off("select", sync);
+    };
   }, [api, onSelect]);
 
-  // Autoplay lento (5 segundos), pausando sob hover do usuário.
+  // Autoplay lento (5s). Para sob hover, quando pausado pelo botão, com 1 só
+  // depoimento, ou sob prefers-reduced-motion (controlável pelo usuário, não
+  // só por hover — funciona no touch).
   useEffect(() => {
-    if (!api || hovered) return;
+    if (!api || hovered || !isPlaying || reducedMotion || !multiplos) return;
 
     const interval = setInterval(() => {
       if (api.canScrollNext()) {
@@ -59,7 +91,7 @@ export function Avaliacoes({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [api, hovered]);
+  }, [api, hovered, isPlaying, reducedMotion, multiplos]);
 
   if (depoimentos.length === 0) return null;
 
@@ -98,7 +130,7 @@ export function Avaliacoes({
                 >
                   <blockquote
                     className={cn(
-                      "rounded-xl border bg-card p-6 flex flex-col items-center text-center gap-4 w-full min-h-72 transition-all duration-500 ease-in-out select-none",
+                      "rounded-xl border bg-card p-6 flex flex-col items-center text-center gap-4 w-full min-h-72 transition-all duration-500 ease-in-out select-none motion-reduce:transition-none",
                       isActive
                         ? "scale-100 opacity-100 shadow-md border-primary/25 z-10"
                         : "scale-90 opacity-50 shadow-none border-border/40 z-0 pointer-events-none"
@@ -173,28 +205,85 @@ export function Avaliacoes({
           </CarouselContent>
         </Carousel>
 
-        {/* Botões de Navegação Externos */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 rounded-full shadow-sm hover:bg-muted shrink-0 size-8 sm:size-10 pointer-events-auto"
-          onClick={() => api?.scrollPrev()}
-          disabled={!canScrollPrev}
-          aria-label="Avaliação anterior"
-        >
-          <ChevronLeft className="size-5" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="absolute right-0 md:right-2 top-1/2 -translate-y-1/2 rounded-full shadow-sm hover:bg-muted shrink-0 size-8 sm:size-10 pointer-events-auto"
-          onClick={() => api?.scrollNext()}
-          disabled={!canScrollNext}
-          aria-label="Próxima avaliação"
-        >
-          <ChevronRight className="size-5" />
-        </Button>
+        {/* Botões de Navegação Externos (só com mais de 1 depoimento) */}
+        {multiplos && (
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 rounded-full shadow-sm hover:bg-muted shrink-0 size-8 sm:size-10 pointer-events-auto"
+              onClick={() => api?.scrollPrev()}
+              disabled={!canScrollPrev}
+              aria-label="Avaliação anterior"
+            >
+              <ChevronLeft className="size-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-0 md:right-2 top-1/2 -translate-y-1/2 rounded-full shadow-sm hover:bg-muted shrink-0 size-8 sm:size-10 pointer-events-auto"
+              onClick={() => api?.scrollNext()}
+              disabled={!canScrollNext}
+              aria-label="Próxima avaliação"
+            >
+              <ChevronRight className="size-5" />
+            </Button>
+          </>
+        )}
       </div>
+
+      {/* Controles: indicador de posição (dots, clicáveis pra saltar) +
+          pausa/retoma. Dots aparecem mesmo sob reduced-motion (são navegação);
+          o botão de pausa some (não há autoplay a controlar). */}
+      {multiplos && (
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <div
+            className="flex items-center gap-1"
+            role="tablist"
+            aria-label="Selecionar avaliação"
+          >
+            {scrollSnaps.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={i === selectedIndex}
+                aria-label={`Avaliação ${i + 1} de ${scrollSnaps.length}`}
+                onClick={() => api?.scrollTo(i)}
+                className="group/dot flex h-8 items-center px-1 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+              >
+                <span
+                  className={cn(
+                    "h-2 rounded-full transition-all motion-reduce:transition-none",
+                    i === selectedIndex
+                      ? "w-5 bg-primary"
+                      : "w-2 bg-border group-hover/dot:bg-muted-foreground/50"
+                  )}
+                />
+              </button>
+            ))}
+          </div>
+          {!reducedMotion && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsPlaying((p) => !p)}
+              aria-label={
+                isPlaying
+                  ? "Pausar rotação automática das avaliações"
+                  : "Retomar rotação automática das avaliações"
+              }
+            >
+              {isPlaying ? (
+                <Pause className="size-4" aria-hidden />
+              ) : (
+                <Play className="size-4" aria-hidden />
+              )}
+              {isPlaying ? "Pausar" : "Reproduzir"}
+            </Button>
+          )}
+        </div>
+      )}
     </section>
   );
 }

@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { urlWhatsApp } from "@/lib/contato";
 
 export function CtaFinal() {
   return (
@@ -21,15 +19,6 @@ export function CtaFinal() {
           >
             Pedir orçamento grátis
           </Link>
-          <a
-            href={urlWhatsApp("Olá! Quero um orçamento da DBG.")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ size: "sm", variant: "ghost" })}
-          >
-            <MessageCircle className="size-4" />
-            Prefiro chamar no WhatsApp
-          </a>
         </div>
       </div>
     </section>

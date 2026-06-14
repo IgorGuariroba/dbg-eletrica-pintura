@@ -90,14 +90,19 @@
   --shadow-spread: 0px;
   --shadow-opacity: 0;
   --shadow-color: 0 0 0;
-  --shadow-2xs: 0 0 0px 0px hsl(0 0 0 / 0.00);
-  --shadow-xs: 0 0 0px 0px hsl(0 0 0 / 0.00);
-  --shadow-sm: 0 0 0px 0px hsl(0 0 0 / 0.00), 0 1px 2px -1px hsl(0 0 0 / 0.00);
-  --shadow: 0 0 0px 0px hsl(0 0 0 / 0.00), 0 1px 2px -1px hsl(0 0 0 / 0.00);
-  --shadow-md: 0 0 0px 0px hsl(0 0 0 / 0.00), 0 2px 4px -1px hsl(0 0 0 / 0.00);
-  --shadow-lg: 0 0 0px 0px hsl(0 0 0 / 0.00), 0 4px 6px -1px hsl(0 0 0 / 0.00);
-  --shadow-xl: 0 0 0px 0px hsl(0 0 0 / 0.00), 0 8px 10px -1px hsl(0 0 0 / 0.00);
-  --shadow-2xl: 0 0 0px 0px hsl(0 0 0 / 0.00);
+  /* Escala de elevação sutil. Superfícies são flat em repouso (Card usa ring,
+     não sombra); estes tokens dão profundidade só a quem flutua — header
+     sticky, overlays do base-ui (dialog/popover/dropdown/sheet) e lift de
+     hover em itens clicáveis. Valores baixos de propósito: 60+ pontos no app
+     referenciam shadow-*; subir todos de leve, nunca pesar. */
+  --shadow-2xs: 0 1px 2px 0 hsl(0 0 0 / 0.04);
+  --shadow-xs: 0 1px 2px 0 hsl(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 hsl(0 0 0 / 0.06), 0 1px 2px -1px hsl(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 hsl(0 0 0 / 0.07), 0 1px 2px -1px hsl(0 0 0 / 0.05);
+  --shadow-md: 0 2px 6px -1px hsl(0 0 0 / 0.08), 0 2px 4px -2px hsl(0 0 0 / 0.05);
+  --shadow-lg: 0 8px 20px -4px hsl(0 0 0 / 0.10), 0 4px 8px -4px hsl(0 0 0 / 0.05);
+  --shadow-xl: 0 16px 32px -8px hsl(0 0 0 / 0.12), 0 6px 12px -6px hsl(0 0 0 / 0.07);
+  --shadow-2xl: 0 24px 48px -12px hsl(0 0 0 / 0.18);
 
   --tracking-normal: -0.01em;
   --spacing: 0.25rem;
@@ -147,6 +152,17 @@
   --sidebar-accent-foreground: oklch(1.0000 0 0);
   --sidebar-border: oklch(0.2973 0.0325 284.2512);
   --sidebar-ring: var(--primary-500);
+
+  /* No escuro a sombra preta quase some: alpha maior pra overlay/header
+     separarem da superfície (borda carrega o resto). */
+  --shadow-2xs: 0 1px 2px 0 hsl(0 0 0 / 0.20);
+  --shadow-xs: 0 1px 2px 0 hsl(0 0 0 / 0.24);
+  --shadow-sm: 0 1px 3px 0 hsl(0 0 0 / 0.28), 0 1px 2px -1px hsl(0 0 0 / 0.24);
+  --shadow: 0 1px 3px 0 hsl(0 0 0 / 0.30), 0 1px 2px -1px hsl(0 0 0 / 0.24);
+  --shadow-md: 0 2px 6px -1px hsl(0 0 0 / 0.34), 0 2px 4px -2px hsl(0 0 0 / 0.26);
+  --shadow-lg: 0 8px 20px -4px hsl(0 0 0 / 0.40), 0 4px 8px -4px hsl(0 0 0 / 0.28);
+  --shadow-xl: 0 16px 32px -8px hsl(0 0 0 / 0.46), 0 6px 12px -6px hsl(0 0 0 / 0.32);
+  --shadow-2xl: 0 24px 48px -12px hsl(0 0 0 / 0.56);
 }
 
 @theme inline {

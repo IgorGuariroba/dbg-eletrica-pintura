@@ -142,6 +142,7 @@ async function publicas(
   const rows = await db
     .select({
       id: fotoPortfolio.id,
+      osId: fotoPortfolio.osId,
       chavePublica: fotoPortfolio.chavePublica,
       categoria: fotoPortfolio.categoria,
       tipo: fotoPortfolio.tipo,
