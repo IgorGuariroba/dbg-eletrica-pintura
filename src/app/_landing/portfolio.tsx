@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export interface FotoPortfolioView {
   id: string;
   osId: string;
@@ -129,12 +131,14 @@ function LadoComparacao({
   return (
     <div className="relative">
       <div className="relative aspect-[4/3] bg-muted">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        {/* Aspect fixo → <Image fill> rende otimização (R2 em remotePatterns).
+            As fotos avulsas seguem <img> por serem masonry de altura natural. */}
+        <Image
           src={foto.url}
           alt={`${CATEGORIA_LABEL[foto.categoria] ?? foto.categoria} — ${rotulo.toLowerCase()}`}
-          loading="lazy"
-          className="absolute inset-0 size-full object-cover"
+          fill
+          sizes="(max-width: 639px) 100vw, 50vw"
+          className="object-cover"
         />
       </div>
       <span className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-xs font-bold uppercase tracking-wider">
