@@ -39,3 +39,10 @@ playwright/.cache/
 
 # Artefatos de validação visual (Playwright MCP) — nunca versionar
 .playwright-mcp/
+
+# Artefatos de tooling de agentes — nunca versionar
+.fallow/
+.impeccable/
+.github/skills/
+DESIGN.md
+PRODUCT.md

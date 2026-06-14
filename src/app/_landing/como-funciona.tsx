@@ -27,36 +27,65 @@ export function ComoFunciona() {
   return (
     <section
       id="como-funciona"
-      className="container mx-auto px-4 py-16 max-w-5xl scroll-mt-24"
+      className="container mx-auto px-4 py-20 max-w-5xl scroll-mt-24"
     >
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Como funciona</h2>
+      <div className="mb-12 text-center">
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+          Como funciona
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+          Passo a passo simples e transparente, sem enrolação e sem surpresas.
+        </p>
       </div>
-      {/* Sequência ordenada real → timeline conectada (não card-grid). A linha
-          horizontal liga os números no desktop; os círculos sólidos a mascaram. */}
-      <ol className="grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-4">
+
+      {/* Mobile view (< md): Left-aligned vertical timeline */}
+      <ol className="relative border-l border-border ml-4 md:hidden flex flex-col gap-8">
+        {PASSOS.map((passo, i) => (
+          <li key={passo.titulo} className="relative pl-8 group">
+            <span className="absolute -left-4 top-0.5 flex size-8 items-center justify-center rounded-full bg-background ring-1 ring-border text-sm font-semibold text-primary transition-colors group-hover:ring-primary group-hover:text-primary-foreground group-hover:bg-primary">
+              {i + 1}
+            </span>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2">
+                <passo.icone className="size-5 text-primary" aria-hidden />
+                <h3 className="text-base font-semibold text-foreground">{passo.titulo}</h3>
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {passo.texto}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      {/* Desktop/Tablet view (>= md): Connected, flat-by-honesty hover-lift cards */}
+      <ol className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
         {PASSOS.map((passo, i) => (
           <li
             key={passo.titulo}
-            className="relative flex flex-col items-center gap-3 text-center"
+            className="group relative bg-card ring-1 ring-foreground/10 rounded-xl p-6 transition-all duration-200 hover:ring-primary/20 hover:-translate-y-0.5 flex flex-col gap-4"
           >
-            {i < PASSOS.length - 1 && (
-              <span
-                className="absolute left-1/2 top-5 hidden h-px w-full bg-border lg:block"
-                aria-hidden
-              />
-            )}
-            <span className="relative flex size-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-              {i + 1}
-            </span>
-            <passo.icone className="size-6 text-primary" aria-hidden />
-            <h3 className="text-sm font-semibold">{passo.titulo}</h3>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              {passo.texto}
-            </p>
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-bold font-mono text-primary/30 group-hover:text-primary transition-colors">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div className="p-2 rounded-lg bg-primary/5 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-200">
+                <passo.icone className="size-5" aria-hidden />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <h3 className="text-base font-semibold text-foreground leading-tight">
+                {passo.titulo}
+              </h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {passo.texto}
+              </p>
+            </div>
           </li>
         ))}
       </ol>
     </section>
   );
 }
+

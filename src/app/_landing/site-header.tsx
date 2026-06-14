@@ -16,9 +16,10 @@ const LINKS: LinkNavegacao[] = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 px-4 pt-4">
-      <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 rounded-full border bg-background/80 pr-2 pl-5 shadow-md backdrop-blur">
-        <Link href="/" className="font-bold tracking-tight">
-          DBG
+      <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 rounded-full border bg-background/80 pr-2 pl-5 shadow-sm backdrop-blur">
+        <Link href="/" className="flex items-center gap-1.5 font-bold tracking-tight text-foreground">
+          <span>DBG</span>
+          <span className="size-1.5 rounded-full bg-primary" aria-hidden />
         </Link>
         <nav
           aria-label="Navegação principal"
@@ -54,10 +55,12 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/solicitar"
-            className={buttonVariants({
-              variant: "gradient",
-              className: "h-11 rounded-full px-4 md:h-8 md:px-3",
-            })}
+            className={cn(
+              buttonVariants({
+                variant: "link",
+              }),
+              "h-11 px-2.5 md:h-8 md:px-3 text-sm font-semibold text-primary hover:text-primary/80 decoration-primary/40",
+            )}
           >
             Solicitar orçamento
           </Link>
@@ -67,3 +70,4 @@ export function SiteHeader() {
     </header>
   );
 }
+

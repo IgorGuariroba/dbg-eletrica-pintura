@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Zap, Ruler, Paintbrush, BadgeCheck, ShieldCheck, Wallet, Camera } from "lucide-react";
+import { MapPin, Zap, Ruler, Paintbrush, BadgeCheck, ShieldCheck, Wallet, Camera, ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { REGIAO_ATENDIMENTO } from "@/lib/contato";
 
 const MAX_BAIRROS_VISIVEIS = 4;
@@ -51,20 +52,25 @@ export function Hero({ bairros }: { bairros: string[] }) {
               Você aprova o preço antes do serviço começar e tem garantia no papel. Sem surpresa no final, sem estranho sem rosto na sua casa.
             </p>
 
-            <div className="mt-8 flex flex-col items-start gap-2 w-full sm:w-auto">
+            <div className="mt-8 flex flex-col items-start gap-2.5 w-full sm:w-auto">
               <Link
                 href="/solicitar"
-                className={buttonVariants({ size: "lg", variant: "gradient", className: "w-full sm:w-auto" })}
+                className={cn(
+                  buttonVariants({ variant: "gradient", className: "w-full sm:w-auto" }),
+                  "h-12 px-8 text-base font-bold rounded-xl gap-2 hover:brightness-110 active:translate-y-px transition-all"
+                )}
               >
-                Pedir orçamento grátis
+                <span>Pedir orçamento grátis</span>
+                <ArrowRight className="size-4.5 shrink-0 transition-transform group-hover/button:translate-x-0.5" />
               </Link>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground pl-1">
                 2 minutos, sem ligação ·{" "}
                 <Link href="#servicos" className="underline underline-offset-2 hover:text-foreground">
                   ver serviços e preços
                 </Link>
               </span>
             </div>
+
 
             <p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground font-medium">
               <MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden />
