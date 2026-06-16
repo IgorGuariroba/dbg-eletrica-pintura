@@ -178,7 +178,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
               {/* Verification Badges */}
               <div className="grid grid-cols-2 gap-4 border-t border-border/40 pt-4">
                 <div className="flex items-start gap-2.5">
-                  <ShieldCheck className="size-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <ShieldCheck className="size-5 text-success shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
                     <p className="text-xs font-bold text-foreground">Antecedentes</p>
                     <p className="text-[10px] text-muted-foreground leading-tight">Ficha 100% limpa e verificada.</p>
