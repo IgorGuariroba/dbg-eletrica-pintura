@@ -49,7 +49,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                 {tecnicos.map((t) => {
                   const isActive = t.id === activeId;
                   const inicial = t.nome.charAt(0).toUpperCase();
-                  const score = t.avaliacaoMedia ?? 5.0;
+                  const temAvaliacoes = (t.totalAvaliacoes ?? 0) > 0;
                   return (
                     <button
                       key={t.id}
@@ -80,10 +80,18 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                           {t.nome.split(" ")[0]}
                         </p>
                         <div className="flex items-center gap-1 mt-0.5">
-                          <Star className="size-3 fill-rating text-rating" />
-                          <span className="text-xs font-medium text-muted-foreground">
-                            {score.toFixed(1)}
-                          </span>
+                          {temAvaliacoes ? (
+                            <>
+                              <Star className="size-3 fill-rating text-rating" />
+                              <span className="text-xs font-medium text-muted-foreground">
+                                {(t.avaliacaoMedia ?? 0).toFixed(1)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-xs font-medium text-muted-foreground">
+                              Novo
+                            </span>
+                          )}
                         </div>
                       </div>
                     </button>
@@ -126,28 +134,32 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                   </h3>
                   
                   {/* Rating Display */}
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, i) => {
-                        const score = activeTecnico.avaliacaoMedia ?? 5.0;
-                        const isFilled = i < Math.round(score);
-                        return (
-                          <Star
-                            key={i}
-                            className={`size-4 ${
-                              isFilled ? "fill-rating text-rating" : "text-border fill-muted"
-                            }`}
-                          />
-                        );
-                      })}
+                  {(activeTecnico.totalAvaliacoes ?? 0) > 0 ? (
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, i) => {
+                          const isFilled = i < Math.round(activeTecnico.avaliacaoMedia ?? 0);
+                          return (
+                            <Star
+                              key={i}
+                              className={`size-4 ${
+                                isFilled ? "fill-rating text-rating" : "text-border fill-muted"
+                              }`}
+                            />
+                          );
+                        })}
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">
+                        {(activeTecnico.avaliacaoMedia ?? 0).toFixed(1)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({activeTecnico.totalAvaliacoes}{" "}
+                        {activeTecnico.totalAvaliacoes === 1 ? "avaliação" : "avaliações"})
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold text-foreground">
-                      {activeTecnico.avaliacaoMedia ? activeTecnico.avaliacaoMedia.toFixed(1) : "5.0"}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({activeTecnico.totalAvaliacoes ?? 12} avaliações)
-                    </span>
-                  </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Sem avaliações ainda</p>
+                  )}
 
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {activeTecnico.especialidades.map((esp) => (
@@ -261,15 +273,20 @@ export function Equipe({ tecnicos, compacta }: Props) {
                       </h3>
                       
                       {/* Rating row */}
-                      <div className="flex items-center gap-1.5">
-                        <Star className="size-3.5 fill-rating text-rating" />
-                        <span className="text-sm font-semibold text-foreground">
-                          {tecnico.avaliacaoMedia ? tecnico.avaliacaoMedia.toFixed(1) : "5.0"}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          ({tecnico.totalAvaliacoes ?? 12} avaliações)
-                        </span>
-                      </div>
+                      {(tecnico.totalAvaliacoes ?? 0) > 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <Star className="size-3.5 fill-rating text-rating" />
+                          <span className="text-sm font-semibold text-foreground">
+                            {(tecnico.avaliacaoMedia ?? 0).toFixed(1)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ({tecnico.totalAvaliacoes}{" "}
+                            {tecnico.totalAvaliacoes === 1 ? "avaliação" : "avaliações"})
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Sem avaliações ainda</p>
+                      )}
                     </div>
                   </div>
 
