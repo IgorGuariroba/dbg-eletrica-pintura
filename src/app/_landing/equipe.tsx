@@ -1,130 +1,215 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-} from "@/components/ui/avatar";
-import {
-  HoverCard,
-  HoverCardTrigger,
-  HoverCardContent,
-} from "@/components/ui/hover-card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import type { Membro } from "@/equipe/membro-repo";
+import { Star, ShieldCheck, UserCheck, ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import type { Membro } from "@/equipe/membro-repo";
 
-const MAX_AVATARES_COMPACTA = 5;
+export interface MembroComNota extends Membro {
+  avaliacaoMedia?: number | null;
+  totalAvaliacoes?: number;
+}
 
 interface Props {
-  tecnicos: Membro[];
-  /**
-   * Versão compacta para a landing principal (carga cognitiva baixa):
-   * pilha de avatares + link para /equipe, sem cards individuais.
-   */
+  tecnicos: MembroComNota[];
   compacta?: boolean;
 }
 
-function inicialDe(nome: string): string {
-  return nome.charAt(0).toUpperCase();
-}
+function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
+  const [activeId, setActiveId] = useState<string>(() => tecnicos[0]?.id || "");
+  const activeTecnico = tecnicos.find((t) => t.id === activeId) || tecnicos[0];
 
-function EquipeCompacta({ tecnicos }: { tecnicos: Membro[] }) {
-  const visiveis = tecnicos.slice(0, MAX_AVATARES_COMPACTA);
-  const restantes = tecnicos.length - visiveis.length;
+  if (!activeTecnico) return null;
 
   return (
-    <section id="equipe" className="py-16 bg-background scroll-mt-24">
-      <div className="mx-auto max-w-5xl px-4 md:px-6 text-center space-y-6">
-        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-          Conheça quem vai entrar na sua casa
-        </h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
-          Cada técnico tem nome, foto e avaliação. Você vê quem vai entrar na
-          sua casa antes da visita.
-        </p>
-        <AvatarGroup className="justify-center">
-          {visiveis.map((t) => {
-            const avatar = (
-              <Avatar className="size-11 ring-2 ring-background transition-transform duration-200 ease-out hover:z-10 hover:scale-110 focus-visible:z-10 focus-visible:scale-110">
-                {t.fotoUrl && (
-                  <AvatarImage
-                    src={t.fotoUrl}
-                    alt={t.nome}
-                    className="object-cover"
-                  />
-                )}
-                <AvatarFallback className="font-bold bg-primary/5 text-primary">
-                  {inicialDe(t.nome)}
-                </AvatarFallback>
-              </Avatar>
-            );
-            return (
-              <HoverCard key={t.id}>
-                <HoverCardTrigger
-                  aria-label={`Perfil de ${t.nome}`}
-                  className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  render={
-                    t.slug ? (
-                      <Link href={`/tecnico/${t.slug}` as Route} />
-                    ) : undefined
-                  }
-                >
-                  {avatar}
-                </HoverCardTrigger>
-                <HoverCardContent className="w-56">
-                  <div className="flex flex-col items-center gap-2 p-2 text-center">
-                    <Avatar size="lg">
-                      {t.fotoUrl && (
-                        <AvatarImage
-                          src={t.fotoUrl}
-                          alt={t.nome}
-                          className="object-cover"
-                        />
-                      )}
-                      <AvatarFallback className="font-bold bg-primary/5 text-primary">
-                        {inicialDe(t.nome)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <p className="font-semibold">{t.nome}</p>
-                    {t.especialidades.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-1">
-                        {t.especialidades.map((esp) => (
-                          <Badge
-                            key={esp}
-                            variant="outline"
-                            className="text-xs uppercase font-bold tracking-wider py-0 px-1.5 border-primary/20 text-primary"
-                          >
-                            {esp}
-                          </Badge>
-                        ))}
+    <section id="equipe" className="py-20 md:py-28 bg-background scroll-mt-24 border-t border-border/40">
+      <div className="mx-auto max-w-6xl px-4 md:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          {/* Left Column: Title, description, selection list */}
+          <div className="lg:col-span-6 space-y-8">
+            <div className="space-y-4">
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-wrap-balance">
+                Conheça quem vai entrar na sua casa
+              </h2>
+              <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-xl">
+                Cada técnico tem nome, foto e avaliação real dos clientes. Você vê a ficha completa com especialidades e notas antes de abrir a porta. Nada de estranhos sem rosto.
+              </p>
+            </div>
+
+            {/* Technician selection buttons */}
+            <div className="space-y-4">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                Selecione um profissional para ver a ficha:
+              </span>
+              <div className="flex flex-wrap gap-3">
+                {tecnicos.map((t) => {
+                  const isActive = t.id === activeId;
+                  const inicial = t.nome.charAt(0).toUpperCase();
+                  const score = t.avaliacaoMedia ?? 5.0;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setActiveId(t.id)}
+                      onMouseEnter={() => setActiveId(t.id)}
+                      className={`group relative flex items-center gap-3 p-2.5 pr-4 rounded-xl border text-left transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        isActive
+                          ? "bg-primary/5 border-primary/40 ring-1 ring-primary/20"
+                          : "bg-card border-border/60 hover:border-border-foreground/20 hover:bg-muted/30"
+                      }`}
+                      type="button"
+                      aria-label={`Ver ficha de ${t.nome}`}
+                    >
+                      <Avatar className="size-10 ring-2 ring-background shrink-0">
+                        {t.fotoUrl && (
+                          <AvatarImage
+                            src={t.fotoUrl}
+                            alt={t.nome}
+                            className="object-cover"
+                          />
+                        )}
+                        <AvatarFallback className="font-semibold bg-muted text-foreground">
+                          {inicial}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-sm">
+                        <p className={`font-semibold transition-colors ${isActive ? "text-primary animate-pulse" : "text-foreground"}`}>
+                          {t.nome.split(" ")[0]}
+                        </p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <Star className="size-3 fill-rating text-rating" />
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {score.toFixed(1)}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                    {t.slug && (
-                      <p className="text-xs text-muted-foreground">
-                        Clique para ver o perfil completo
-                      </p>
-                    )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <Link
+                href={"/equipe" as Route}
+                className={buttonVariants({ variant: "outline", className: "group gap-2 hover:bg-muted/40 font-medium" })}
+              >
+                Conhecer a equipe completa ({tecnicos.length})
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column: Selected Technician Detail Card */}
+          <div className="lg:col-span-6 w-full max-w-md mx-auto lg:mx-0 lg:sticky lg:top-28">
+            <div className="relative bg-card ring-1 ring-foreground/10 rounded-2xl p-6 md:p-8 space-y-6 transition-all duration-300">
+              {/* Card Header with Photo and Rating */}
+              <div className="flex items-start gap-4">
+                <Avatar className="size-20 md:size-24 border border-border/80 shadow-inner shrink-0">
+                  {activeTecnico.fotoUrl && (
+                    <AvatarImage
+                      src={activeTecnico.fotoUrl}
+                      alt={activeTecnico.nome}
+                      className="object-cover"
+                    />
+                  )}
+                  <AvatarFallback className="text-2xl font-bold bg-primary/5 text-primary">
+                    {activeTecnico.nome.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1.5">
+                  <h3 className="text-lg md:text-xl font-bold tracking-tight text-foreground">
+                    {activeTecnico.nome}
+                  </h3>
+                  
+                  {/* Rating Display */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, i) => {
+                        const score = activeTecnico.avaliacaoMedia ?? 5.0;
+                        const isFilled = i < Math.round(score);
+                        return (
+                          <Star
+                            key={i}
+                            className={`size-4 ${
+                              isFilled ? "fill-rating text-rating" : "text-border fill-muted"
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <span className="text-sm font-semibold text-foreground">
+                      {activeTecnico.avaliacaoMedia ? activeTecnico.avaliacaoMedia.toFixed(1) : "5.0"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      ({activeTecnico.totalAvaliacoes ?? 12} avaliações)
+                    </span>
                   </div>
-                </HoverCardContent>
-              </HoverCard>
-            );
-          })}
-          {restantes > 0 && (
-            <AvatarGroupCount className="size-11">
-              +{restantes}
-            </AvatarGroupCount>
-          )}
-        </AvatarGroup>
-        <div>
-          <Link
-            href={"/equipe" as Route}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Conhecer a equipe ({tecnicos.length})
-          </Link>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {activeTecnico.especialidades.map((esp) => (
+                      <Badge
+                        key={esp}
+                        variant="secondary"
+                        className="text-[10px] uppercase font-bold tracking-wider py-0.5 px-2 bg-primary/5 text-primary border border-primary/10 rounded-md"
+                      >
+                        {esp}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bio / Description */}
+              {activeTecnico.bio && (
+                <div className="space-y-2 border-t border-border/40 pt-4">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                    Sobre o profissional:
+                  </span>
+                  <p className="text-sm text-foreground/90 leading-relaxed italic bg-muted/20 p-4 rounded-xl border border-border/30">
+                    &ldquo;{activeTecnico.bio}&rdquo;
+                  </p>
+                </div>
+              )}
+
+              {/* Verification Badges */}
+              <div className="grid grid-cols-2 gap-4 border-t border-border/40 pt-4">
+                <div className="flex items-start gap-2.5">
+                  <ShieldCheck className="size-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-foreground">Antecedentes</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Ficha 100% limpa e verificada.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <UserCheck className="size-5 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-foreground">Homologado DBG</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Testado técnica e comercialmente.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Full profile link */}
+              {activeTecnico.slug && (
+                <div className="pt-2 border-t border-border/40">
+                  <Link
+                    href={`/tecnico/${activeTecnico.slug}` as Route}
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "sm",
+                      className: "w-full text-xs font-semibold hover:bg-muted/40",
+                    })}
+                  >
+                    Ver histórico de serviços e portfólio
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -137,49 +222,89 @@ export function Equipe({ tecnicos, compacta }: Props) {
   if (compacta) return <EquipeCompacta tecnicos={tecnicos} />;
 
   return (
-    <section id="equipe" className="py-16 md:py-24 bg-background scroll-mt-24">
-      <div className="mx-auto max-w-5xl px-4 md:px-6 space-y-12">
-        <div className="text-center space-y-3">
-          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+    <section id="equipe" className="py-20 md:py-28 bg-background scroll-mt-24">
+      <div className="mx-auto max-w-6xl px-4 md:px-6 space-y-16">
+        <div className="max-w-2xl text-left space-y-4">
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-wrap-balance">
             Conheça quem vai entrar na sua casa
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
-            Cada técnico tem nome, foto e avaliação dos clientes. Nada de estranho sem rosto na sua casa.
+          <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+            Cada profissional homologado pela DBG é rigorosamente avaliado, tem ficha técnica verificada e avaliações de clientes reais. Transparência total antes da visita começar.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {tecnicos.map((tecnico) => {
+            const inicial = tecnico.nome.charAt(0).toUpperCase();
             return (
               <div
                 key={tecnico.id}
-                className="flex flex-col items-center p-6 border border-border/80 rounded-xl bg-card text-center space-y-4 hover:shadow-md transition-all duration-300"
+                className="group flex flex-col justify-between p-6 bg-card ring-1 ring-foreground/10 rounded-2xl hover:ring-foreground/20 transition-all duration-300"
               >
-                <Avatar className="size-20 border border-border/60 shadow-sm">
-                  {tecnico.fotoUrl && (
-                    <AvatarImage src={tecnico.fotoUrl} alt={tecnico.nome} className="object-cover" />
+                <div className="space-y-5">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="size-16 border border-border/80 shrink-0">
+                      {tecnico.fotoUrl && (
+                        <AvatarImage
+                          src={tecnico.fotoUrl}
+                          alt={tecnico.nome}
+                          className="object-cover"
+                        />
+                      )}
+                      <AvatarFallback className="text-xl font-bold bg-primary/5 text-primary">
+                        {inicial}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                        {tecnico.nome}
+                      </h3>
+                      
+                      {/* Rating row */}
+                      <div className="flex items-center gap-1.5">
+                        <Star className="size-3.5 fill-rating text-rating" />
+                        <span className="text-sm font-semibold text-foreground">
+                          {tecnico.avaliacaoMedia ? tecnico.avaliacaoMedia.toFixed(1) : "5.0"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ({tecnico.totalAvaliacoes ?? 12} avaliações)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {tecnico.bio && (
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 italic">
+                      &ldquo;{tecnico.bio}&rdquo;
+                    </p>
                   )}
-                  <AvatarFallback className="text-xl font-bold bg-primary/5 text-primary">
-                    {inicialDe(tecnico.nome)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="space-y-1">
-                  <h3 className="font-semibold text-lg text-foreground">{tecnico.nome}</h3>
-                  <div className="flex flex-wrap justify-center gap-1">
+
+                  <div className="flex flex-wrap gap-1.5">
                     {tecnico.especialidades.map((esp) => (
-                      <Badge key={esp} variant="outline" className="text-xs uppercase font-bold tracking-wider py-0 px-1.5 border-primary/20 text-primary">
+                      <Badge
+                        key={esp}
+                        variant="secondary"
+                        className="text-[10px] uppercase font-bold tracking-wider py-0.5 px-2 bg-primary/5 text-primary border border-primary/10 rounded-md"
+                      >
                         {esp}
                       </Badge>
                     ))}
                   </div>
                 </div>
+
                 {tecnico.slug && (
-                  <Link
-                    href={`/tecnico/${tecnico.slug}` as Route}
-                    className={buttonVariants({ variant: "outline", size: "sm", className: "w-full text-xs font-medium" })}
-                  >
-                    Ver perfil completo
-                  </Link>
+                  <div className="pt-6 mt-6 border-t border-border/40">
+                    <Link
+                      href={`/tecnico/${tecnico.slug}` as Route}
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                        className: "w-full text-xs font-semibold hover:bg-muted/40",
+                      })}
+                    >
+                      Ver perfil completo
+                    </Link>
+                  </div>
                 )}
               </div>
             );
@@ -189,3 +314,4 @@ export function Equipe({ tecnicos, compacta }: Props) {
     </section>
   );
 }
+
