@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Route } from "next";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -17,9 +18,15 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 px-4 pt-4">
       <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 rounded-full border bg-background/80 pr-2 pl-5 shadow-sm backdrop-blur">
-        <Link href="/" className="flex items-center gap-1.5 font-bold tracking-tight text-foreground">
-          <span>DBG</span>
-          <span className="size-1.5 rounded-full bg-primary" aria-hidden />
+        <Link href="/" className="flex items-center" aria-label="DBG — página inicial">
+          <Image
+            src="/logo-dbg.png"
+            alt="DBG"
+            width={84}
+            height={28}
+            priority
+            className="h-7 w-auto"
+          />
         </Link>
         <nav
           aria-label="Navegação principal"
