@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Star, ShieldCheck, UserCheck, ArrowRight } from "lucide-react";
+import { Star, ShieldCheck, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import type { Membro } from "@/equipe/membro-repo";
 
@@ -106,7 +106,20 @@ function EspecialidadesBadges({ especialidades }: { especialidades: string[] }) 
 
 function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
   const [activeId, setActiveId] = useState<string>(() => tecnicos[0]?.id || "");
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 4;
+  const totalPages = Math.ceil(tecnicos.length / itemsPerPage);
+  const paginatedTecnicos = tecnicos.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
   const activeTecnico = tecnicos.find((t) => t.id === activeId) || tecnicos[0];
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    const firstOnNewPage = tecnicos[newPage * itemsPerPage];
+    if (firstOnNewPage) {
+      setActiveId(firstOnNewPage.id);
+    }
+  };
 
   if (!activeTecnico) return null;
 
@@ -127,11 +140,38 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
 
             {/* Technician selection buttons */}
             <div className="space-y-4">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                Selecione um profissional para ver a ficha:
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Selecione um profissional para ver a ficha:
+                </span>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 0}
+                      className="p-1 rounded-md border border-border/80 bg-card hover:bg-muted text-muted-foreground disabled:opacity-40 transition-colors cursor-pointer"
+                      type="button"
+                      aria-label="Página anterior"
+                    >
+                      <ChevronLeft className="size-4" />
+                    </button>
+                    <span className="text-xs text-muted-foreground font-medium min-w-[2.5rem] text-center select-none">
+                      {currentPage + 1} / {totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages - 1}
+                      className="p-1 rounded-md border border-border/80 bg-card hover:bg-muted text-muted-foreground disabled:opacity-40 transition-colors cursor-pointer"
+                      type="button"
+                      aria-label="Próxima página"
+                    >
+                      <ChevronRight className="size-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="flex flex-wrap gap-3">
-                {tecnicos.map((t) => {
+                {paginatedTecnicos.map((t) => {
                   const isActive = t.id === activeId;
                   const inicial = t.nome.charAt(0).toUpperCase();
                   return (
@@ -173,15 +213,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
               </div>
             </div>
 
-            <div className="pt-2">
-              <Link
-                href={"/equipe" as Route}
-                className={buttonVariants({ variant: "outline", className: "group gap-2 hover:bg-muted/40 font-medium" })}
-              >
-                Conhecer a equipe completa ({tecnicos.length})
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </div>
+
           </div>
 
           {/* Right Column: Selected Technician Detail Card */}

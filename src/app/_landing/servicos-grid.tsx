@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { ArrowRight, Paintbrush, Ruler, Zap } from "lucide-react";
+import { ArrowRight, PaintRoller, BrickWall, PlugZap } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Servico } from "@/catalogo/servico-repo";
 import { buttonVariants } from "@/components/ui/button";
@@ -16,9 +16,9 @@ const LABEL_CATEGORIA: Record<Servico["categoria"], string> = {
 };
 
 const ICONE_CATEGORIA: Record<Servico["categoria"], LucideIcon> = {
-  ELETRICA: Zap,
-  PINTURA: Paintbrush,
-  DRYWALL: Ruler,
+  ELETRICA: PlugZap,
+  PINTURA: PaintRoller,
+  DRYWALL: BrickWall,
 };
 
 const ANCORA_CATEGORIA: Record<Servico["categoria"], string> = {

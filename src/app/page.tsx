@@ -8,7 +8,6 @@ import { Diferenciais } from "./_landing/diferenciais";
 import { ComoFunciona } from "./_landing/como-funciona";
 import { ServicosGrid } from "./_landing/servicos-grid";
 import { Portfolio } from "./_landing/portfolio";
-import { Avaliacoes } from "./_landing/avaliacoes";
 import { Faq } from "./_landing/faq";
 import { Orcamento } from "./_landing/orcamento";
 import { SiteHeader } from "./_landing/site-header";
@@ -141,7 +140,6 @@ export default async function Home() {
       <ServicosGrid servicos={servicos} limitePorCategoria={3} />
       <Portfolio fotos={portfolio} limite={6} />
       <Equipe tecnicos={tecnicos} compacta />
-      <Avaliacoes depoimentos={depoimentos} />
       <Faq />
       <Orcamento bairros={bairros} />
       <SiteFooter bairros={bairros} />

@@ -34,7 +34,7 @@
   --info-foreground: oklch(1.0000 0 0);
   --rating: oklch(0.828 0.155 84.4);
   --border: oklch(0.9288 0.0126 255.5078);
-  --input: oklch(1.0000 0 0);
+  --input: var(--border);
   --ring: var(--primary-500);
   /* Assinatura manuscrita: tinta escura sobre papel branco, independente de
      tema (artefato legal, PNG armazenado consistente). */
@@ -140,7 +140,7 @@
   --info-foreground: oklch(1.0000 0 0);
   --rating: oklch(0.828 0.155 84.4);
   --border: oklch(0.2973 0.0325 284.2512);
-  --input: oklch(0.1743 0.0227 283.7998);
+  --input: var(--border);
   --ring: var(--primary-500);
   /* Mesmo papel branco/tinta escura no tema escuro: a assinatura é sempre
      dark-on-white, como um documento assinado. */

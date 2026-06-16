@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Zap, Ruler, Paintbrush, BadgeCheck, ShieldCheck, Wallet, Camera, ArrowRight, ClipboardCheck, UserRound, Route, Star } from "lucide-react";
+import { MapPin, PlugZap, BrickWall, PaintRoller, BadgeCheck, ShieldCheck, FileCheck, HandCoins, Camera, ArrowRight, ClipboardCheck, UserRound, Route, Star } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { REGIAO_ATENDIMENTO } from "@/lib/contato";
@@ -16,16 +16,16 @@ function textoCobertura(bairros: string[]): string {
 }
 
 const SINAIS = [
-  { icone: Wallet, text: "Sem adiantamento" },
+  { icone: HandCoins, text: "Sem adiantamento" },
   { icone: Camera, text: "Foto antes e depois" },
   { icone: Route, text: "Acompanhe o técnico" },
-  { icone: ShieldCheck, text: "Garantia no papel" },
+  { icone: FileCheck, text: "Garantia no papel" },
 ] as const;
 
 const SERVICOS = [
-  { icone: Zap, nome: "Elétrica", desc: "Disjuntor, chuveiro, tomada, ventilador." },
-  { icone: Ruler, nome: "Drywall", desc: "Divisória, forro, home office, sanca." },
-  { icone: Paintbrush, nome: "Pintura", desc: "Quarto, casa inteira, retoque." },
+  { icone: PlugZap, nome: "Elétrica", desc: "Disjuntor, chuveiro, tomada, ventilador." },
+  { icone: BrickWall, nome: "Drywall", desc: "Divisória, forro, home office, sanca." },
+  { icone: PaintRoller, nome: "Pintura", desc: "Quarto, casa inteira, retoque." },
 ] as const;
 
 export function Hero({ bairros }: { bairros: string[] }) {
@@ -151,9 +151,7 @@ export function Hero({ bairros }: { bairros: string[] }) {
                   href="#servicos"
                   className="flex min-h-24 items-center gap-3 rounded-xl border border-border/40 bg-background p-4 outline-none transition-[transform,border-color] duration-200 ease-out hover:-translate-y-1 hover:border-primary focus-visible:-translate-y-1 focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-visible:translate-y-0"
                 >
-                  <div className="shrink-0 rounded-lg bg-primary/10 p-2.5 text-brand-ink">
-                    <s.icone className="size-5" aria-hidden />
-                  </div>
+                  <s.icone className="size-8 shrink-0 text-brand-ink" aria-hidden />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">{s.nome}</p>
                     <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{s.desc}</p>
