@@ -21,6 +21,7 @@ build/
 .antigravitycli/
 skills-lock.json
 tsconfig.tsbuildinfo
+next-env.d.ts
 
 # PWA gerado
 public/sw.js
