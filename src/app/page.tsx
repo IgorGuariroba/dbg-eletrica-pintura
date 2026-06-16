@@ -23,6 +23,8 @@ import { listarBairrosAtendidos } from "@/operacao/cobertura-query";
 import { urlPublicaFoto } from "@/lib/storage";
 import { Equipe } from "./_landing/equipe";
 import type { FotoPortfolioView } from "./_landing/portfolio";
+import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo";
+
 
 export const dynamic = "force-static";
 export const revalidate = 3600;
@@ -106,15 +108,24 @@ export default async function Home() {
       carregarBairros(),
     ]);
 
-  let tecnicos: import("@/equipe/membro-repo").Membro[] = [];
+  let tecnicos: import("./_landing/equipe").MembroComNota[] = [];
   try {
-    const res = await criarMembroRepoDrizzle(db).listar({
-      papel: "tecnico",
-      ativo: true,
-      limit: 100,
-      offset: 0,
-    });
-    tecnicos = res.itens;
+    const [res, notas] = await Promise.all([
+      criarMembroRepoDrizzle(db).listar({
+        papel: "tecnico",
+        ativo: true,
+        limit: 100,
+        offset: 0,
+      }),
+      criarNotaTecnicoRepoDrizzle(db).listarNotasPorTecnico(),
+    ]);
+
+    const notasMap = new Map(notas.map((n) => [n.tecnicoId, n]));
+    tecnicos = res.itens.map((t) => ({
+      ...t,
+      avaliacaoMedia: notasMap.get(t.id)?.media ?? null,
+      totalAvaliacoes: notasMap.get(t.id)?.total ?? 0,
+    }));
   } catch (err) {
     console.error("Erro ao carregar técnicos:", err);
   }
