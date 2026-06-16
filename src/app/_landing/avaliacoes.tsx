@@ -138,7 +138,7 @@ export function Avaliacoes({
                   >
                     {/* Avatar */}
                     <Avatar className="size-14 text-base border-2 border-primary/10 shrink-0">
-                      <AvatarFallback className="bg-primary/10 dark:bg-primary/20 text-primary font-bold">
+                      <AvatarFallback className="bg-primary/10 dark:bg-primary/20 text-brand-ink font-bold">
                         {obterIniciais(d.nome)}
                       </AvatarFallback>
                     </Avatar>

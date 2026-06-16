@@ -85,7 +85,7 @@ export function ServicosGrid({
           return (
             <div key={cat} id={ANCORA_CATEGORIA[cat]} className="scroll-mt-20">
               <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-                <IconeCat className="size-5 text-primary" aria-hidden />
+                <IconeCat className="size-5 text-brand-ink" aria-hidden />
                 {LABEL_CATEGORIA[cat]}
               </h3>
               {/* Grade de altura uniforme: cada card preenche a célula (h-full +

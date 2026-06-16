@@ -95,7 +95,7 @@ function EspecialidadesBadges({ especialidades }: { especialidades: string[] }) 
         <Badge
           key={esp}
           variant="secondary"
-          className="text-[10px] uppercase font-bold tracking-wider py-0.5 px-2 bg-primary/5 text-primary border border-primary/10 rounded-md"
+          className="text-[10px] uppercase font-bold tracking-wider py-0.5 px-2 bg-primary/5 text-brand-ink border border-primary/10 rounded-md"
         >
           {esp}
         </Badge>
@@ -117,7 +117,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
           {/* Left Column: Title, description, selection list */}
           <div className="lg:col-span-6 space-y-8">
             <div className="space-y-4">
-              <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-wrap-balance">
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-balance">
                 Conheça quem vai entrar na sua casa
               </h2>
               <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-xl">
@@ -160,7 +160,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                         </AvatarFallback>
                       </Avatar>
                       <div className="text-sm">
-                        <p className={`font-semibold transition-colors ${isActive ? "text-primary animate-pulse" : "text-foreground"}`}>
+                        <p className={`font-semibold transition-colors ${isActive ? "text-brand-ink" : "text-foreground"}`}>
                           {t.nome.split(" ")[0]}
                         </p>
                         <div className="flex items-center gap-1 mt-0.5">
@@ -197,7 +197,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                       className="object-cover"
                     />
                   )}
-                  <AvatarFallback className="text-2xl font-bold bg-primary/5 text-primary">
+                  <AvatarFallback className="text-2xl font-bold bg-primary/5 text-brand-ink">
                     {activeTecnico.nome.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -237,7 +237,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <UserCheck className="size-5 text-primary shrink-0 mt-0.5" />
+                  <UserCheck className="size-5 text-brand-ink shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
                     <p className="text-xs font-bold text-foreground">Homologado DBG</p>
                     <p className="text-[10px] text-muted-foreground leading-tight">Testado técnica e comercialmente.</p>
@@ -277,7 +277,7 @@ export function Equipe({ tecnicos, compacta }: Props) {
     <section id="equipe" className="py-20 md:py-28 bg-background scroll-mt-24">
       <div className="mx-auto max-w-6xl px-4 md:px-6 space-y-16">
         <div className="max-w-2xl text-left space-y-4">
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-wrap-balance">
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-balance">
             Conheça quem vai entrar na sua casa
           </h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
@@ -303,12 +303,12 @@ export function Equipe({ tecnicos, compacta }: Props) {
                           className="object-cover"
                         />
                       )}
-                      <AvatarFallback className="text-xl font-bold bg-primary/5 text-primary">
+                      <AvatarFallback className="text-xl font-bold bg-primary/5 text-brand-ink">
                         {inicial}
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
-                      <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                      <h3 className="font-bold text-lg text-foreground group-hover:text-brand-ink transition-colors">
                         {tecnico.nome}
                       </h3>
                       

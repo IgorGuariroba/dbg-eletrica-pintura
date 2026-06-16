@@ -42,12 +42,12 @@ export function ComoFunciona() {
       <ol className="relative border-l border-border ml-4 md:hidden flex flex-col gap-8">
         {PASSOS.map((passo, i) => (
           <li key={passo.titulo} className="relative pl-8 group">
-            <span className="absolute -left-4 top-0.5 flex size-8 items-center justify-center rounded-full bg-background ring-1 ring-border text-sm font-semibold text-primary transition-colors group-hover:ring-primary group-hover:text-primary-foreground group-hover:bg-primary">
+            <span className="absolute -left-4 top-0.5 flex size-8 items-center justify-center rounded-full bg-background ring-1 ring-border text-sm font-semibold text-brand-ink transition-colors group-hover:ring-primary group-hover:text-primary-foreground group-hover:bg-primary">
               {i + 1}
             </span>
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2">
-                <passo.icone className="size-5 text-primary" aria-hidden />
+                <passo.icone className="size-5 text-brand-ink" aria-hidden />
                 <h3 className="text-base font-semibold text-foreground">{passo.titulo}</h3>
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -66,10 +66,10 @@ export function ComoFunciona() {
             className="group relative bg-card ring-1 ring-foreground/10 rounded-xl p-6 transition-all duration-200 hover:ring-primary/20 hover:-translate-y-0.5 flex flex-col gap-4"
           >
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold font-mono text-primary/30 group-hover:text-primary transition-colors">
+              <span className="text-2xl font-bold font-mono text-brand-ink/30 group-hover:text-brand-ink transition-colors">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <div className="p-2 rounded-lg bg-primary/5 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-200">
+              <div className="p-2 rounded-lg bg-primary/5 text-brand-ink group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-200">
                 <passo.icone className="size-5" aria-hidden />
               </div>
             </div>

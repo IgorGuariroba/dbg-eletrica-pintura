@@ -86,12 +86,12 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
               </p>
 
               <ArrowRight
-                className="hidden size-6 shrink-0 text-primary sm:block"
+                className="hidden size-6 shrink-0 text-brand-ink sm:block"
                 aria-hidden
               />
 
               <div className="flex items-start gap-4">
-                <div className="shrink-0 rounded-xl bg-primary/10 p-3 text-primary transition-colors duration-200 ease-out motion-safe:group-hover:bg-primary motion-safe:group-hover:text-primary-foreground">
+                <div className="shrink-0 rounded-xl bg-primary/10 p-3 text-brand-ink transition-colors duration-200 ease-out motion-safe:group-hover:bg-primary motion-safe:group-hover:text-primary-foreground">
                   <par.icone className="size-6" aria-hidden />
                 </div>
                 <div>
@@ -109,7 +109,7 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
 
         {mostrarConcluidas && (
           <p className="mt-14 flex items-baseline gap-3">
-            <strong className="font-mono text-3xl md:text-4xl font-bold text-primary">
+            <strong className="font-mono text-3xl md:text-4xl font-bold text-brand-ink">
               {metricas.osConcluidas}
             </strong>
             <span className="text-muted-foreground">
