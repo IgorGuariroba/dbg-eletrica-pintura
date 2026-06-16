@@ -19,6 +19,91 @@ interface Props {
   compacta?: boolean;
 }
 
+// Nota do técnico em 3 contextos: "chip" (botão de seleção), "stars"
+// (ficha detalhada) e "inline" (card da grade). Sem avaliações não
+// exibe número fabricado — mostra "Novo" / "Sem avaliações ainda".
+function NotaTecnico({
+  tecnico,
+  variant,
+}: {
+  tecnico: MembroComNota;
+  variant: "chip" | "inline" | "stars";
+}) {
+  const total = tecnico.totalAvaliacoes ?? 0;
+  const media = tecnico.avaliacaoMedia ?? 0;
+
+  if (total === 0) {
+    if (variant === "chip") {
+      return <span className="text-xs font-medium text-muted-foreground">Novo</span>;
+    }
+    return (
+      <p className={`${variant === "stars" ? "text-sm" : "text-xs"} text-muted-foreground`}>
+        Sem avaliações ainda
+      </p>
+    );
+  }
+
+  const contagem = (
+    <span className="text-xs text-muted-foreground">
+      ({total} {total === 1 ? "avaliação" : "avaliações"})
+    </span>
+  );
+
+  if (variant === "chip") {
+    return (
+      <>
+        <Star className="size-3 fill-rating text-rating" />
+        <span className="text-xs font-medium text-muted-foreground">
+          {media.toFixed(1)}
+        </span>
+      </>
+    );
+  }
+
+  if (variant === "stars") {
+    return (
+      <div className="flex items-center gap-1.5">
+        <div className="flex gap-0.5">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`size-4 ${
+                i < Math.round(media) ? "fill-rating text-rating" : "text-border fill-muted"
+              }`}
+            />
+          ))}
+        </div>
+        <span className="text-sm font-semibold text-foreground">{media.toFixed(1)}</span>
+        {contagem}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Star className="size-3.5 fill-rating text-rating" />
+      <span className="text-sm font-semibold text-foreground">{media.toFixed(1)}</span>
+      {contagem}
+    </div>
+  );
+}
+
+function EspecialidadesBadges({ especialidades }: { especialidades: string[] }) {
+  return (
+    <>
+      {especialidades.map((esp) => (
+        <Badge
+          key={esp}
+          variant="secondary"
+          className="text-[10px] uppercase font-bold tracking-wider py-0.5 px-2 bg-primary/5 text-primary border border-primary/10 rounded-md"
+        >
+          {esp}
+        </Badge>
+      ))}
+    </>
+  );
+}
+
 function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
   const [activeId, setActiveId] = useState<string>(() => tecnicos[0]?.id || "");
   const activeTecnico = tecnicos.find((t) => t.id === activeId) || tecnicos[0];
@@ -49,7 +134,6 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                 {tecnicos.map((t) => {
                   const isActive = t.id === activeId;
                   const inicial = t.nome.charAt(0).toUpperCase();
-                  const temAvaliacoes = (t.totalAvaliacoes ?? 0) > 0;
                   return (
                     <button
                       key={t.id}
@@ -80,18 +164,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                           {t.nome.split(" ")[0]}
                         </p>
                         <div className="flex items-center gap-1 mt-0.5">
-                          {temAvaliacoes ? (
-                            <>
-                              <Star className="size-3 fill-rating text-rating" />
-                              <span className="text-xs font-medium text-muted-foreground">
-                                {(t.avaliacaoMedia ?? 0).toFixed(1)}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-xs font-medium text-muted-foreground">
-                              Novo
-                            </span>
-                          )}
+                          <NotaTecnico tecnico={t} variant="chip" />
                         </div>
                       </div>
                     </button>
@@ -134,43 +207,10 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                   </h3>
                   
                   {/* Rating Display */}
-                  {(activeTecnico.totalAvaliacoes ?? 0) > 0 ? (
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex gap-0.5">
-                        {[...Array(5)].map((_, i) => {
-                          const isFilled = i < Math.round(activeTecnico.avaliacaoMedia ?? 0);
-                          return (
-                            <Star
-                              key={i}
-                              className={`size-4 ${
-                                isFilled ? "fill-rating text-rating" : "text-border fill-muted"
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                      <span className="text-sm font-semibold text-foreground">
-                        {(activeTecnico.avaliacaoMedia ?? 0).toFixed(1)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({activeTecnico.totalAvaliacoes}{" "}
-                        {activeTecnico.totalAvaliacoes === 1 ? "avaliação" : "avaliações"})
-                      </span>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Sem avaliações ainda</p>
-                  )}
+                  <NotaTecnico tecnico={activeTecnico} variant="stars" />
 
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {activeTecnico.especialidades.map((esp) => (
-                      <Badge
-                        key={esp}
-                        variant="secondary"
-                        className="text-[10px] uppercase font-bold tracking-wider py-0.5 px-2 bg-primary/5 text-primary border border-primary/10 rounded-md"
-                      >
-                        {esp}
-                      </Badge>
-                    ))}
+                    <EspecialidadesBadges especialidades={activeTecnico.especialidades} />
                   </div>
                 </div>
               </div>
@@ -273,20 +313,7 @@ export function Equipe({ tecnicos, compacta }: Props) {
                       </h3>
                       
                       {/* Rating row */}
-                      {(tecnico.totalAvaliacoes ?? 0) > 0 ? (
-                        <div className="flex items-center gap-1.5">
-                          <Star className="size-3.5 fill-rating text-rating" />
-                          <span className="text-sm font-semibold text-foreground">
-                            {(tecnico.avaliacaoMedia ?? 0).toFixed(1)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            ({tecnico.totalAvaliacoes}{" "}
-                            {tecnico.totalAvaliacoes === 1 ? "avaliação" : "avaliações"})
-                          </span>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">Sem avaliações ainda</p>
-                      )}
+                      <NotaTecnico tecnico={tecnico} variant="inline" />
                     </div>
                   </div>
 
@@ -297,15 +324,7 @@ export function Equipe({ tecnicos, compacta }: Props) {
                   )}
 
                   <div className="flex flex-wrap gap-1.5">
-                    {tecnico.especialidades.map((esp) => (
-                      <Badge
-                        key={esp}
-                        variant="secondary"
-                        className="text-[10px] uppercase font-bold tracking-wider py-0.5 px-2 bg-primary/5 text-primary border border-primary/10 rounded-md"
-                      >
-                        {esp}
-                      </Badge>
-                    ))}
+                    <EspecialidadesBadges especialidades={tecnico.especialidades} />
                   </div>
                 </div>
 
