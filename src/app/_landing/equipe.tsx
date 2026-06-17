@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Star, ShieldCheck, UserCheck, ArrowRight } from "lucide-react";
+import { Star, ShieldCheck, UserCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import type { Membro } from "@/equipe/membro-repo";
 
@@ -95,7 +95,7 @@ function EspecialidadesBadges({ especialidades }: { especialidades: string[] }) 
         <Badge
           key={esp}
           variant="secondary"
-          className="text-[10px] uppercase font-bold tracking-wider py-0.5 px-2 bg-primary/5 text-primary border border-primary/10 rounded-md"
+          className="text-[10px] uppercase font-bold tracking-wider py-0.5 px-2 bg-primary/5 text-brand-ink border border-primary/10 rounded-md"
         >
           {esp}
         </Badge>
@@ -106,7 +106,20 @@ function EspecialidadesBadges({ especialidades }: { especialidades: string[] }) 
 
 function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
   const [activeId, setActiveId] = useState<string>(() => tecnicos[0]?.id || "");
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 4;
+  const totalPages = Math.ceil(tecnicos.length / itemsPerPage);
+  const paginatedTecnicos = tecnicos.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
   const activeTecnico = tecnicos.find((t) => t.id === activeId) || tecnicos[0];
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    const firstOnNewPage = tecnicos[newPage * itemsPerPage];
+    if (firstOnNewPage) {
+      setActiveId(firstOnNewPage.id);
+    }
+  };
 
   if (!activeTecnico) return null;
 
@@ -117,7 +130,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
           {/* Left Column: Title, description, selection list */}
           <div className="lg:col-span-6 space-y-8">
             <div className="space-y-4">
-              <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-wrap-balance">
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-balance">
                 Conheça quem vai entrar na sua casa
               </h2>
               <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-xl">
@@ -127,11 +140,38 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
 
             {/* Technician selection buttons */}
             <div className="space-y-4">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-                Selecione um profissional para ver a ficha:
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                  Selecione um profissional para ver a ficha:
+                </span>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 0}
+                      className="p-1 rounded-md border border-border/80 bg-card hover:bg-muted text-muted-foreground disabled:opacity-40 transition-colors cursor-pointer"
+                      type="button"
+                      aria-label="Página anterior"
+                    >
+                      <ChevronLeft className="size-4" />
+                    </button>
+                    <span className="text-xs text-muted-foreground font-medium min-w-[2.5rem] text-center select-none">
+                      {currentPage + 1} / {totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages - 1}
+                      className="p-1 rounded-md border border-border/80 bg-card hover:bg-muted text-muted-foreground disabled:opacity-40 transition-colors cursor-pointer"
+                      type="button"
+                      aria-label="Próxima página"
+                    >
+                      <ChevronRight className="size-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="flex flex-wrap gap-3">
-                {tecnicos.map((t) => {
+                {paginatedTecnicos.map((t) => {
                   const isActive = t.id === activeId;
                   const inicial = t.nome.charAt(0).toUpperCase();
                   return (
@@ -160,7 +200,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                         </AvatarFallback>
                       </Avatar>
                       <div className="text-sm">
-                        <p className={`font-semibold transition-colors ${isActive ? "text-primary animate-pulse" : "text-foreground"}`}>
+                        <p className={`font-semibold transition-colors ${isActive ? "text-brand-ink" : "text-foreground"}`}>
                           {t.nome.split(" ")[0]}
                         </p>
                         <div className="flex items-center gap-1 mt-0.5">
@@ -173,15 +213,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
               </div>
             </div>
 
-            <div className="pt-2">
-              <Link
-                href={"/equipe" as Route}
-                className={buttonVariants({ variant: "outline", className: "group gap-2 hover:bg-muted/40 font-medium" })}
-              >
-                Conhecer a equipe completa ({tecnicos.length})
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </div>
+
           </div>
 
           {/* Right Column: Selected Technician Detail Card */}
@@ -197,7 +229,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                       className="object-cover"
                     />
                   )}
-                  <AvatarFallback className="text-2xl font-bold bg-primary/5 text-primary">
+                  <AvatarFallback className="text-2xl font-bold bg-primary/5 text-brand-ink">
                     {activeTecnico.nome.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -237,7 +269,7 @@ function EquipeCompacta({ tecnicos }: { tecnicos: MembroComNota[] }) {
                   </div>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <UserCheck className="size-5 text-primary shrink-0 mt-0.5" />
+                  <UserCheck className="size-5 text-brand-ink shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
                     <p className="text-xs font-bold text-foreground">Homologado DBG</p>
                     <p className="text-[10px] text-muted-foreground leading-tight">Testado técnica e comercialmente.</p>
@@ -277,7 +309,7 @@ export function Equipe({ tecnicos, compacta }: Props) {
     <section id="equipe" className="py-20 md:py-28 bg-background scroll-mt-24">
       <div className="mx-auto max-w-6xl px-4 md:px-6 space-y-16">
         <div className="max-w-2xl text-left space-y-4">
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-wrap-balance">
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-balance">
             Conheça quem vai entrar na sua casa
           </h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
@@ -303,12 +335,12 @@ export function Equipe({ tecnicos, compacta }: Props) {
                           className="object-cover"
                         />
                       )}
-                      <AvatarFallback className="text-xl font-bold bg-primary/5 text-primary">
+                      <AvatarFallback className="text-xl font-bold bg-primary/5 text-brand-ink">
                         {inicial}
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
-                      <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                      <h3 className="font-bold text-lg text-foreground group-hover:text-brand-ink transition-colors">
                         {tecnico.nome}
                       </h3>
                       

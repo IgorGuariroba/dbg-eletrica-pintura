@@ -16,36 +16,34 @@ const LINKS: LinkNavegacao[] = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 px-4 pt-4">
-      <div className="container mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 rounded-full border bg-background/80 pr-2 pl-5 shadow-sm backdrop-blur">
+    <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
+
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6">
         <Link href="/" className="flex items-center" aria-label="DBG — página inicial">
           <Image
             src="/logo-dbg.png"
             alt="DBG"
-            width={84}
-            height={28}
+            width={96}
+            height={32}
             priority
-            className="h-7 w-auto"
+            className="h-8 w-auto"
           />
         </Link>
         <nav
           aria-label="Navegação principal"
-          className="hidden items-center gap-1 md:flex"
+          className="hidden h-16 flex-1 items-center gap-5 pl-2 md:flex"
         >
           {LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href as Route}
-              className={buttonVariants({
-                size: "sm",
-                variant: "ghost",
-                className: "rounded-full",
-              })}
+              className="inline-flex h-16 items-center border-b-2 border-transparent text-sm font-semibold text-foreground/80 transition-colors hover:border-primary hover:text-foreground"
             >
               {link.label}
             </Link>
           ))}
         </nav>
+        <div className="hidden h-6 w-px bg-border md:block" aria-hidden />
         <div className="flex items-center gap-1">
           <Link
             href="/login"
@@ -61,12 +59,12 @@ export function SiteHeader() {
             Entrar
           </Link>
           <Link
-            href="/solicitar"
+            href="/#orcamento"
             className={cn(
               buttonVariants({
                 variant: "link",
               }),
-              "h-11 px-2.5 md:h-8 md:px-3 text-sm font-semibold text-primary hover:text-primary/80 decoration-primary/40",
+              "h-11 px-2.5 md:h-8 md:px-3 text-sm font-semibold text-brand-ink hover:text-brand-ink/80 decoration-primary/40",
             )}
           >
             Solicitar orçamento
@@ -74,6 +72,7 @@ export function SiteHeader() {
           <MenuMobile links={LINKS} />
         </div>
       </div>
+
     </header>
   );
 }

@@ -8,9 +8,8 @@ import { Diferenciais } from "./_landing/diferenciais";
 import { ComoFunciona } from "./_landing/como-funciona";
 import { ServicosGrid } from "./_landing/servicos-grid";
 import { Portfolio } from "./_landing/portfolio";
-import { Avaliacoes } from "./_landing/avaliacoes";
 import { Faq } from "./_landing/faq";
-import { CtaFinal } from "./_landing/cta-final";
+import { Orcamento } from "./_landing/orcamento";
 import { SiteHeader } from "./_landing/site-header";
 import { SiteFooter } from "./_landing/site-footer";
 import { criarMembroRepoDrizzle } from "@/equipe/membro-repo-drizzle";
@@ -24,6 +23,7 @@ import { urlPublicaFoto } from "@/lib/storage";
 import { Equipe } from "./_landing/equipe";
 import type { FotoPortfolioView } from "./_landing/portfolio";
 import { criarNotaTecnicoRepoDrizzle } from "@/marketing/nota-tecnico-repo";
+import { DepoimentosMarquee } from "./_landing/depoimentos-marquee";
 
 
 export const dynamic = "force-static";
@@ -134,14 +134,14 @@ export default async function Home() {
     <>
       <SiteHeader />
       <Hero bairros={bairros} />
+      <DepoimentosMarquee depoimentos={depoimentos} />
       <Diferenciais metricas={metricas} />
       <ComoFunciona />
       <ServicosGrid servicos={servicos} limitePorCategoria={3} />
       <Portfolio fotos={portfolio} limite={6} />
       <Equipe tecnicos={tecnicos} compacta />
-      <Avaliacoes depoimentos={depoimentos} />
       <Faq />
-      <CtaFinal />
+      <Orcamento bairros={bairros} />
       <SiteFooter bairros={bairros} />
     </>
   );
