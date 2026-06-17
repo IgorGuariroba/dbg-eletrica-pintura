@@ -35,6 +35,10 @@ export default defineConfig({
           // Ordem importa: worker-db reescreve DATABASE_URL para o banco do
           // worker (CI) antes de neon-proxy/db-reset tocarem no driver.
           setupFiles: [
+            // guard-db PRIMEIRO: sem NEON_LOCAL_PROXY (banco descartável),
+            // zera DATABASE_URL pra integração skipar — jamais escreve no
+            // Neon cloud do .env.local.
+            "./tests/setup/guard-db.ts",
             "./tests/setup/worker-db.ts",
             "./tests/setup/neon-proxy.ts",
             "./tests/setup/db-reset.ts",
