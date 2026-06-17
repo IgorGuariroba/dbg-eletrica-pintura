@@ -26,12 +26,13 @@ export function lerEnderecoForm(form: FormData): EnderecoSolicitacao {
 }
 
 export function lerCategoriasForm(form: FormData): Categoria[] {
-  return form
-    .getAll("categorias")
-    .map((v) => String(v))
-    .filter((v): v is Categoria =>
-      categoriaServicoEnum.enumValues.includes(v as Categoria),
-    );
+  const parsed = form.getAll("categorias").map((v) => String(v));
+  if (parsed.includes("OUTRO")) {
+    return ["ELETRICA", "PINTURA", "DRYWALL"];
+  }
+  return parsed.filter((v): v is Categoria =>
+    categoriaServicoEnum.enumValues.includes(v as Categoria),
+  );
 }
 
 export function lerFotosKeysForm(form: FormData): string[] {

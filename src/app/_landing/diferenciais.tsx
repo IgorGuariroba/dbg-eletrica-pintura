@@ -2,7 +2,7 @@ import {
   ArrowRight,
   BadgeDollarSign,
   Route,
-  ShieldCheck,
+  FileCheck,
   UserCheck,
   X,
 } from "lucide-react";
@@ -42,7 +42,7 @@ const PARES: ReadonlyArray<{
   },
   {
     medo: "Já pegou serviço malfeito e ficou no prejuízo.",
-    icone: ShieldCheck,
+    icone: FileCheck,
     titulo: "Garantia no papel, com prova",
     antidoto:
       "Foto antes e depois no WhatsApp. Deu problema no prazo, a gente refaz sem cobrar.",
@@ -61,11 +61,11 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
       <div className="container mx-auto px-4 py-20 md:py-28 max-w-5xl">
         <div className="max-w-3xl">
           <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-balance">
-            Cansada de chamar e se arrepender? A DBG funciona ao contrário.
+            Cansou de chamar e se arrepender? Conheça o jeito DBG.
           </h2>
           <p className="mt-3 text-muted-foreground leading-relaxed">
             Todo medo de chamar um desconhecido tem um motivo. Pra cada um deles,
-            a gente faz o oposto.
+            a gente faz diferente.
           </p>
         </div>
 
@@ -86,14 +86,15 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
               </p>
 
               <ArrowRight
-                className="hidden size-6 shrink-0 text-primary sm:block"
+                className="hidden size-6 shrink-0 text-brand-ink sm:block"
                 aria-hidden
               />
 
               <div className="flex items-start gap-4">
-                <div className="shrink-0 rounded-xl bg-primary/10 p-3 text-primary transition-colors duration-200 ease-out motion-safe:group-hover:bg-primary motion-safe:group-hover:text-primary-foreground">
-                  <par.icone className="size-6" aria-hidden />
-                </div>
+                <par.icone
+                  className="mt-0.5 size-6 shrink-0 text-brand-ink transition-colors duration-200 ease-out motion-safe:group-hover:text-primary"
+                  aria-hidden
+                />
                 <div>
                   <h3 className="text-lg md:text-xl font-semibold tracking-tight">
                     {par.titulo}
@@ -109,7 +110,7 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
 
         {mostrarConcluidas && (
           <p className="mt-14 flex items-baseline gap-3">
-            <strong className="font-mono text-3xl md:text-4xl font-bold text-primary">
+            <strong className="font-mono text-3xl md:text-4xl font-bold text-brand-ink">
               {metricas.osConcluidas}
             </strong>
             <span className="text-muted-foreground">

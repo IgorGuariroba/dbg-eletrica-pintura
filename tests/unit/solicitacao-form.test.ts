@@ -78,6 +78,16 @@ describe("solicitacao-form parsers", () => {
       expect(cats).toEqual(["ELETRICA", "PINTURA"]);
     });
 
+    it("mapeia OUTRO para todas as categorias", () => {
+      const cats = lerCategoriasForm(
+        form([
+          ["categorias", "OUTRO"],
+        ]),
+      );
+
+      expect(cats).toEqual(["ELETRICA", "PINTURA", "DRYWALL"]);
+    });
+
     it("retorna vazio sem categorias", () => {
       expect(lerCategoriasForm(form([]))).toEqual([]);
     });

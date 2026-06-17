@@ -4,6 +4,9 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { buttonVariants } from "@/components/ui/button";
+import { urlWhatsApp } from "@/lib/contato";
+import { cn } from "@/lib/utils";
 
 // Perguntas na voz desconfiada da cliente; respostas honestas e curtas.
 // Só promete o que a operação entrega de verdade (sem "antecedente
@@ -41,24 +44,50 @@ const PERGUNTAS = [
 
 export function Faq() {
   return (
-    <section id="faq" className="container mx-auto px-4 py-16 max-w-3xl scroll-mt-24">
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-          Ainda com uma dúvida?
-        </h2>
+    <section id="faq" className="container mx-auto px-4 py-16 md:py-24 max-w-5xl scroll-mt-24">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+        {/* Esquerda: Conteúdo de Título e CTA (Bolder/Asymmetric) */}
+        <div className="lg:col-span-5 flex flex-col justify-start gap-6">
+          <div className="space-y-4">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground leading-[1.08] text-balance">
+              Ainda com uma dúvida?
+            </h2>
+            <p className="text-muted-foreground text-base leading-relaxed max-w-sm">
+              A gente responde tudo, sem enrolação. Se a sua dúvida não estiver aqui, é só chamar no WhatsApp.
+            </p>
+          </div>
+          <div>
+            <a
+              href={urlWhatsApp("Olá! Vi o site de vocês e ainda tenho uma dúvida sobre os serviços.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "w-full sm:w-auto font-medium transition-colors"
+              )}
+            >
+              Falar no WhatsApp
+            </a>
+          </div>
+        </div>
+
+        {/* Direita: Acordeon de Perguntas Frequentes */}
+        <div className="lg:col-span-7">
+          <Accordion className="w-full">
+            {PERGUNTAS.map((item) => (
+              <AccordionItem key={item.p} value={item.p}>
+                <AccordionTrigger className="text-left text-base font-semibold py-4 hover:no-underline">
+                  {item.p}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground text-sm leading-relaxed pb-4">
+                  {item.r}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
       </div>
-      <Accordion className="w-full">
-        {PERGUNTAS.map((item) => (
-          <AccordionItem key={item.p} value={item.p}>
-            <AccordionTrigger className="text-left text-base">
-              {item.p}
-            </AccordionTrigger>
-            <AccordionContent className="text-muted-foreground text-sm leading-relaxed">
-              {item.r}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
     </section>
   );
 }
+
