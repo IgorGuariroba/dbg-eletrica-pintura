@@ -12,7 +12,10 @@ import { config } from "dotenv";
 // A ordem respeita as foreign keys.
 export default async function setup() {
   config({ path: ".env.local" });
-  if (!process.env.DATABASE_URL) return;
+  // Só varre o Postgres DESCARTÁVEL atrás do proxy (CI/docker). Sem
+  // NEON_LOCAL_PROXY, DATABASE_URL aponta pro Neon cloud do .env.local —
+  // jamais deletar lá (mesmo guard de tests/setup/guard-db.ts).
+  if (!process.env.NEON_LOCAL_PROXY || !process.env.DATABASE_URL) return;
 
   // globalSetup não passa pelos setupFiles — configura o proxy aqui também.
   const { configurarProxyLocalNeon } = await import("@/db/neon-local-proxy");

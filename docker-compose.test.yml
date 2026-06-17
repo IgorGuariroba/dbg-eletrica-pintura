@@ -1,0 +1,34 @@
+# Postgres descartável + proxy Neon HTTP para rodar a suíte de INTEGRAÇÃO
+# localmente — espelha os `services` do CI (.github/workflows/ci.yml).
+#
+# O app fala via driver Neon serverless (HTTP), que não entende o
+# wire-protocol do Postgres comum. O proxy `local-neon-http-proxy` traduz
+# HTTP -> Postgres. `NEON_LOCAL_PROXY=localhost:4444` aponta o driver ao
+# proxy (ver src/db/neon-local-proxy.ts).
+#
+# Uso: `pnpm test:integration` sobe isto, migra e roda os testes. Nunca toca
+# o banco cloud do `.env.local`.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ci
+      POSTGRES_PASSWORD: ci
+      POSTGRES_DB: ci
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ci"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  neon-proxy:
+    image: ghcr.io/timowilhelm/local-neon-http-proxy:main
+    environment:
+      PG_CONNECTION_STRING: postgres://ci:ci@postgres:5432/ci
+    ports:
+      - "4444:4444"
+    depends_on:
+      postgres:
+        condition: service_healthy
