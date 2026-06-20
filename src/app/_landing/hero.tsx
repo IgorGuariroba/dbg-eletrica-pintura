@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, PlugZap, BrickWall, PaintRoller, BadgeCheck, ShieldCheck, FileCheck, HandCoins, Camera, ArrowRight, ClipboardCheck, UserRound, Route, Star } from "lucide-react";
+import { MapPin, PlugZap, BrickWall, PaintRoller, BadgeCheck, FileCheck, HandCoins, Camera, ArrowRight, ClipboardCheck, UserRound, Route } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { REGIAO_ATENDIMENTO } from "@/lib/contato";
@@ -19,7 +19,7 @@ const SINAIS = [
   { icone: HandCoins, text: "Sem adiantamento" },
   { icone: Camera, text: "Foto antes e depois" },
   { icone: Route, text: "Acompanhe o técnico" },
-  { icone: FileCheck, text: "Garantia no papel" },
+  { icone: FileCheck, text: "Garantia 90 dias no papel" },
 ] as const;
 
 const SERVICOS = [
@@ -50,7 +50,7 @@ export function Hero({ bairros }: { bairros: string[] }) {
             </h1>
 
             <p className="mt-5 text-muted-foreground text-base md:text-lg leading-relaxed max-w-lg">
-              Serviço profissional de elétrica, pintura e drywall com agendamento transparente, técnicos identificados e valor fixado sem surpresas.
+              Serviço profissional de elétrica, pintura e drywall com agendamento transparente, técnicos identificados e preço aprovado antes de começar, sem surpresa no final.
             </p>
 
             <div className="mt-8 flex flex-col items-start gap-2.5 w-full sm:w-auto">
@@ -78,67 +78,40 @@ export function Hero({ bairros }: { bairros: string[] }) {
               </h2>
 
               <div className="mt-5 space-y-4">
-                {/* 1. Card do Técnico Identificado (Rosto) */}
-                <div className="flex items-center justify-between gap-4 rounded-xl border border-border/50 bg-background p-4 shadow-2xs">
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-400 font-bold text-lg">
-                      LS
-                      <span className="absolute bottom-0 right-0 block size-3 rounded-full bg-success ring-2 ring-background animate-pulse" aria-label="Disponível" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h3 className="text-sm font-semibold text-foreground">Lucas Silva</h3>
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-success/10 px-1.5 py-0.5 text-[9px] font-medium text-success dark:bg-success/20">
-                          <BadgeCheck className="size-3" /> Identificado
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Eletricista Parceiro Cadastrado</p>
-                      <div className="mt-1 flex items-center gap-1">
-                        <span className="text-xs font-bold text-foreground">4.9</span>
-                        <div className="flex text-amber-500">
-                          <Star className="size-3 fill-current" />
-                          <Star className="size-3 fill-current" />
-                          <Star className="size-3 fill-current" />
-                          <Star className="size-3 fill-current" />
-                          <Star className="size-3 fill-current" />
-                        </div>
-                        <span className="text-[10px] text-muted-foreground">(142 avaliações)</span>
-                      </div>
-                    </div>
+                {/* 1. Técnico identificado — linha de apoio (1 elemento) */}
+                <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-background p-3 shadow-2xs">
+                  <div className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-400 font-bold">
+                    LS
+                    <span className="absolute bottom-0 right-0 block size-3 rounded-full bg-success ring-2 ring-background animate-pulse" aria-label="Disponível" />
                   </div>
-
-                  <div className="hidden sm:flex flex-col items-end gap-0.5">
-                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">Identidade</span>
-                    <span className="text-xs font-mono font-medium text-foreground bg-muted px-2 py-0.5 rounded">RG 48.***-4</span>
+                  <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-foreground">Lucas S.</h3>
+                      <p className="text-xs text-muted-foreground">Eletricista parceiro</p>
+                    </div>
+                    <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success dark:bg-success/20">
+                      <BadgeCheck className="size-3" /> Identificado
+                    </span>
                   </div>
                 </div>
 
-                {/* 2. Card do Orçamento Aprovado (Preço & Garantia) */}
+                {/* 2. Orçamento aprovado — elemento dominante (preço fixo) */}
                 <div className="rounded-xl border border-border/50 bg-background p-4 shadow-2xs space-y-3">
-                  <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <ClipboardCheck className="size-4 text-brand-ink" />
-                      <span className="text-xs font-bold text-muted-foreground">Orçamento #3492</span>
+                      <span className="text-xs font-bold text-muted-foreground">Orçamento aprovado</span>
                     </div>
-                    <span className="inline-flex items-center rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success dark:bg-success/20">
-                      Aprovado por você
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success dark:bg-success/20">
+                      <BadgeCheck className="size-3" /> Por você
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-baseline gap-2">
-                    <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Serviço contratado</p>
-                      <p className="text-xs sm:text-sm font-semibold text-foreground truncate">Instalação de Chuveiro + Disjuntor</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Preço Final</p>
-                      <p className="text-sm sm:text-base font-bold text-foreground font-mono">R$ 280,00</p>
-                    </div>
-                  </div>
+                  <p className="text-sm font-semibold text-foreground">Instalação de chuveiro + disjuntor</p>
 
-                  <div className="flex items-center gap-2 rounded-lg bg-primary-50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900/30 px-3 py-2 text-xs text-brand-ink">
-                    <ShieldCheck className="size-4 shrink-0 text-brand-ink" />
-                    <span><strong>Garantia de 90 dias</strong> registrada e ativa no papel.</span>
+                  <div className="flex items-baseline justify-between gap-2 border-t border-border/40 pt-3">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Preço final, fixo</span>
+                    <span className="text-2xl font-bold text-foreground font-mono">R$ 280,00</span>
                   </div>
                 </div>
               </div>

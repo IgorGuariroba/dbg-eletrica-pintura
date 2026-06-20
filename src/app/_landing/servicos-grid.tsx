@@ -1,52 +1,32 @@
-import Image from "next/image";
-import Link from "next/link";
-import type { Route } from "next";
-import { ArrowRight, PaintRoller, BrickWall, PlugZap } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import type { Servico } from "@/catalogo/servico-repo";
-import { buttonVariants } from "@/components/ui/button";
-import { formatBRL } from "@/lib/utils";
-
-const ORDEM_CATEGORIA: Servico["categoria"][] = ["ELETRICA", "PINTURA", "DRYWALL"];
-
-const LABEL_CATEGORIA: Record<Servico["categoria"], string> = {
-  ELETRICA: "Elétrica",
-  PINTURA: "Pintura",
-  DRYWALL: "Drywall",
-};
-
-const ICONE_CATEGORIA: Record<Servico["categoria"], LucideIcon> = {
-  ELETRICA: PlugZap,
-  PINTURA: PaintRoller,
-  DRYWALL: BrickWall,
-};
-
-const ANCORA_CATEGORIA: Record<Servico["categoria"], string> = {
-  ELETRICA: "eletrica",
-  PINTURA: "pintura",
-  DRYWALL: "drywall",
-};
-
-const LABEL_UNIDADE: Record<Servico["unidade"], string> = {
-  PONTO: "por ponto",
-  M2: "por m²",
-  HORA: "por hora",
-};
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { ServicosCategoria } from "./servicos-categoria";
+import {
+  ORDEM_CATEGORIA,
+  LABEL_CATEGORIA,
+  ICONE_CATEGORIA,
+  ANCORA_CATEGORIA,
+} from "./servicos-grid.constants";
 
 interface Props {
   servicos: Servico[];
   /**
-   * Máximo de cards por categoria (landing principal — carga cognitiva
-   * baixa). Omitido = catálogo completo (página /servicos).
+   * Quais categorias já vêm abertas no acordeão. "primeira" (landing —
+   * carga cognitiva baixa) ou "todas" (página /servicos, catálogo completo).
    */
-  limitePorCategoria?: number;
+  aberturaInicial?: "primeira" | "todas";
   titulo?: string;
   descricao?: string;
 }
 
 export function ServicosGrid({
   servicos,
-  limitePorCategoria,
+  aberturaInicial = "primeira",
   titulo = "O que a gente resolve na sua casa",
   descricao = "Os preços abaixo são de referência. O valor exato você aprova no orçamento, antes do serviço começar.",
 }: Props) {
@@ -61,6 +41,11 @@ export function ServicosGrid({
     return null;
   }
 
+  const categorias = ORDEM_CATEGORIA.filter((c) => porCategoria.has(c));
+  const ancoras = categorias.map((c) => ANCORA_CATEGORIA[c]);
+  const defaultAbertas =
+    aberturaInicial === "todas" ? ancoras : ancoras.slice(0, 1);
+
   return (
     <section
       id="servicos"
@@ -73,97 +58,35 @@ export function ServicosGrid({
         </p>
       </div>
 
-      <div className="space-y-12">
-        {ORDEM_CATEGORIA.filter((c) => porCategoria.has(c)).map((cat) => {
-          const todos = porCategoria.get(cat)!;
-          const items =
-            limitePorCategoria != null
-              ? todos.slice(0, limitePorCategoria)
-              : todos;
-          const ocultos = todos.length - items.length;
+      <Accordion defaultValue={defaultAbertas}>
+        {categorias.map((cat) => {
+          const items = porCategoria.get(cat)!;
           const IconeCat = ICONE_CATEGORIA[cat];
           return (
-            <div key={cat} id={ANCORA_CATEGORIA[cat]} className="scroll-mt-20">
-              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-                <IconeCat className="size-5 text-brand-ink" aria-hidden />
-                {LABEL_CATEGORIA[cat]}
-              </h3>
-              {/* Grade de altura uniforme: cada card preenche a célula (h-full +
-                  flex-col), preço fixado na base. Sem masonry — alinhamento
-                  consistente mesmo com/sem foto. */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {items.map((s) => {
-                  const conteudo = (
-                    <>
-                      <div className="relative aspect-video bg-muted">
-                        {s.fotoUrl ? (
-                          <Image
-                            src={s.fotoUrl}
-                            alt={s.nome}
-                            fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-muted-foreground/30">
-                            <IconeCat className="size-9" aria-hidden />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-1 flex-col p-4">
-                        <h4 className="font-semibold leading-snug text-balance">
-                          {s.nome}
-                        </h4>
-                        <div className="mt-auto flex items-baseline justify-between pt-4">
-                          <span className="text-xl font-bold font-mono">
-                            {formatBRL(s.precoBase)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {LABEL_UNIDADE[s.unidade]}
-                          </span>
-                        </div>
-                        {s.prazoGarantiaMeses > 0 && (
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            Garantia de {s.prazoGarantiaMeses}{" "}
-                            {s.prazoGarantiaMeses === 1 ? "mês" : "meses"}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  );
-                  const classeCard =
-                    "flex h-full flex-col overflow-hidden rounded-xl border bg-card";
-                  // Serviço com slug tem landing própria — card vira link.
-                  return s.slug ? (
-                    <Link
-                      key={s.id}
-                      href={`/servicos/${s.slug}` as Route}
-                      className={`${classeCard} transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
-                    >
-                      {conteudo}
-                    </Link>
-                  ) : (
-                    <article key={s.id} className={classeCard}>
-                      {conteudo}
-                    </article>
-                  );
-                })}
-              </div>
-              {ocultos > 0 && (
-                <div className="mt-4">
-                  <Link
-                    href={`/servicos#${ANCORA_CATEGORIA[cat]}` as Route}
-                    className={buttonVariants({ variant: "ghost", size: "sm" })}
-                  >
-                    {`Ver todos os ${todos.length} serviços de ${LABEL_CATEGORIA[cat]}`}
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </div>
-              )}
-            </div>
+            <AccordionItem
+              key={cat}
+              value={ANCORA_CATEGORIA[cat]}
+              id={ANCORA_CATEGORIA[cat]}
+              className="scroll-mt-24"
+            >
+              <AccordionTrigger className="items-center py-4 text-base">
+                <span className="flex items-center gap-2 font-semibold">
+                  <IconeCat className="size-5 text-brand-ink" aria-hidden />
+                  {LABEL_CATEGORIA[cat]}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({items.length})
+                  </span>
+                </span>
+              </AccordionTrigger>
+              {/* [&_a]:no-underline neutraliza o sublinhado que o AccordionContent
+                  aplica a qualquer <a> — os cards-link não devem ficar sublinhados. */}
+              <AccordionContent className="[&_a]:no-underline">
+                <ServicosCategoria categoria={cat} servicos={items} />
+              </AccordionContent>
+            </AccordionItem>
           );
         })}
-      </div>
+      </Accordion>
     </section>
   );
 }
