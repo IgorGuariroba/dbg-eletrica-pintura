@@ -14,7 +14,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Serviços e preços — DBG Elétrica e Pintura",
   description:
-    "Catálogo completo de serviços de elétrica, pintura e drywall com preço fixo e garantia formal. O que você vê é o que paga.",
+    "Catálogo completo de serviços de elétrica, pintura e drywall com preço aprovado antes do serviço e garantia formal. Sem surpresa no final.",
 };
 
 async function carregarServicos(): Promise<Servico[]> {
@@ -37,6 +37,7 @@ export default async function ServicosPage() {
       <SiteHeader />
       <ServicosGrid
         servicos={servicos}
+        aberturaInicial="todas"
         titulo="Serviços e preços"
         descricao="Catálogo completo, com preço de referência e garantia. O valor exato você aprova no orçamento. Clique num serviço para ver detalhes e pedir orçamento."
       />

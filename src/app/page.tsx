@@ -137,7 +137,7 @@ export default async function Home() {
       <DepoimentosMarquee depoimentos={depoimentos} />
       <Diferenciais metricas={metricas} />
       <ComoFunciona />
-      <ServicosGrid servicos={servicos} limitePorCategoria={3} />
+      <ServicosGrid servicos={servicos} />
       <Portfolio fotos={portfolio} limite={6} />
       <Equipe tecnicos={tecnicos} compacta />
       <Faq />

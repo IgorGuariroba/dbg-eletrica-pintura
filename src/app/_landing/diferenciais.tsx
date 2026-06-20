@@ -71,11 +71,11 @@ export function Diferenciais({ metricas }: { metricas: MetricasPublicas }) {
 
         {/* Pares medo → antídoto. Esquerda riscada e estreita (a dor que some);
             direita larga e dominante (o jeito DBG). A assimetria É a mensagem. */}
-        <ul className="mt-14 md:mt-16 divide-y divide-border">
+        <ul className="mt-14 md:mt-16">
           {PARES.map((par) => (
             <li
               key={par.titulo}
-              className="group grid items-center gap-5 py-8 md:py-10 sm:grid-cols-[minmax(0,4fr)_auto_minmax(0,7fr)] sm:gap-8"
+              className="group grid items-center gap-5 py-10 md:py-12 sm:grid-cols-[minmax(0,4fr)_auto_minmax(0,7fr)] sm:gap-8"
             >
               <p className="flex items-start gap-2 text-sm text-muted-foreground line-through decoration-muted-foreground/40">
                 <X
