@@ -67,7 +67,7 @@
     "fake-indexeddb": "^6.2.5",
     "fallow": "^2.85.0",
     "pg": "^8.21.0",
-    "postcss": "8.4.49",
+    "postcss": "8.5.18",
     "shadcn": "^4.8.2",
     "tailwindcss": "4.3.0",
     "tsx": "^4.22.4",
